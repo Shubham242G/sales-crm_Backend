@@ -1,0 +1,10 @@
+import express from 'express';
+import { authorizeJwt } from '@middlewares/auth.middleware';
+import { addEmployeeType, deleteEmployeeTypeById, getAllEmployeeType, getEmployeeTypeById, updateEmployeeTypeById } from '../controllers/employeeType.controller';
+const router = express.Router();
+router.post('/', authorizeJwt, addEmployeeType);
+router.get('/', authorizeJwt, getAllEmployeeType);
+router.get('/getById/:id', authorizeJwt, getEmployeeTypeById);
+router.patch('/updateById/:id', authorizeJwt, updateEmployeeTypeById);
+router.delete('/deleteById/:id', authorizeJwt, deleteEmployeeTypeById);
+export default router;

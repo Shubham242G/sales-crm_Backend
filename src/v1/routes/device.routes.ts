@@ -1,0 +1,10 @@
+import express from 'express';
+import { authorizeJwt } from '@middlewares/auth.middleware';
+import { addDevice, deleteDeviceById, getAllDevice, getDeviceById, updateDeviceById } from '../controllers/device.controller';
+const router = express.Router();
+router.post('/', authorizeJwt, addDevice);
+router.get('/', authorizeJwt, getAllDevice);
+router.get('/getById/:id', authorizeJwt, getDeviceById);
+router.patch('/updateById/:id', authorizeJwt, updateDeviceById);
+router.delete('/deleteById/:id', authorizeJwt, deleteDeviceById);
+export default router;

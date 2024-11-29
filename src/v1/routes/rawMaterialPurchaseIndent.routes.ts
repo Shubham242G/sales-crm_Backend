@@ -1,0 +1,10 @@
+import express from 'express';
+import { authorizeJwt } from "@middlewares/auth.middleware";
+import { addrawMaterialPurchaseIndent, deleterawMaterialPurchaseIndentById, getAllrawMaterialPurchaseIndent, getrawMaterialPurchaseIndentById, updaterawMaterialPurchaseIndentById } from '@controllersv1/rawMaterialPurchaseIndent.controller';
+const router = express.Router();
+router.post('/', authorizeJwt, addrawMaterialPurchaseIndent);
+router.get('/', authorizeJwt, getAllrawMaterialPurchaseIndent);
+router.get('/getById/:id', authorizeJwt, getrawMaterialPurchaseIndentById);
+router.patch('/updateById/:id', authorizeJwt, updaterawMaterialPurchaseIndentById);
+router.delete('/deleteById/:id', authorizeJwt, deleterawMaterialPurchaseIndentById);
+export default router;

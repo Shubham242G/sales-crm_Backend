@@ -1,0 +1,11 @@
+import express from 'express';
+import { authorizeJwt } from '@middlewares/auth.middleware';
+import { addRawMaterialProductionIndent, deleteById, getAllRawMaterialProductionIndent, getById, getRawMaterialProductionIndentForSelectInput, updateById } from '../controllers/rawMaterialProductionIndent.controller';
+const router = express.Router();
+router.post('/', authorizeJwt, addRawMaterialProductionIndent);
+router.get('/', authorizeJwt, getAllRawMaterialProductionIndent);
+router.get('/getById/:id', authorizeJwt, getById);
+router.get('/getRawMaterialProductionIndentForSelectInput', authorizeJwt, getRawMaterialProductionIndentForSelectInput);
+router.patch('/updateById/:id', authorizeJwt, updateById);
+router.delete('/deleteById/:id', authorizeJwt, deleteById);
+export default router;

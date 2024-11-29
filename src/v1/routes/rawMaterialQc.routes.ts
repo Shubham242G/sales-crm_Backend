@@ -1,0 +1,10 @@
+import express from 'express';
+import { authorizeJwt } from '@middlewares/auth.middleware';
+import { addRawMaterialQc, deleteRawMaterialQcById, getAllRawMaterialQc, getRawMaterialQcById, updateRawMaterialQcById } from '@controllersv1/rawMaterialQc.controller';
+const router = express.Router();
+router.post('/', authorizeJwt, addRawMaterialQc);
+router.get('/', authorizeJwt, getAllRawMaterialQc);
+router.get('/getById/:id', authorizeJwt, getRawMaterialQcById);
+router.patch('/updateById/:id', authorizeJwt, updateRawMaterialQcById);
+router.delete('/deleteById/:id', authorizeJwt, deleteRawMaterialQcById);
+export default router;

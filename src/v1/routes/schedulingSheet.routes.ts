@@ -1,0 +1,12 @@
+import express from "express";
+import { authorizeJwt } from "@middlewares/auth.middleware";
+import { CheckSchedulingSheetDataExists, addSchedulingSheet, deleteById, getAllSchedulingSheet, getAllSchedulingSheetDataForSelectedDates, getById, updateById } from "@controllersv1/schedulingSheet.controller";
+const router = express.Router();
+router.post("/", authorizeJwt, addSchedulingSheet);
+router.get("/", authorizeJwt, getAllSchedulingSheet);
+router.get("/getSheetDataByDate", authorizeJwt, getAllSchedulingSheetDataForSelectedDates);
+router.post("/CheckSchedulingSheetDataExists", authorizeJwt, CheckSchedulingSheetDataExists);
+router.get("/getById/:id", authorizeJwt, getById);
+router.patch("/updateById/:id", authorizeJwt, updateById);
+router.delete("/deleteById/:id", authorizeJwt, deleteById);
+export default router;

@@ -1,0 +1,10 @@
+import express from 'express';
+import { authorizeJwt } from '@middlewares/auth.middleware';
+import { addPolicy, deletePolicyById, getAllPolicy, getPolicyById, updatePolicyById } from '../controllers/policy.controller';
+const router = express.Router();
+router.post('/', authorizeJwt, addPolicy);
+router.get('/', authorizeJwt, getAllPolicy);
+router.get('/getById/:id', authorizeJwt, getPolicyById);
+router.patch('/updateById/:id', authorizeJwt, updatePolicyById);
+router.delete('/deleteById/:id', authorizeJwt, deletePolicyById);
+export default router;
