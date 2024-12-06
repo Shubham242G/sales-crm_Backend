@@ -31,6 +31,8 @@ import shiftRouter from "@routesv1/shift.routes";
 import levateTypeRouter from "@routesv1/leaveType.routes";
 import rawMaterialProductionIndentRouter from "@routesv1/rawMaterialProductionIndent.routes";
 import categoryRouter from "@routesv1/category.routes";
+import hotelRouter from "@routesv1/hotel.routes";
+import vendorRouter from "@routesv1/vendor.routes";
 import express from "express";
 
 const router = express.Router();
@@ -68,6 +70,8 @@ router.use("/rawMaterialProductionIndent", rawMaterialProductionIndentRouter);
 router.use("/device", deviceRouter);
 router.use("/holiday", holidayRouter);
 router.use("/employeeType", employeeTypeRouter);
+router.use("/hotel", hotelRouter);
+router.use("/vendor", vendorRouter);
 
 // =======<ryz>====== //
 

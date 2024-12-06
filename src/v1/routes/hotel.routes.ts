@@ -1,0 +1,10 @@
+import express from 'express';
+import { authorizeJwt } from '@middlewares/auth.middleware';
+import { addHotel, deleteHotelById, getAllHotel, getHotelById, updateHotelById } from '../controllers/hotel.controller';
+const router = express.Router();
+router.post('/', addHotel);
+router.get('/', getAllHotel);
+router.get('/getById/:id', getHotelById);
+router.patch('/updateById/:id', updateHotelById);
+router.delete('/deleteById/:id', deleteHotelById);
+export default router;
