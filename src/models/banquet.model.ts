@@ -9,8 +9,6 @@ interface IBanquet {
     vegPrice: string,
     nonVegPrice: string,
     PFAsize: string,
-    floor: string,
-
     imagesArr: {
         image: string
     }[]
@@ -25,7 +23,6 @@ const BanquetSchema = new Schema({
     vegPrice: String,
     nonVegPrice: String,
     PFAsize: String,
-    floor: String,
     imagesArr: [{
         image: String
     }]
