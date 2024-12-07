@@ -1,0 +1,10 @@
+import express from 'express';
+import { authorizeJwt } from '@middlewares/auth.middleware';
+import { addBanquet, deleteBanquetById, getAllBanquet, getBanquetById, updateBanquetById } from '../controllers/banquet.controller';
+const router = express.Router();
+router.post('/', addBanquet);
+router.get('/', getAllBanquet);
+router.get('/getById/:id', getBanquetById);
+router.patch('/updateById/:id', updateBanquetById);
+router.delete('/deleteById/:id', deleteBanquetById);
+export default router;

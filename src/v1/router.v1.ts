@@ -33,6 +33,7 @@ import rawMaterialProductionIndentRouter from "@routesv1/rawMaterialProductionIn
 import categoryRouter from "@routesv1/category.routes";
 import hotelRouter from "@routesv1/hotel.routes";
 import vendorRouter from "@routesv1/vendor.routes";
+import banquetRouter from "@routesv1/banquet.routes";
 import express from "express";
 
 const router = express.Router();
@@ -72,6 +73,7 @@ router.use("/holiday", holidayRouter);
 router.use("/employeeType", employeeTypeRouter);
 router.use("/hotel", hotelRouter);
 router.use("/vendor", vendorRouter);
+router.use("/banquet", banquetRouter);
 
 // =======<ryz>====== //
 

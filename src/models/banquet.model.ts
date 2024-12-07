@@ -1,0 +1,34 @@
+import { model, Model, Schema, Types } from "mongoose";
+
+
+interface IBanquet {
+    banquetName: string,
+    size: string,
+    setup: string,
+    foodOption: string,
+    vegPrice: string,
+    nonVegPrice: string,
+    PFAsize: string,
+    floor: string,
+
+    imagesArr: {
+        image: string
+    }[]
+};
+
+
+const BanquetSchema = new Schema({
+    banquetName: String,
+    size: String,
+    setup: String,
+    foodOption: String,
+    vegPrice: String,
+    nonVegPrice: String,
+    PFAsize: String,
+    floor: String,
+    imagesArr: [{
+        image: String
+    }]
+})
+
+export const Banquet = model<IBanquet>("Banquet", BanquetSchema);

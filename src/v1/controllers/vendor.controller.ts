@@ -20,10 +20,10 @@ export const addVendor = async (
       for (const hotels of req.body.hotelArr) {
         console.log("second", hotels);
         if (hotels.roomsArr && hotels.roomsArr.length > 0) {
-          for (const rooms of hotels.roomsArr) {
+          for (const rooms of hotels.roomsArr) {    
             console.log("thrid", rooms);
             if (hotels.roomsArr && hotels.roomsArr.length > 0) {
-              for (const images of rooms.imagesArr) {
+              for (const images of rooms.imagesArr) { 
                   console.log("fourth", images);
                 images.image = await storeFileAndReturnNameBase64(images.image);
               }
@@ -32,7 +32,6 @@ export const addVendor = async (
         }
       }
     }
-
     await new Vendor(req.body).save();
     res.status(201).json({ message: "Vendor Created" });
   } catch (error) {
