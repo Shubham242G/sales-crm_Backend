@@ -9,12 +9,13 @@ interface IVendor {
   firstName: string;
   lastName: string;
   email: string;
+  landLine : string;
   phoneNumber: string;
   mobileNumber: string;
   paymentTerms: string;
   currencyCode: string;
   notes: string;
-  website: string;
+  Website: string;
   status: string;
   openingBalance: string;
   branchId: string;
@@ -55,6 +56,7 @@ interface IVendor {
   billingCountry: string;
   billingCode: string;
   billingPhoneNumber: string;
+  alternateContact : string;
   billingFax: string;
 
   // shipping details
@@ -77,6 +79,8 @@ interface IVendor {
   // vendor details
   vendorBankAccountNumber: string;
   vendorBankName: string;
+  vendorIfscCode: string;
+
   vendorBankCode: string;
 
   //category drop down
@@ -131,12 +135,14 @@ const vendorSchema = new Schema({
   firstName: String,
   lastName: String,
   email: String,
+  landLine : String,
+  alternateContact : String,
   phoneNumber: String,
   mobileNumber: String,
   paymentTerms: String,
   currencyCode: String,
   notes: String,
-  website: String,
+  Website: String,
   status: String,
   openingBalance: String,
   branchId: String,

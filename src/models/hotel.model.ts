@@ -2,6 +2,7 @@ import { model, Model, Schema, Types } from "mongoose";
 
 
 interface IHotel {
+    _id:Types.ObjectId;
     name : string,
     vendorId : Types.ObjectId,
     noOfRooms : string,

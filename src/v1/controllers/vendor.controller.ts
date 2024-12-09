@@ -12,20 +12,18 @@ export const addVendor = async (
 ) => {
   try {
     let existsCheck = await Vendor.findOne({ name: req.body.name }).exec();
-    if (existsCheck) {
-      throw new Error("Vendor with same name already exists");
-    }
+    // if (existsCheck) {
+    //   throw new Error("Vendor with same name already exists");
+    // }
     if (req.body.hotelArr && req.body.hotelArr.length > 0) {
-      console.log("first");
       for (const hotels of req.body.hotelArr) {
-        console.log("second", hotels);
         if (hotels.roomsArr && hotels.roomsArr.length > 0) {
-          for (const rooms of hotels.roomsArr) {    
-            console.log("thrid", rooms);
+          for (const rooms of hotels.roomsArr) {
             if (hotels.roomsArr && hotels.roomsArr.length > 0) {
-              for (const images of rooms.imagesArr) { 
-                  console.log("fourth", images);
-                images.image = await storeFileAndReturnNameBase64(images.image);
+              for (const images of rooms.imagesArr) {
+                if (images.image && images.image !== "") {
+                  images.image = await storeFileAndReturnNameBase64(images.image);
+                }
               }
             }
           }

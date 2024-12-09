@@ -9,10 +9,10 @@ import { Banquet } from "@models/banquet.model";
 
 export const addBanquet = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        let existsCheck = await Banquet.findOne({ name: req.body.name }).exec();
-        if (existsCheck) {
-            throw new Error("Banquet with same name already exists");
-        }
+        // let existsCheck = await Banquet.findOne({ name: req.body.name }).exec();
+        // if (existsCheck) {
+        //     throw new Error("Banquet with same name already exists");
+        // }
 
         if(req.body.imagesArr && req.body.imagesArr.length > 0){
             console.log("first",req.body.imagesArr)

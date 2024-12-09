@@ -1,0 +1,10 @@
+import express from 'express';
+import { authorizeJwt } from '@middlewares/auth.middleware';
+import { addResturant, deleteResturantById, getAllResturant, getResturantById, updateResturantById } from '../controllers/resturant.controller';
+const router = express.Router();
+router.post('/', addResturant);
+router.get('/', getAllResturant);
+router.get('/getById/:id', getResturantById);
+router.patch('/updateById/:id', updateResturantById);
+router.delete('/deleteById/:id', deleteResturantById);
+export default router;

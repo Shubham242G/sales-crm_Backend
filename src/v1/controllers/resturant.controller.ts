@@ -5,13 +5,15 @@ import { Category } from "@models/category.model";
 import { Vendor } from "@models/vendor.model";
 import { storeFileAndReturnNameBase64 } from "@helpers/fileSystem";
 import { Hotel } from "@models/hotel.model";
+import { Banquet } from "@models/banquet.model";
+import { Resturant } from "@models/resturant.model";
 
-export const addHotel = async (req: Request, res: Response, next: NextFunction) => {
+export const addResturant = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        let existsCheck = await Hotel.findOne({ name: req.body.name }).exec();
-        if (existsCheck) {
-            throw new Error("Hotel with same name already exists");
-        }
+        // let existsCheck = await Banquet.findOne({ name: req.body.name }).exec();
+        // if (existsCheck) {
+        //     throw new Error("Banquet with same name already exists");
+        // }
 
         if(req.body.imagesArr && req.body.imagesArr.length > 0){
             console.log("first",req.body.imagesArr)
@@ -21,33 +23,31 @@ export const addHotel = async (req: Request, res: Response, next: NextFunction) 
                 }
             }
           }
-        await new Hotel(req.body).save();
-        res.status(201).json({ message: "Hotel Created" });
+        await new Resturant(req.body).save();
+        res.status(201).json({ message: "Resturant Created" });
     } catch (error) {
         next(error);
     }
 };
 
-export const getAllHotel = async (req: any, res: any, next: any) => {
+export const getAllResturant = async (req: any, res: any, next: any) => {
     try {
         let pipeline: PipelineStage[] = [];
         let matchObj: Record<string, any> = {};
-        // if (req.query.query && req.query.query != "") {
-        //     matchObj.name = new RegExp(req.query.query, "i");
-        // }
+        if (req.query.query && req.query.query != "") {
+            matchObj.name = new RegExp(req.query.query, "i");
+        }
         pipeline.push({
             $match: matchObj,
         });
-
-        let HotelArr = await paginateAggregate(Hotel, pipeline, req.query);
-        console.log(HotelArr,"dscm")
-        res.status(201).json({ message: "found all Hotel", data: HotelArr.data, total: HotelArr.total });
+        let ResturantArr = await paginateAggregate(Resturant, pipeline, req.query);
+        res.status(201).json({ message: "found all Device", data: ResturantArr.data, total: ResturantArr.total });
     } catch (error) {
         next(error);
     }
 };
 
-export const getHotelById = async (req: Request, res: Response, next: NextFunction) => {
+export const getResturantById = async (req: Request, res: Response, next: NextFunction) => {
     try {
         let pipeline: PipelineStage[] = [];
         let matchObj: Record<string, any> = {};
@@ -57,13 +57,13 @@ export const getHotelById = async (req: Request, res: Response, next: NextFuncti
         pipeline.push({
             $match: matchObj,
         });
-        let existsCheck = await Hotel.aggregate(pipeline);
+        let existsCheck = await Resturant.aggregate(pipeline);
         if (!existsCheck || existsCheck.length == 0) {
-            throw new Error("Hotel does not exists");
+            throw new Error("Resturant does not exists");
         }
         existsCheck = existsCheck[0];
         res.status(201).json({
-            message: "found specific Hotel",
+            message: "found specific Resturant",
             data: existsCheck,
         });
     } catch (error) {
@@ -71,11 +71,11 @@ export const getHotelById = async (req: Request, res: Response, next: NextFuncti
     }
 };
 
-export const updateHotelById = async (req: Request, res: Response, next: NextFunction) => {
+export const updateResturantById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        let existsCheck = await Hotel.findById(req.params.id).lean().exec();
+        let existsCheck = await Resturant.findById(req.params.id).lean().exec();
         if (!existsCheck) {
-            throw new Error("Hotel does not exists");
+            throw new Error("Resturant does not exists");
         }
 
         if(req.body.imagesArr && req.body.imagesArr.length > 0){
@@ -85,21 +85,21 @@ export const updateHotelById = async (req: Request, res: Response, next: NextFun
                 }  
             }
           }
-        let Obj = await Hotel.findByIdAndUpdate(req.params.id, req.body).exec();
-        res.status(201).json({ message: "hotel Updated" });
+        let Obj = await Resturant.findByIdAndUpdate(req.params.id, req.body).exec();
+        res.status(201).json({ message: "Resturant Updated" });
     } catch (error) {
         next(error);
     }
 };
 
-export const deleteHotelById = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteResturantById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        let existsCheck = await Hotel.findById(req.params.id).exec();
+        let existsCheck = await Resturant.findById(req.params.id).exec();
         if (!existsCheck) {
-            throw new Error("Hotel does not exists or already deleted");
+            throw new Error("Resturant does not exists or already deleted");
         }
-        await Hotel.findByIdAndDelete(req.params.id).exec();
-        res.status(201).json({ message: "hotel Deleted" });
+        await Resturant.findByIdAndDelete(req.params.id).exec();
+        res.status(201).json({ message: "Resturant Deleted" });
     } catch (error) {
         next(error);
     }
