@@ -12,6 +12,8 @@ interface IBanquet {
     imagesArr: {
         image: string
     }[]
+    createdAt: Date;
+    updateAt: Date;
 };
 
 
@@ -26,6 +28,7 @@ const BanquetSchema = new Schema({
     imagesArr: [{
         image: String
     }]
-})
+
+}, { timestamps: true })
 
 export const Banquet = model<IBanquet>("Banquet", BanquetSchema);

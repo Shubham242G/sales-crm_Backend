@@ -14,14 +14,14 @@ export const addBanquet = async (req: Request, res: Response, next: NextFunction
         //     throw new Error("Banquet with same name already exists");
         // }
 
-        if(req.body.imagesArr && req.body.imagesArr.length > 0){
-            console.log("first",req.body.imagesArr)
-            for(const el of req.body.imagesArr){
+        if (req.body.imagesArr && req.body.imagesArr.length > 0) {
+            console.log("first", req.body.imagesArr)
+            for (const el of req.body.imagesArr) {
                 if (el.image && el.image !== "") {
                     el.image = await storeFileAndReturnNameBase64(el.image);
                 }
             }
-          }
+        }
         await new Banquet(req.body).save();
         res.status(201).json({ message: "Banquet Created" });
     } catch (error) {
@@ -40,6 +40,7 @@ export const getAllBanquet = async (req: any, res: any, next: any) => {
             $match: matchObj,
         });
         let BanquetArr = await paginateAggregate(Banquet, pipeline, req.query);
+
         res.status(201).json({ message: "found all Device", data: BanquetArr.data, total: BanquetArr.total });
     } catch (error) {
         next(error);
@@ -77,13 +78,13 @@ export const updateBanquetById = async (req: Request, res: Response, next: NextF
             throw new Error("Banquet does not exists");
         }
 
-        if(req.body.imagesArr && req.body.imagesArr.length > 0){
-            for(const el of req.body.imagesArr){
-                if(el.images && el.images !== "" && el.images.includes("base64")){
-                  el.images = await storeFileAndReturnNameBase64(el.images);
-                }  
+        if (req.body.imagesArr && req.body.imagesArr.length > 0) {
+            for (const el of req.body.imagesArr) {
+                if (el.images && el.images !== "" && el.images.includes("base64")) {
+                    el.images = await storeFileAndReturnNameBase64(el.images);
+                }
             }
-          }
+        }
         let Obj = await Banquet.findByIdAndUpdate(req.params.id, req.body).exec();
         res.status(201).json({ message: "Banquet Updated" });
     } catch (error) {
