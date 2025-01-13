@@ -442,3 +442,55 @@ export const downloadExcelEnquiry = async (req: Request, res: Response, next: Ne
     }
 };
 
+
+
+export const convertRpf = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // let existsCheck = await Banquet.findOne({ name: req.body.name }).exec();
+        // if (existsCheck) {
+        //     throw new Error("Banquet with same name already exists");
+        // }
+
+        // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
+        //     console.log("first", req.body.imagesArr)
+        //     for (const el of req.body.imagesArr) {
+        //         if (el.image && el.image !== "") {
+        //             el.image = await storeFileAndReturnNameBase64(el.image);
+        //         }
+        //     }
+        // }
+        if (req.params.id) {
+
+            const enquiry = await Enquiry.findOne({ _id: req.params.id })
+            if (enquiry) {
+
+
+                const rpf = new Rpf({
+                    name: enquiry.name,
+                    phone: enquiry.phone,
+                    email: enquiry.email,
+                    typeOfContact: enquiry.typeOfContact,
+                    contactId: enquiry._id,
+                    subject: 'New Enquiry',
+                    details: 'Initial enquiry created automatically.',
+                    priority: 'Normal',
+                });
+
+                await rpf.save();
+
+                res.status(200).json({ message: "RPF conversion completed successfully", data: rpf });
+
+            }
+
+
+        }
+
+        res.status(500).json({ message: "Something Went Wrong", });
+
+
+
+    } catch (error) {
+        next(error);
+    }
+};
+

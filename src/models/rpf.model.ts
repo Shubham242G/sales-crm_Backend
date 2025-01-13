@@ -6,16 +6,15 @@ import { model, Model, Schema, Types } from "mongoose";
 
 interface IRpf {
 
+    rpfId: string;
+    serviceType: string;
 
-    name: string;
-    phone: string;
-    email: string;
-    typeOfContact: string;
+    eventDate: string;
+    eventDetails: string;
 
-    contactId: string;
-    subject: string;
-    details: string;
-    priority: string;
+    deadlineOfProposal: string;
+    vendorList: string;
+    additionalInstructions: string;
 
 
 
@@ -25,17 +24,24 @@ interface IRpf {
 
 
 const RpfSchema = new Schema({
-    name: String,
-    phone: String,
-    email: String,
-    typeOfContact: String,
-    contactId: {
-        type: Schema.Types.ObjectId,
-        ref: 'Contact', // Reference to the Contact model
-    },
-    subject: String,
-    details: String,
-    priority: { type: String, default: 'Normal' },
+    // name: String,
+    // phone: String,
+    // email: String,
+    // typeOfContact: String,
+    // contactId: {
+    //     type: Schema.Types.ObjectId,
+    //     ref: 'Contact', // Reference to the Contact model
+    // },
+    // subject: String,
+    // details: String,
+    // priority: { type: String, default: 'Normal' },
+    rpfId: String,
+    serviceType: String,
+    eventDate: String,
+    eventDetails: String,
+    deadlineOfProposal: String,
+    vendorList: String,
+    additionalInstructions: String,
 
 
     //     // Basic Details

@@ -470,7 +470,7 @@ export const convertEnquiry = async (req: Request, res: Response, next: NextFunc
 
                 await enquiry.save();
 
-                res.status(200).json({ message: "Bulk upload Contact completed successfully", data: enquiry });
+                res.status(200).json({ message: "Enquiry conversion completed successfully", data: enquiry });
 
             }
 
