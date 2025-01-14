@@ -8,6 +8,8 @@ import resturantRouter from "@routesv1/resturant.routes";
 import contactRouter from "@routesv1/contact.routes";
 import enquiryRouter from "@routesv1/enquiry.routes";
 import rpfRouter from "@routesv1/rpf.routes";
+import leadRouter from "@routesv1/lead.routes";
+import customerRouter from "@routesv1/customer.routes";
 import express from "express";
 
 const router = express.Router();
@@ -22,6 +24,8 @@ router.use("/resturant", resturantRouter);
 router.use("/contactUs", contactRouter);
 router.use("/enquiry", enquiryRouter);
 router.use("/rpf", rpfRouter);
+router.use("/lead", leadRouter);
+router.use("/customer", customerRouter);
 
 // =======<ryz>====== //
 
