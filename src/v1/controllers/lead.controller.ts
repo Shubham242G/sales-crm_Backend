@@ -9,9 +9,9 @@ import { Lead } from "@models/lead.model";
 
 export const addLead = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // let existsCheck = await Banquet.findOne({ name: req.body.name }).exec();
+        // let existsCheck = await Lead.findOne({ name: req.body.phone }).exec();
         // if (existsCheck) {
-        //     throw new Error("Banquet with same name already exists");
+        //     throw new Error("Lead with same email already exists");
         // }
 
         // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
@@ -22,6 +22,10 @@ export const addLead = async (req: Request, res: Response, next: NextFunction) =
         //         }
         //     }
         // }
+
+        console.log(
+            "check 2 ", "for check lead"
+        )
         const lead = await new Lead(req.body).save();
         res.status(201).json({ message: "Lead Created" });
 

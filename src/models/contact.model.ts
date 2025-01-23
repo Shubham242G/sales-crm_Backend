@@ -5,11 +5,13 @@ import { model, Model, Schema, Types } from "mongoose";
 
 interface IContact {
 
-
-    name: string;
+    
+    firstName: string;
+    lastName: string;
     phone: string;
     email: string;
     typeOfContact: string;
+    salutaton:string;
     // Basic Details
 
     // displayName: string;
@@ -92,10 +94,11 @@ interface IContact {
 
 const ContactSchema = new Schema(
     {
-        name: String,
+        firstName: String,
+        lastName: String,
         phone: String,
         email: String,
-        typeOfContact: String,
+        salutaton: String,
 
 
         // Basic Details

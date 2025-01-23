@@ -11,10 +11,10 @@ import { Enquiry } from "@models/enquiry.model";
 
 export const addContact = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // let existsCheck = await Banquet.findOne({ name: req.body.name }).exec();
-        // if (existsCheck) {
-        //     throw new Error("Banquet with same name already exists");
-        // }
+        let existsCheck = await Contact.findOne({ firstName: req.body.name, lastName: req.body.lastName, phone: req.body.phone }).exec();
+        if (existsCheck) {
+            throw new Error("Banquet with same name already exists");
+        }
 
         // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
         //     console.log("first", req.body.imagesArr)
@@ -28,10 +28,11 @@ export const addContact = async (req: Request, res: Response, next: NextFunction
         res.status(201).json({ message: "Contact Created" });
 
         const enquiry = new Enquiry({
-            name: contact.name,
+            salutaton: contact.salutaton,
+            firstName: contact.firstName,
+            lastName: contact.lastName,
             phone: contact.phone,
             email: contact.email,
-            typeOfContact: contact.typeOfContact,
             contactId: contact._id,
             subject: 'New Enquiry',
             details: 'Initial enquiry created automatically.',
@@ -54,6 +55,7 @@ export const getAllContact = async (req: any, res: any, next: any) => {
             $match: matchObj,
         });
         let ContactArr = await paginateAggregate(Contact, pipeline, req.query);
+        
 
         res.status(201).json({ message: "found all Device", data: ContactArr.data, total: ContactArr.total });
     } catch (error) {
@@ -160,10 +162,9 @@ export const BulkUploadContact: RequestHandler = async (req, res, next) => {
 
             let query: any = {
                 _id: row["ID"],
-                name: row["Display Name"],
+                firstName: row["Display Name"],
                 phone: row["Phone"],
                 email: row["Email"],
-                typeOfContact: row["Type of Contact"],
 
                 // displayName: row["Display Name"],
                 // companyName: row["Company Name"],
@@ -390,10 +391,10 @@ export const downloadExcelContact = async (req: Request, res: Response, next: Ne
             console.log(contact, "check contact")
             worksheet.addRow({
                 _id: contact._id,
-                displayName: contact.name,
+                displayName: contact.firstName,
                 phone: contact.phone,
                 email: contact.email,
-                typeOfContact: contact.typeOfContact,
+                
 
                 // displayName: contact.displayName,
                 // companyName: contact.companyName,
@@ -458,7 +459,8 @@ export const convertEnquiry = async (req: Request, res: Response, next: NextFunc
 
 
                 const enquiry = new Enquiry({
-                    name: contact.name,
+                    firstName: contact.firstName,
+                    lastName: contact.lastName,
                     phone: contact.phone,
                     email: contact.email,
                     typeOfContact: contact.typeOfContact,
