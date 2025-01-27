@@ -2,16 +2,16 @@ import { NextFunction, Request, Response, RequestHandler } from "express";
 import { paginateAggregate } from "@helpers/paginateAggregate";
 import mongoose, { PipelineStage } from "mongoose";
 import { storeFileAndReturnNameBase64 } from "@helpers/fileSystem";
-import { Contact } from "@models/contact.model";
+import { PurchaseContact } from "@models/purchaseContact.model";
 import ExcelJs from "exceljs";
 import XLSX from "xlsx";
 import path from 'path'
 import { Enquiry } from "@models/enquiry.model";
 
 
-export const addContact = async (req: Request, res: Response, next: NextFunction) => {
+export const addPurchaseContact = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        let existsCheck = await Contact.findOne({ firstName: req.body.name, lastName: req.body.lastName, phone: req.body.phone }).exec();
+        let existsCheck = await PurchaseContact.findOne({ firstName: req.body.name, lastName: req.body.lastName, phone: req.body.phone }).exec();
         if (existsCheck) {
             throw new Error("Banquet with same name already exists");
         }
@@ -24,16 +24,16 @@ export const addContact = async (req: Request, res: Response, next: NextFunction
         //         }
         //     }
         // }
-        const contact = await new Contact(req.body).save();
-        res.status(201).json({ message: "Contact Created" });
+        const Salescontact = await new PurchaseContact(req.body).save();
+        res.status(201).json({ message: "purchaseContact Created" });
 
         const enquiry = new Enquiry({
-            salutaton: contact.salutaton,
-            firstName: contact.firstName,
-            lastName: contact.lastName,
-            phone: contact.phone,
-            email: contact.email,
-            contactId: contact._id,
+            salutation: Salescontact.salutation,
+            firstName: Salescontact.firstName,
+            lastName: Salescontact.lastName,
+            phone: Salescontact.phone,
+            email: Salescontact.email,
+            contactId: Salescontact._id,
             subject: 'New Enquiry',
             details: 'Initial enquiry created automatically.',
             priority: 'Normal',
@@ -44,7 +44,7 @@ export const addContact = async (req: Request, res: Response, next: NextFunction
     }
 };
 
-export const getAllContact = async (req: any, res: any, next: any) => {
+export const getAllPurchaseContact = async (req: any, res: any, next: any) => {
     try {
         let pipeline: PipelineStage[] = [];
         let matchObj: Record<string, any> = {};
@@ -54,16 +54,16 @@ export const getAllContact = async (req: any, res: any, next: any) => {
         pipeline.push({
             $match: matchObj,
         });
-        let ContactArr = await paginateAggregate(Contact, pipeline, req.query);
+        let purchaseContactArr = await paginateAggregate(PurchaseContact, pipeline, req.query);
         
 
-        res.status(201).json({ message: "found all Device", data: ContactArr.data, total: ContactArr.total });
+        res.status(201).json({ message: "found all Device", data: purchaseContactArr.data, total: purchaseContactArr.total });
     } catch (error) {
         next(error);
     }
 };
 
-export const getContactById = async (req: Request, res: Response, next: NextFunction) => {
+export const getPurchaseContactById = async (req: Request, res: Response, next: NextFunction) => {
     try {
         let pipeline: PipelineStage[] = [];
         let matchObj: Record<string, any> = {};
@@ -73,13 +73,13 @@ export const getContactById = async (req: Request, res: Response, next: NextFunc
         pipeline.push({
             $match: matchObj,
         });
-        let existsCheck = await Contact.aggregate(pipeline);
+        let existsCheck = await PurchaseContact.aggregate(pipeline);
         if (!existsCheck || existsCheck.length == 0) {
             throw new Error("Banquet does not exists");
         }
         existsCheck = existsCheck[0];
         res.status(201).json({
-            message: "found specific Contact",
+            message: "found specific Purchase Contact",
             data: existsCheck,
         });
     } catch (error) {
@@ -87,11 +87,11 @@ export const getContactById = async (req: Request, res: Response, next: NextFunc
     }
 };
 
-export const updateContactById = async (req: Request, res: Response, next: NextFunction) => {
+export const updatePurchaseContactById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        let existsCheck = await Contact.findById(req.params.id).lean().exec();
+        let existsCheck = await PurchaseContact.findById(req.params.id).lean().exec();
         if (!existsCheck) {
-            throw new Error("Contact does not exists");
+            throw new Error("Purchase Contact does not exists");
         }
 
         // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
@@ -101,28 +101,28 @@ export const updateContactById = async (req: Request, res: Response, next: NextF
         //         }
         //     }
         // }
-        let Obj = await Contact.findByIdAndUpdate(req.params.id, req.body).exec();
-        res.status(201).json({ message: "Contact Updated" });
+        let Obj = await PurchaseContact.findByIdAndUpdate(req.params.id, req.body).exec();
+        res.status(201).json({ message: "sales Contact Updated" });
     } catch (error) {
         next(error);
     }
 };
 
-export const deleteContactById = async (req: Request, res: Response, next: NextFunction) => {
+export const deletePurchaseContactById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        let existsCheck = await Contact.findById(req.params.id).exec();
+        let existsCheck = await PurchaseContact.findById(req.params.id).exec();
         if (!existsCheck) {
-            throw new Error("Contact does not exists or already deleted");
+            throw new Error("Sales Contact does not exists or already deleted");
         }
-        await Contact.findByIdAndDelete(req.params.id).exec();
-        res.status(201).json({ message: "Contact Deleted" });
+        await PurchaseContact.findByIdAndDelete(req.params.id).exec();
+        res.status(201).json({ message: "Sales Contact Deleted" });
     } catch (error) {
         next(error);
     }
 };
 
 
-export const BulkUploadContact: RequestHandler = async (req, res, next) => {
+export const BulkUploadPurchaseContact: RequestHandler = async (req, res, next) => {
     try {
         let xlsxFile: any = req.file?.path;
         if (!xlsxFile) throw new Error("File Not Found");
@@ -229,15 +229,15 @@ export const BulkUploadContact: RequestHandler = async (req, res, next) => {
                 // shippingFax: row["Shipping Fax"],
 
                 // // Additional Details
-                // placeOfContact: row["Place of Contact"],
-                // placeOfContactWithStateCode: row["Place of Contact with State Code"],
-                // contactAddressId: row["Contact Address ID"],
+                // placeOfpurchaseContact: row["Place of purchaseContact"],
+                // placeOfpurchaseContactWithStateCode: row["Place of purchaseContact with State Code"],
+                // contactAddressId: row["purchaseContact Address ID"],
                 // source: row["Source"],
                 // ownerName: row["Owner Name"],
-                // primaryContactId: row["Primary Contact ID"],
-                // contactId: row["Contact ID"],
-                // contactName: row["Contact Name"],
-                // contactType: row["Contact Type"],
+                // primarypurchaseContactId: row["Primary purchaseContact ID"],
+                // contactId: row["purchaseContact ID"],
+                // contactName: row["purchaseContact Name"],
+                // contactType: row["purchaseContact Type"],
                 // lastSyncTime: row["Last Sync Time"],
             };
 
@@ -280,24 +280,24 @@ export const BulkUploadContact: RequestHandler = async (req, res, next) => {
 
         console.log(finalArr, "check finalArr")
         if (finalArr.length > 0) {
-            await Contact.insertMany(finalArr);
+            await PurchaseContact.insertMany(finalArr);
 
         }
 
         // Responding back with success
-        res.status(200).json({ message: "Bulk upload Contact completed successfully", data: finalArr });
+        res.status(200).json({ message: "Bulk upload Sales Contact completed successfully", data: finalArr });
     } catch (error) {
         next(error);
     }
 };
 
-export const downloadExcelContact = async (req: Request, res: Response, next: NextFunction) => {
+export const downloadExcelPurchaseContact = async (req: Request, res: Response, next: NextFunction) => {
     try {
 
 
         // Create a new workbook and a new sheet
         const workbook = new ExcelJs.Workbook();
-        const worksheet = workbook.addWorksheet("Bulk  Contact", {
+        const worksheet = workbook.addWorksheet("Bulk  Sales Contact", {
             pageSetup: { paperSize: 9, orientation: "landscape" },
         });
 
@@ -307,7 +307,7 @@ export const downloadExcelContact = async (req: Request, res: Response, next: Ne
             { header: "Display Name", key: "name", width: 20 },
             { header: "Phone", key: "phone", width: 15 },
             { header: "Email", key: "email", width: 20 },
-            { header: "Type of Contact", key: "typeOfContact", width: 20 },
+            { header: "Type of sales Contact", key: "typeOfPurchaseContact", width: 20 },
             // { header: "Display Name", key: "displayName", width: 20 },
             // { header: "Company Name", key: "companyName", width: 20 },
             // { header: "Salutation", key: "salutation", width: 15 },
@@ -332,7 +332,7 @@ export const downloadExcelContact = async (req: Request, res: Response, next: Ne
             // { header: "Payment Terms", key: "paymentTerms", width: 20 },
             // { header: "Payment Terms Label", key: "paymentTermsLabel", width: 25 },
 
-            // // Contact Information
+            // // purchaseContact Information
             // { header: "Email ID", key: "emailId", width: 25 },
             // { header: "Mobile Phone", key: "mobilePhone", width: 20 },
             // { header: "Skype Identity", key: "skypeIdentity", width: 20 },
@@ -373,19 +373,19 @@ export const downloadExcelContact = async (req: Request, res: Response, next: Ne
             // { header: "Shipping Fax", key: "shippingFax", width: 20 },
 
             // // Additional Details
-            // { header: "Place of Contact", key: "placeOfContact", width: 25 },
-            // { header: "Place of Contact with State Code", key: "placeOfContactWithStateCode", width: 30 },
-            // { header: "Contact Address ID", key: "contactAddressId", width: 25 },
+            // { header: "Place of purchaseContact", key: "placeOfpurchaseContact", width: 25 },
+            // { header: "Place of purchaseContact with State Code", key: "placeOfpurchaseContactWithStateCode", width: 30 },
+            // { header: "purchaseContact Address ID", key: "contactAddressId", width: 25 },
             // { header: "Source", key: "source", width: 20 },
             // { header: "Owner Name", key: "ownerName", width: 20 },
-            // { header: "Primary Contact ID", key: "primaryContactId", width: 25 },
-            // { header: "Contact ID", key: "contactId", width: 20 },
-            // { header: "Contact Name", key: "contactName", width: 20 },
-            // { header: "Contact Type", key: "contactType", width: 20 },
+            // { header: "Primary purchaseContact ID", key: "primarypurchaseContactId", width: 25 },
+            // { header: "purchaseContact ID", key: "contactId", width: 20 },
+            // { header: "purchaseContact Name", key: "contactName", width: 20 },
+            // { header: "purchaseContact Type", key: "contactType", width: 20 },
             // { header: "Last Sync Time", key: "lastSyncTime", width: 25 },
         ];
 
-        let contacts = await Contact.find({}).lean().exec();
+        let contacts = await PurchaseContact.find({}).lean().exec();
 
         contacts.forEach((contact) => {
             console.log(contact, "check contact")
@@ -454,16 +454,16 @@ export const convertEnquiry = async (req: Request, res: Response, next: NextFunc
         // }
         if (req.params.id) {
 
-            const contact = await Contact.findOne({ _id: req.params.id })
+            const contact = await PurchaseContact.findOne({ _id: req.params.id })
             if (contact) {
 
 
                 const enquiry = new Enquiry({
+                    salutation: contact.salutation,
                     firstName: contact.firstName,
                     lastName: contact.lastName,
                     phone: contact.phone,
                     email: contact.email,
-                    typeOfContact: contact.typeOfContact,
                     contactId: contact._id,
                     subject: 'New Enquiry',
                     details: 'Initial enquiry created automatically.',
@@ -487,4 +487,3 @@ export const convertEnquiry = async (req: Request, res: Response, next: NextFunc
         next(error);
     }
 };
-

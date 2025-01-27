@@ -3,15 +3,17 @@ import { model, Model, Schema, Types } from "mongoose";
 
 
 
-interface IContact {
+interface ISalesContact {
 
+    
+    // Basic Details
     
     firstName: string;
     lastName: string;
     phone: string;
     email: string;
-    typeOfContact: string;
-    salutaton:string;
+    comapny:string;
+    salutation:string;
     // Basic Details
 
     // displayName: string;
@@ -92,13 +94,14 @@ interface IContact {
 }
 
 
-const ContactSchema = new Schema(
+const SalesContactSchema = new Schema(
     {
         firstName: String,
-        lastName: String,
-        phone: String,
-        email: String,
-        salutaton: String,
+    lastName: String,
+    phone: String,
+    email: String,
+    comapny:String,
+    salutation:String,
 
 
         // Basic Details
@@ -181,4 +184,4 @@ const ContactSchema = new Schema(
     { timestamps: true }
 );
 
-export const Contact = model<IContact>("Contact", ContactSchema);
+export const SalesContact = model<ISalesContact>("Contact", SalesContactSchema);
