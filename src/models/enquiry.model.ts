@@ -10,7 +10,7 @@ interface IEnquiry {
     name: string;
     phone: string;
     email: string;
-    companyName: string
+    companyName: string;
     levelOfEnquiry: string;
     enquiryType: string;
     hotelPreferences: string;
@@ -18,9 +18,9 @@ interface IEnquiry {
     checkOut: Date;
     city: string;
     area: string;
-    numberOfRooms: string;
+    noOfRooms: string;
     categoryOfHotel: { type: string }[];
-    priority: string;
+    // priority: string;
     occupancy: { type: string }[]
     banquet: {
         date: Date;

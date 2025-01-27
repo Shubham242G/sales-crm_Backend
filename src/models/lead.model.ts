@@ -7,7 +7,6 @@ interface ILead {
 
 
 
-    contactType: string;
     firstName: string;
     lastName: string;
     email: string;
@@ -99,7 +98,6 @@ const LeadSchema = new Schema(
     {
 
 
-        contactType: String,
         firstName: String,
         lastName: String,
         email: String,
