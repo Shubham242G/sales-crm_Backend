@@ -12,8 +12,6 @@ interface ILead {
     email: string;
     phone: string;
     company: string;
-    panNumber: string;
-    gstNumber: string;
 
 
     // displayName: string;
@@ -103,8 +101,6 @@ const LeadSchema = new Schema(
         email: String,
         phone: String,
         company: String,
-        panNumber: String,
-        gstNumber: String,
 
 
 

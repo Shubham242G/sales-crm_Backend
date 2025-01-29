@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import { paginateAggregate } from "@helpers/paginateAggregate";
 import mongoose, { PipelineStage } from "mongoose";
-import { Category } from "@models/category.model";
 import { Vendor } from "@models/vendor.model";
 import { storeFileAndReturnNameBase64 } from "@helpers/fileSystem";
+import { deleteFileUsingUrl  }from "@helpers/fileSystem";
 
 export const addVendor = async (
   req: Request,
@@ -11,24 +11,12 @@ export const addVendor = async (
   next: NextFunction
 ) => {
   try {
-    let existsCheck = await Vendor.findOne({ name: req.body.name }).exec();
-    // if (existsCheck) {
-    //   throw new Error("Vendor with same name already exists");
-    // }
-    if (req.body.hotelArr && req.body.hotelArr.length > 0) {
-      for (const hotels of req.body.hotelArr) {
-        if (hotels.roomsArr && hotels.roomsArr.length > 0) {
-          for (const rooms of hotels.roomsArr) {
-            if (hotels.roomsArr && hotels.roomsArr.length > 0) {
-              for (const images of rooms.imagesArr) {
-                if (images.image && images.image !== "") {
-                  images.image = await storeFileAndReturnNameBase64(images.image);
-                }
-              }
-            }
-          }
-        }
-      }
+    let existsCheck = await Vendor.findOne({ name: req.body.firstName, lastName: req.body.lastName, email: req.body.email }).exec();
+    if (existsCheck) {
+      throw new Error("Vendor with same email first namme, last name and Email already exists");
+    }
+    if (req.body.documents && req.body.documents != "" && String(req.body.documents).includes("base64")) {
+      req.body.documents = await storeFileAndReturnNameBase64(req.body.documents);
     }
     await new Vendor(req.body).save();
     res.status(201).json({ message: "Vendor Created" });
@@ -47,18 +35,18 @@ export const getAllVendor = async (req: any, res: any, next: any) => {
     pipeline.push({
       $match: matchObj,
     });
-    let CategoryArr = await paginateAggregate(Category, pipeline, req.query);
+    let vendorArr = await paginateAggregate(Vendor, pipeline, req.query);
     res.status(201).json({
       message: "found all Device",
-      data: CategoryArr.data,
-      total: CategoryArr.total,
+      data: vendorArr.data,
+      total: vendorArr.total,
     });
   } catch (error) {
     next(error);
   }
 };
 
-export const getCategoryById = async (
+export const getVendorById = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -72,7 +60,7 @@ export const getCategoryById = async (
     pipeline.push({
       $match: matchObj,
     });
-    let existsCheck = await Category.aggregate(pipeline);
+    let existsCheck = await Vendor.aggregate(pipeline);
     if (!existsCheck || existsCheck.length == 0) {
       throw new Error("Category does not exists");
     }
@@ -86,35 +74,41 @@ export const getCategoryById = async (
   }
 };
 
-export const updateCategoryById = async (
+
+export const updateVendorById = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    let existsCheck = await Category.findById(req.params.id).lean().exec();
+    let existsCheck = await Vendor.findById(req.params.id).lean().exec();
     if (!existsCheck) {
-      throw new Error("Category does not exists");
+      throw new Error("Vendor does not exists");
     }
-    let Obj = await Category.findByIdAndUpdate(req.params.id, req.body).exec();
-    res.status(201).json({ message: "Category Updated" });
+    if (req.body.documents && req.body.documents != "" && String(req.body.documents).includes("base64")) {
+      req.body.documents = await storeFileAndReturnNameBase64(req.body.documents);
+      await deleteFileUsingUrl(`uploads/${existsCheck.documents}`);
+    }
+    let Obj = await Vendor.findByIdAndUpdate(req.params.id, req.body).exec();
+    res.status(201).json({ message: "Vendor Updated" });
   } catch (error) {
     next(error);
   }
 };
 
-export const deleteCategoryById = async (
+export const deleteVendorById = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    let existsCheck = await Category.findById(req.params.id).exec();
+    let existsCheck = await Vendor.findById(req.params.id).exec();
     if (!existsCheck) {
-      throw new Error("Category does not exists or already deleted");
+      throw new Error("Vendordoes not exists or already deleted");
     }
-    await Category.findByIdAndDelete(req.params.id).exec();
-    res.status(201).json({ message: "Category Deleted" });
+    await deleteFileUsingUrl(`uploads/${existsCheck.documents}`);
+    await Vendor.findByIdAndDelete(req.params.id).exec();
+    res.status(201).json({ message: "Vendor Deleted" });
   } catch (error) {
     next(error);
   }
