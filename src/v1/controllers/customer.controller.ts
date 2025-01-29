@@ -15,15 +15,17 @@ export const addCustomer = async (req: Request, res: Response, next: NextFunctio
         // if (existsCheck) {
         //     throw new Error("Banquet with same name already exists");
         // }
-
-        // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
-        //     console.log("first", req.body.imagesArr)
-        //     for (const el of req.body.imagesArr) {
-        //         if (el.image && el.image !== "") {
-        //             el.image = await storeFileAndReturnNameBase64(el.image);
-        //         }
-        //     }
-        // }
+        console.log(req.body.documentArray, "checking the document array in controller");
+        if (req?.body?.documentArray && req?.body?.documentArray?.length > 0 && req?.body?.documentArray?.includes("base64"))  {
+            
+            for (let el of req?.body?.documentArray) {
+                if (el && el !== "") {
+                    console.log(el, "before conversion");
+                    el = await storeFileAndReturnNameBase64(el);
+                    console.log(el, "after conversion");
+                }
+            }
+        }
         const customer = await new Customer(req.body).save();
         res.status(201).json({ message: "Customer Created" });
 
@@ -64,7 +66,7 @@ export const getCustomerById = async (req: Request, res: Response, next: NextFun
         });
         let existsCheck = await Customer.aggregate(pipeline);
         if (!existsCheck || existsCheck.length == 0) {
-            throw new Error("Banquet does not exists");
+            throw new Error("Customer does not exists");
         }
         existsCheck = existsCheck[0];
         res.status(201).json({
@@ -78,15 +80,21 @@ export const getCustomerById = async (req: Request, res: Response, next: NextFun
 
 export const updateCustomerById = async (req: Request, res: Response, next: NextFunction) => {
     try {
+
+        console.log(req.body.documentArray, "check the document array in updateCustomer"); 
         let existsCheck = await Customer.findById(req.params.id).lean().exec();
         if (!existsCheck) {
             throw new Error("Customer does not exists");
         }
 
-        // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
-        //     for (const el of req.body.imagesArr) {
-        //         if (el.images && el.images !== "" && el.images.includes("base64")) {
-        //             el.images = await storeFileAndReturnNameBase64(el.images);
+        // if (req?.body?.documentArray && req?.body?.documentArray?.length > 0 && req?.body?.documentArray?.includes("base64")) {
+
+        //     console.log(req.body.documentArray, "check the document array inside include statement ")
+        //     for (let el of req.body.documentArray) {
+        //         if (el && el !== "") {
+        //             console.log("el check for store", el)
+        //             el = await storeFileAndReturnNameBase64(el);
+        //             console.log("el check after store", el)
         //         }
         //     }
         // }

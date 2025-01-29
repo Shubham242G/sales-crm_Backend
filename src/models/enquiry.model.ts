@@ -28,7 +28,7 @@ interface IEnquiry {
         seatingStyle: string;
         avSetup: string;
         menuType: string;
-        noOfPax: string;
+        minPax: string;
         seatingRequired: string;
     }[];
     room: {
@@ -63,7 +63,7 @@ interface IEnquiry {
         toCity: string;
         vehicleType: string;
         tripType: string;
-        noOfVehicle: string;
+        noOfVehicles: string;
         typeOfVehicle: string;
         cabTripType: string;
         mealPlan: [];
@@ -90,7 +90,7 @@ const EnquirySchema = new Schema({
     checkOut: Date,
     city: String,
     area: String,
-    numberOfRooms: String,
+    noOfRooms: String,
     categoryOfHotel: [{ type: String }],
     priority: String,
     occupancy: [{ type: String }],
@@ -100,7 +100,7 @@ const EnquirySchema = new Schema({
         seatingStyle: String,
         avSetup: String,
         menuType: String,
-        noOfPax: String,
+        minPax: String,
         seatingRequired: String,
     }],
     room: [{
@@ -116,7 +116,7 @@ const EnquirySchema = new Schema({
             startDate: Date,
             endDate: Date,
         }],
-        eventSetupRequired: String,
+        setupRequired: String,
         eventStartDate:String,
         eventEndDate: String,
     },
@@ -135,7 +135,7 @@ const EnquirySchema = new Schema({
         toCity: String,
         vehicleType: String,
         tripType: String,
-        noOfVehicle: String,
+        noOfVehicles: String,
         typeOfVehicle: String,
         cabTripType: String,
         mealPlan: [],
