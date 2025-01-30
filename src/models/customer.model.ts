@@ -1,12 +1,18 @@
 import { model, Model, Schema, Types } from "mongoose";
 
+
+type communicationChannelsProps = {
+    prefersEmail: boolean ,
+    prefersSms : boolean
+}
+
 interface IContactPerson {
     salutation: string;
     firstName: string;
     lastName: string;
     email: string;
     workPhone: string;
-    communicationChannels: string[];
+    communicationChannels: communicationChannelsProps;
 }
 
 
@@ -23,7 +29,7 @@ interface ICustomer {
     panNumber: string;
     placeOfSupply: string;
     prefersEmail: boolean;
-    prefersSMS: boolean;
+    prefersSms: boolean;
     gstTreatment: string;
     taxPreference: string;
     currency: string;
@@ -51,16 +57,10 @@ interface ICustomer {
     shippingFaxNumber: string;
     contactPersons: IContactPerson[];
     documentArray: string[];
+    // communicationChannels: communicationChannelsProps;
 }
 
-const ContactPersonSchema = new Schema({
-    salutation: String,
-    firstName: String,
-    lastName: String,
-    email: String,
-    workPhone: String,
-    communicationChannels: [String]
-});
+
 
 
 const CustomerSchema = new Schema(
@@ -77,7 +77,7 @@ const CustomerSchema = new Schema(
         panNumber: String,
         placeOfSupply: String,
         prefersEmail: { type: Boolean, default: false },
-        prefersSMS: { type: Boolean, default: false },
+        prefersSms: { type: Boolean, default: false },
         gstTreatment: String,
         taxPreference: { type: String, default: "Taxable" },
         currency: String,
@@ -103,8 +103,9 @@ const CustomerSchema = new Schema(
         shippingPhoneNumber: String,
         shippingPinCode: String,
         shippingFaxNumber: String,
-        contactPersons: [ContactPersonSchema],
+        contactPersons: Array,
         documentArray: Array,
+        // communicationChannels: Array
     },
     { timestamps: true }
 );
