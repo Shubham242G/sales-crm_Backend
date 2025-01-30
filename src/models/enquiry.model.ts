@@ -11,6 +11,9 @@ interface IEnquiry {
     phone: string;
     email: string;
     companyName: string;
+    hotelName: string;
+    othersPreference: string;
+    approxPassengers: string;
     levelOfEnquiry: string;
     enquiryType: string;
     hotelPreferences: string;
@@ -84,6 +87,9 @@ const EnquirySchema = new Schema({
     companyName: String,
     typeOfContact: String,
     levelOfEnquiry: String,
+    hotelName: String,
+    othersPreference: String,
+    approxPassengers: String,
     enquiryType: String,
     hotelPreferences: String,
     checkIn: Date,
