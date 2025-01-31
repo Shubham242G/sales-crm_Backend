@@ -103,7 +103,7 @@ export const updateEnquiryById = async (req: Request, res: Response, next: NextF
         if (!existsCheck) {
             throw new Error("Enquiry does not exists");
         }
-
+        console.log(req.body);
         // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
         //     for (const el of req.body.imagesArr) {
         //         if (el.images && el.images !== "" && el.images.includes("base64")) {

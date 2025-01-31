@@ -1,74 +1,111 @@
 import { model, Model, Schema, Types } from "mongoose";
 
 
+type communicationChannelsProps = {
+    prefersEmail: boolean ,
+    prefersSms : boolean
+}
+
+interface IContactPerson {
+    salutation: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    workPhone: string;
+    communicationChannels: communicationChannelsProps;
+}
 
 
 interface ICustomer {
-
-
-
-
-
-
-    contactName: "",
-    contactOwner: "",
-    companyName: "",
-    email: "",
-    phoneNumber: "",
-    panNumber: "",
-    placeOfSupply: "",
-    state: "",
-    city: "",
-    Area: "",
-    Address: "",
-    bankName: "",
-    bankAccountNumber: "",
-    bankIFSCCode: "",
-    salutation: "",
-
-    contactPersonName: "",
-    contactPersonEmail: "",
-    constactPersonPhoneNumber: "",
-
-
-
+    customerType: string;
+    salutation: string;
+    firstName: string;
+    lastName: string;
+    companyName: string;
+    displayName: string;
+    email: string;
+    workPhone: string;
+    mobile: string;
+    panNumber: string;
+    placeOfSupply: string;
+    prefersEmail: boolean;
+    prefersSms: boolean;
+    gstTreatment: string;
+    taxPreference: string;
+    currency: string;
+    paymentTerms: string;
+    priceList: string;
+    enablePortal: boolean;
+    portalLanguage: string;
+    attention: string;
+    countryRegion: string;
+    addressStreet1: string;
+    addressStreet2: string;
+    city: string;
+    state: string;
+    phoneNumber: string;
+    pinCode: string;
+    faxNumber: string;
+    shippingAttention: string;
+    shippingCountryRegion: string;
+    shippingAddressStreet1: string;
+    shippingAddressStreet2: string;
+    shippingCity: string;
+    shippingState: string;
+    shippingPhoneNumber: string;
+    shippingPinCode: string;
+    shippingFaxNumber: string;
+    contactPersons: IContactPerson[];
+    documentArray: string[];
+    // communicationChannels: communicationChannelsProps;
 }
+
+
 
 
 const CustomerSchema = new Schema(
     {
-
-
-
-
-        contactOwner: String,
+        customerType: { type: String, default: "Business" },
+        salutation: String,
+        firstName: String,
+        lastName: String,
         companyName: String,
+        displayName: String,
         email: String,
-        contactName: String,
-        phoneNumber: String,
+        workPhone: String,
+        mobile: String,
         panNumber: String,
         placeOfSupply: String,
-        state: String,
+        prefersEmail: { type: Boolean, default: false },
+        prefersSms: { type: Boolean, default: false },
+        gstTreatment: String,
+        taxPreference: { type: String, default: "Taxable" },
+        currency: String,
+        paymentTerms: String,
+        priceList: String,
+        enablePortal: { type: Boolean, default: false },
+        portalLanguage: String,
+        attention: String,
+        countryRegion: String,
+        addressStreet1: String,
+        addressStreet2: String,
         city: String,
-        Area: String,
-        Address: String,
-        bankName: String,
-        bankAccountNumber: String,
-        bankIFSCCode: String,
-        salutation: String,
-
-        contactPersonName: String,
-        contactPersonEmail: String,
-        constactPersonPhoneNumber: String,
-
-
-
-
-
-
-
-
-
+        state: String,
+        phoneNumber: String,
+        pinCode: String,
+        faxNumber: String,
+        shippingAttention: String,
+        shippingCountryRegion: String,
+        shippingAddressStreet1: String,
+        shippingAddressStreet2: String,
+        shippingCity: String,
+        shippingState: String,
+        shippingPhoneNumber: String,
+        shippingPinCode: String,
+        shippingFaxNumber: String,
+        contactPersons: Array,
+        documentArray: Array,
+        // communicationChannels: Array
     },
     { timestamps: true }
 );

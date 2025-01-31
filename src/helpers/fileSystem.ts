@@ -4,30 +4,52 @@ import https from 'https';
 import http from 'http';
 import url from 'url';
 
-export const storeFileAndReturnNameBase64 = async (base64: string, includesFileName: boolean = false) => {
-    console.log(base64.slice(0,200), "herr 0")
-    let tempBase64 = base64.split("base64,");
-    console.log(tempBase64.slice(0,200), "tempBase64 0")
 
-    let extension = tempBase64[0].split("/")[1];
-    let filename = new Date().getTime() + `.${extension.split(";")[0]}`;
-
-    if (includesFileName) {
-        let { newFilename } = getNewFileName(`./public/uploads/${base64.split("@@")[0]}`);
-        console.log(base64.slice(0,200), "herr")
-        tempBase64 = base64.split("@@")[1].split(",");
-        filename = newFilename;
+export const storeFileAndReturnNameBase64 = async (base64: string) => {
+    const tempBase64 = base64.split(",");
+    const extension = tempBase64[0].split("/")[1];
+    const filename = new Date().getTime() + `.${extension.split(";")[0]}`;
+    // Ensure the uploads directory exists
+    const uploadsDir = "./public/uploads";
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
     }
+  
     return new Promise((resolve, reject) => {
-        fs.writeFile(`./public/uploads/${filename}`, tempBase64[1], "base64", (err) => {
-            if (err) {
-                console.error(err);
-                reject(err);
-            }
-            resolve(filename);
-        });
+      fs.writeFile(`./public/uploads/${filename}`, tempBase64[1], "base64", (err) => {
+        if (err) {
+          console.error(err);
+          reject(err);
+        }
+        resolve(filename);
+      });
     });
-};
+  };
+
+// export const storeFileAndReturnNameBase64 = async (base64: string, includesFileName: boolean = false) => {
+//     console.log(base64.slice(0,200), "herr 0")
+//     let tempBase64 = base64.split("base64,");
+//     console.log(tempBase64.slice(0,200), "tempBase64 0")
+
+//     let extension = tempBase64[0].split("/")[1];
+//     let filename = new Date().getTime() + `.${extension.split(";")[0]}`;
+
+//     if (includesFileName) {
+//         let { newFilename } = getNewFileName(`./public/uploads/${base64.split("@@")[0]}`);
+//         console.log(base64.slice(0,200), "herr")
+//         tempBase64 = base64.split("@@")[1].split(",");
+//         filename = newFilename;
+//     }
+//     return new Promise((resolve, reject) => {
+//         fs.writeFile(`./public/uploads/${filename}`, tempBase64[1], "base64", (err) => {
+//             if (err) {
+//                 console.error(err);
+//                 reject(err);
+//             }
+//             resolve(filename);
+//         });
+//     });
+// };
 
 
 export const storeFileAndReturnNameBase64ForExeal = async (base64Data: string) => {
