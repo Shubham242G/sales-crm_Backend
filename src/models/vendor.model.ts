@@ -2,14 +2,17 @@ import { model, Model, Schema, Types } from "mongoose";
 
 interface IVendor {
   // contactName: string;
-    _id: Types.ObjectId;
+  vendor:{
+    salutation:string,
     firstName: string;
     lastName: string;
     email: string;
+    companyName: string;
     landLine : string;
     phoneNumber: string;
     displayName: string;
-    
+  }
+
     otherDetails:{
     sourceOfSupply: string;
     gstTreatment: string;
@@ -22,7 +25,7 @@ interface IVendor {
     priceList: string;
     enablePortal: boolean;
     portalLanguage: string;
-    documents?:string;
+    documents:[];
     addOtherDetails: [];
     };
 
@@ -61,7 +64,8 @@ interface IVendor {
       contactPersonMobile: string;
     }[];
  
-    documents?: string;
+  
+
 
   // companyName: string;
   // displayName: string;
@@ -184,14 +188,16 @@ interface IVendor {
 
 const vendorSchema = new Schema({
   // contactName: string;
-  _id: String,
+  vendor:{
+  salutation:String,
   firstName: String,
   lastName: String,
   email: String,
+  companyName: String,
   landLine : String,
   phoneNumber: String,
   displayName: String,
-  
+  },
   otherDetails:{
   sourceOfSupply: String,
   gstTreatment: String,
@@ -204,7 +210,7 @@ const vendorSchema = new Schema({
   priceList: String,
   enablePortal: Boolean,
   portalLanguage: String,
-  documents: String,
+  documents: [],
   addOtherDetails: [],
   },
 

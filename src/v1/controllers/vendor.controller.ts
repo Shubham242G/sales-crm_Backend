@@ -10,12 +10,15 @@ export const addVendor = async (
   res: Response,
   next: NextFunction
 ) => {
+
+  console.log(req.body, "req.body");
   try {
-    let existsCheck = await Vendor.findOne({ name: req.body.firstName, lastName: req.body.lastName, email: req.body.email }).exec();
-    if (existsCheck) {
-      throw new Error("Vendor with same email first namme, last name and Email already exists");
-    }
-    if (req.body.documents && req.body.documents != "" && String(req.body.documents).includes("base64")) {
+    // let existsCheck = await Vendor.findOne({ name: req.body.firstName, lastName: req.body.lastName, email: req.body.email }).exec();
+    // if (existsCheck) {
+    //   throw new Error("Vendor with same email first name, last name and Email already exists");
+    // }
+    console.log(req.body.vendor, "req.body");
+    if (req?.body?.documents && req?.body?.documents && req?.body?.documents != "" && String(req?.body?.documents).includes("base64")) {
       req.body.documents = await storeFileAndReturnNameBase64(req.body.documents);
     }
     await new Vendor(req.body).save();
@@ -62,11 +65,11 @@ export const getVendorById = async (
     });
     let existsCheck = await Vendor.aggregate(pipeline);
     if (!existsCheck || existsCheck.length == 0) {
-      throw new Error("Category does not exists");
+      throw new Error("Vendor does not exists");
     }
     existsCheck = existsCheck[0];
     res.status(201).json({
-      message: "found specific Category",
+      message: "found specific VENDOR",
       data: existsCheck,
     });
   } catch (error) {
@@ -84,10 +87,13 @@ export const updateVendorById = async (
     let existsCheck = await Vendor.findById(req.params.id).lean().exec();
     if (!existsCheck) {
       throw new Error("Vendor does not exists");
+
     }
-    if (req.body.documents && req.body.documents != "" && String(req.body.documents).includes("base64")) {
-      req.body.documents = await storeFileAndReturnNameBase64(req.body.documents);
-      await deleteFileUsingUrl(`uploads/${existsCheck.documents}`);
+
+    console.log(req.body.vendor, "req.body");
+    if (req?.body?.otherDetails && req?.body?.otherDetails?.documents && req?.body?.otherDetails?.documents && req?.body?.otherDetails?.documents != "" && String(req.body.otherDetails.documents).includes("base64")) {
+      req.body.otherDetails.documents = await storeFileAndReturnNameBase64(req.body.otherDetails.documents);
+      await deleteFileUsingUrl(`uploads/${existsCheck?.otherDetails?.documents}`);
     }
     let Obj = await Vendor.findByIdAndUpdate(req.params.id, req.body).exec();
     res.status(201).json({ message: "Vendor Updated" });
@@ -104,9 +110,9 @@ export const deleteVendorById = async (
   try {
     let existsCheck = await Vendor.findById(req.params.id).exec();
     if (!existsCheck) {
-      throw new Error("Vendordoes not exists or already deleted");
+      throw new Error("Vendor does not exists or already deleted");
     }
-    await deleteFileUsingUrl(`uploads/${existsCheck.documents}`);
+    await deleteFileUsingUrl(`uploads/${existsCheck.otherDetails.documents}`);
     await Vendor.findByIdAndDelete(req.params.id).exec();
     res.status(201).json({ message: "Vendor Deleted" });
   } catch (error) {
