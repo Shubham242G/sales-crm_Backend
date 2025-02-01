@@ -37,7 +37,7 @@ interface ICustomer {
     priceList: string;
     enablePortal: boolean;
     portalLanguage: string;
-    attention: string;
+    // attention: string;
     countryRegion: string;
     addressStreet1: string;
     addressStreet2: string;
@@ -46,7 +46,7 @@ interface ICustomer {
     phoneNumber: string;
     pinCode: string;
     faxNumber: string;
-    shippingAttention: string;
+    // shippingAttention: string;
     shippingCountryRegion: string;
     shippingAddressStreet1: string;
     shippingAddressStreet2: string;
@@ -85,7 +85,7 @@ const CustomerSchema = new Schema(
         priceList: String,
         enablePortal: { type: Boolean, default: false },
         portalLanguage: String,
-        attention: String,
+        // attention: String,
         countryRegion: String,
         addressStreet1: String,
         addressStreet2: String,
@@ -94,7 +94,7 @@ const CustomerSchema = new Schema(
         phoneNumber: String,
         pinCode: String,
         faxNumber: String,
-        shippingAttention: String,
+        // shippingAttention: String,
         shippingCountryRegion: String,
         shippingAddressStreet1: String,
         shippingAddressStreet2: String,

@@ -31,7 +31,7 @@ interface IVendor {
 
     billingAddress:{
       addressId: Types.ObjectId;
-      attention : string;
+      // attention : string;
       billingCountry: string;
       billingAddressStreet1: string;
       billingAddressStreet2: string;
@@ -43,7 +43,7 @@ interface IVendor {
     };
 
     shipppingAddress:{
-      attention : string;
+      // attention : string;
       shippingCountry: string;
       shippingAddressStreet1: string;
       shippingAddressStreet2: string;
@@ -216,7 +216,7 @@ const vendorSchema = new Schema({
 
   billingAddress:{
     addressId: String,
-    attention : String,
+    // attention : String,
     billingCountry: String,
     billingAddressStreet1: String,
     billingAddressStreet2: String,
@@ -228,7 +228,7 @@ const vendorSchema = new Schema({
   },
 
   shipppingAddress:{
-  attention : String,
+  // attention : String,
   shippingCountry: String,
   shippingAddressStreet1: String,
   shippingAddressStreet2: String,
