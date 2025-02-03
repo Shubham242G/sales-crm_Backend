@@ -6,6 +6,8 @@ type communicationChannelsProps = {
     prefersSms : boolean
 }
 
+//comment
+
 interface IContactPerson {
     salutation: string;
     firstName: string;
