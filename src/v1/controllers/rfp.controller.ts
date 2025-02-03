@@ -6,7 +6,7 @@ import ExcelJs from "exceljs";
 import XLSX from "xlsx";
 import path from 'path'
 
-import { Rpf } from "@models/rpf.model"
+import { Rfp } from "@models/rfp.model"
 
 
 // serviceType: '',
@@ -17,7 +17,7 @@ import { Rpf } from "@models/rpf.model"
 // additionalInstructions: '',
 
 
-export const addRpf = async (req: Request, res: Response, next: NextFunction) => {
+export const addRfp = async (req: Request, res: Response, next: NextFunction) => {
     try {
         // let existsCheck = await Banquet.findOne({ name: req.body.name }).exec();
         // if (existsCheck) {
@@ -32,8 +32,8 @@ export const addRpf = async (req: Request, res: Response, next: NextFunction) =>
         //         }
         //     }
         // }
-        const rpf = await new Rpf(req.body).save();
-        res.status(201).json({ message: "Rpf Created" });
+        const rfp = await new Rfp(req.body).save();
+        res.status(201).json({ message: "Rfp Created" });
 
 
 
@@ -45,7 +45,7 @@ export const addRpf = async (req: Request, res: Response, next: NextFunction) =>
     }
 };
 
-export const getAllRpf = async (req: any, res: any, next: any) => {
+export const getAllRfp = async (req: any, res: any, next: any) => {
     try {
         let pipeline: PipelineStage[] = [];
         let matchObj: Record<string, any> = {};
@@ -55,15 +55,15 @@ export const getAllRpf = async (req: any, res: any, next: any) => {
         pipeline.push({
             $match: matchObj,
         });
-        let RpfArr = await paginateAggregate(Rpf, pipeline, req.query);
+        let RfpArr = await paginateAggregate(Rfp, pipeline, req.query);
 
-        res.status(201).json({ message: "found all Device", data: RpfArr.data, total: RpfArr.total });
+        res.status(201).json({ message: "found all Device", data: RfpArr.data, total: RfpArr.total });
     } catch (error) {
         next(error);
     }
 };
 
-export const getRpfById = async (req: Request, res: Response, next: NextFunction) => {
+export const getRfpById = async (req: Request, res: Response, next: NextFunction) => {
     try {
         let pipeline: PipelineStage[] = [];
         let matchObj: Record<string, any> = {};
@@ -73,13 +73,13 @@ export const getRpfById = async (req: Request, res: Response, next: NextFunction
         pipeline.push({
             $match: matchObj,
         });
-        let existsCheck = await Rpf.aggregate(pipeline);
+        let existsCheck = await Rfp.aggregate(pipeline);
         if (!existsCheck || existsCheck.length == 0) {
-            throw new Error("Banquet does not exists");
+            throw new Error("Rfp does not exists");
         }
         existsCheck = existsCheck[0];
         res.status(201).json({
-            message: "found specific Rpf",
+            message: "found specific Rfp",
             data: existsCheck,
         });
     } catch (error) {
@@ -87,11 +87,11 @@ export const getRpfById = async (req: Request, res: Response, next: NextFunction
     }
 };
 
-export const updateRpfById = async (req: Request, res: Response, next: NextFunction) => {
+export const updateRfpById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        let existsCheck = await Rpf.findById(req.params.id).lean().exec();
+        let existsCheck = await Rfp.findById(req.params.id).lean().exec();
         if (!existsCheck) {
-            throw new Error("Enquiry does not exists");
+            throw new Error("Rfp does not exists");
         }
 
         // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
@@ -101,28 +101,28 @@ export const updateRpfById = async (req: Request, res: Response, next: NextFunct
         //         }
         //     }
         // }
-        let Obj = await Rpf.findByIdAndUpdate(req.params.id, req.body).exec();
-        res.status(201).json({ message: "Enquiry Updated" });
+        let Obj = await Rfp.findByIdAndUpdate(req.params.id, req.body).exec();
+        res.status(201).json({ message: "Rfp Updated" });
     } catch (error) {
         next(error);
     }
 };
 
-export const deleteRpfById = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteRfpById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        let existsCheck = await Rpf.findById(req.params.id).exec();
+        let existsCheck = await Rfp.findById(req.params.id).exec();
         if (!existsCheck) {
             throw new Error("Enquiry does not exists or already deleted");
         }
-        await Rpf.findByIdAndDelete(req.params.id).exec();
-        res.status(201).json({ message: "Enquiry Deleted" });
+        await Rfp.findByIdAndDelete(req.params.id).exec();
+        res.status(201).json({ message: "Rfp Deleted" });
     } catch (error) {
         next(error);
     }
 };
 
 
-export const BulkUploadRpf: RequestHandler = async (req, res, next) => {
+export const BulkUploadRfp: RequestHandler = async (req, res, next) => {
     try {
         let xlsxFile: any = req.file?.path;
         if (!xlsxFile) throw new Error("File Not Found");
@@ -281,7 +281,7 @@ export const BulkUploadRpf: RequestHandler = async (req, res, next) => {
 
         console.log(finalArr, "check finalArr")
         if (finalArr.length > 0) {
-            await Rpf.insertMany(finalArr);
+            await Rfp.insertMany(finalArr);
 
         }
 
@@ -292,7 +292,7 @@ export const BulkUploadRpf: RequestHandler = async (req, res, next) => {
     }
 };
 
-// export const downloadExcelRpf = async (req: Request, res: Response, next: NextFunction) => {
+// export const downloadExcelRfp = async (req: Request, res: Response, next: NextFunction) => {
 //     try {
 
 
@@ -439,7 +439,7 @@ export const BulkUploadRpf: RequestHandler = async (req, res, next) => {
 
 
 
-// export const convertRpf = async (req: Request, res: Response, next: NextFunction) => {
+// export const convertRfp = async (req: Request, res: Response, next: NextFunction) => {
 //     try {
 //         // let existsCheck = await Banquet.findOne({ name: req.body.name }).exec();
 //         // if (existsCheck) {
@@ -460,7 +460,7 @@ export const BulkUploadRpf: RequestHandler = async (req, res, next) => {
 //             if (enquiry) {
 
 
-//                 const rpf = new Rpf({
+//                 const rfp = new Rfp({
 //                     name: enquiry.name,
 //                     phone: enquiry.phone,
 //                     email: enquiry.email,
@@ -471,9 +471,9 @@ export const BulkUploadRpf: RequestHandler = async (req, res, next) => {
 //                     priority: 'Normal',
 //                 });
 
-//                 await rpf.save();
+//                 await rfp.save();
 
-//                 res.status(200).json({ message: "RPF conversion completed successfully", data: rpf });
+//                 res.status(200).json({ message: "RPF conversion completed successfully", data: rfp });
 
 //             }
 

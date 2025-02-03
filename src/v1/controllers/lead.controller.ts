@@ -3,6 +3,12 @@ import { paginateAggregate } from "@helpers/paginateAggregate";
 import mongoose, { PipelineStage } from "mongoose";
 import { storeFileAndReturnNameBase64 } from "@helpers/fileSystem";
 import { Lead } from "@models/lead.model";
+import { Enquiry } from "@models/enquiry.model";
+import { Rfp } from "@models/rfp.model";
+import { last } from "lodash";
+import { SalesContact } from "@models/salesContact.model";
+
+
 
 
 
@@ -110,6 +116,79 @@ export const deleteLeadById = async (req: Request, res: Response, next: NextFunc
         next(error);
     }
 };
+
+
+ export const convertToContact = async (req: Request, res: Response, next: NextFunction) => {
+        // try {
+        //     let existsCheck = await SalesContact.findOne({ firstName: req.body.first,  lastName: req.body.last, companyName: req.body.company }).exec();
+        //     if (existsCheck) {
+        //         throw new Error("Contact with same name already exists");
+        //     }
+
+        console.log( req.params.id , 
+            
+        "check params id lead"
+            
+        )
+
+        try{
+            const lead = await Lead.findById(req.params.id).exec();
+            if (!lead) {
+                throw new Error("Lead not found");
+        }
+    
+            // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
+            //     console.log("first", req.body.imagesArr)
+            //     for (const el of req.body.imagesArr) {
+            //         if (el.image && el.image !== "") {
+            //             el.image = await storeFileAndReturnNameBase64(el.image);
+            //         }
+            //     }
+            // }
+
+
+         
+            const existingContact = await SalesContact.findOne({ leadId: req.params.id}).exec();
+            if (existingContact) {
+                throw new Error("A contact already exists for this lead.");
+              }
+
+  
+
+            if (lead) {
+    
+    
+                    const salesContact = new SalesContact({
+                        firstName: lead.firstName, 
+                        lastName: lead.lastName,
+                        phone: lead.phone,
+                        email: lead.email,
+                        company: lead.company,
+                        salutation: lead.salutation,
+                        contactId: lead._id,
+                        
+                    });
+    
+                    await salesContact.save();
+    
+                    res.status(200).json({ message: "Contact conversion completed successfully", data: salesContact }); }
+    
+             
+    
+    
+          
+    
+            res.status(500).json({ message: "Something Went Wrong", });
+    
+    
+    
+        } catch (error) {
+            next(error);
+        };
+    }
+
+    
+
 
 
 

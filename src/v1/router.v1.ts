@@ -8,7 +8,7 @@ import resturantRouter from "@routesv1/resturant.routes";
 import salesContactRouter from "@routesv1/salesContact.routes";
 import purchaseContactRouter from "@routesv1/purchaseContact.routes";
 import enquiryRouter from "@routesv1/enquiry.routes";
-import rpfRouter from "@routesv1/rpf.routes";
+import rfpRouter from "@routesv1/rfp.routes";
 import leadRouter from "@routesv1/lead.routes";
 import customerRouter from "@routesv1/customer.routes";
 import express from "express";
@@ -25,7 +25,7 @@ router.use("/resturant", resturantRouter);
 router.use("/salesContact", salesContactRouter);
 router.use("/purchaseContact", purchaseContactRouter);
 router.use("/enquiry", enquiryRouter);
-router.use("/rpf", rpfRouter);
+router.use("/rfp", rfpRouter);
 router.use("/lead", leadRouter);
 router.use("/customer", customerRouter);
 

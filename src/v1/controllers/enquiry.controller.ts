@@ -6,7 +6,7 @@ import ExcelJs from "exceljs";
 import XLSX from "xlsx";
 import path from 'path'
 import { Enquiry } from "@models/enquiry.model";
-import { Rpf } from "@models/rpf.model"
+import { Rfp } from "@models/rfp.model"
 
 
 

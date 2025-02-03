@@ -4,16 +4,17 @@ import { model, Model, Schema, Types } from "mongoose";
 
 
 
-interface IRpf {
+interface IRfp {
 
-    rpfId: string;
-    serviceType: string;
+    rfpId: String;
+    serviceType: [];
+
 
     eventDate: string;
     eventDetails: string;
 
     deadlineOfProposal: string;
-    vendorList: string;
+    vendorList: [];
     additionalInstructions: string;
 
 
@@ -23,7 +24,7 @@ interface IRpf {
 
 
 
-const RpfSchema = new Schema({
+const RfpSchema = new Schema({
     // name: String,
     // phone: String,
     // email: String,
@@ -35,12 +36,12 @@ const RpfSchema = new Schema({
     // subject: String,
     // details: String,
     // priority: { type: String, default: 'Normal' },
-    rpfId: String,
-    serviceType: String,
+    rfpId: String ,
+    serviceType: [],
     eventDate: String,
     eventDetails: String,
     deadlineOfProposal: String,
-    vendorList: String,
+    vendorList: [],
     additionalInstructions: String,
 
 
@@ -124,4 +125,4 @@ const RpfSchema = new Schema({
     { timestamps: true }
 );
 
-export const Rpf = model<IRpf>("Rpf", RpfSchema);
+export const Rfp = model<IRfp>("Rfp", RfpSchema);

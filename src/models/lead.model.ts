@@ -6,12 +6,13 @@ import { model, Model, Schema, Types } from "mongoose";
 interface ILead {
 
 
-
+    salutation: string;
     firstName: string;
     lastName: string;
     email: string;
     phone: string;
     company: string;
+    leadId: Types.ObjectId;
 
 
     // displayName: string;
@@ -95,13 +96,13 @@ interface ILead {
 const LeadSchema = new Schema(
     {
 
-
+        salutation: String,
         firstName: String,
         lastName: String,
         email: String,
         phone: String,
         company: String,
-
+        leadId: Types.ObjectId,
 
 
 
