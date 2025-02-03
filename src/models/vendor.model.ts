@@ -42,6 +42,8 @@ interface IVendor {
       billingFaxNumber:string;
     };
 
+
+
     shipppingAddress:{
       // attention : string;
       shippingCountry: string;
@@ -227,7 +229,8 @@ const vendorSchema = new Schema({
     billingFaxNumber:String,
   },
 
-  shipppingAddress:{
+
+  shippingAddress:{
   // attention : String,
   shippingCountry: String,
   shippingAddressStreet1: String,
