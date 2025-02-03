@@ -11,13 +11,13 @@ export const addVendor = async (
   next: NextFunction
 ) => {
 
-  console.log(req.body, "req.body");
+ 
   try {
     // let existsCheck = await Vendor.findOne({ name: req.body.firstName, lastName: req.body.lastName, email: req.body.email }).exec();
     // if (existsCheck) {
     //   throw new Error("Vendor with same email first name, last name and Email already exists");
     // }
-    console.log(req.body.vendor, "req.body");
+    // console.log(req.body.vendor, "req.body");
     if (req?.body?.documents && req?.body?.documents && req?.body?.documents != "" && String(req?.body?.documents).includes("base64")) {
       req.body.documents = await storeFileAndReturnNameBase64(req.body.documents);
     }
@@ -90,7 +90,7 @@ export const updateVendorById = async (
 
     }
 
-    console.log(req.body.vendor, "req.body");
+    console.log(req.body, "req.body full");
     if (req?.body?.otherDetails && req?.body?.otherDetails?.documents && req?.body?.otherDetails?.documents && req?.body?.otherDetails?.documents != "" && String(req.body.otherDetails.documents).includes("base64")) {
       req.body.otherDetails.documents = await storeFileAndReturnNameBase64(req.body.otherDetails.documents);
       await deleteFileUsingUrl(`uploads/${existsCheck?.otherDetails?.documents}`);

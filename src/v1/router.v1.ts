@@ -28,6 +28,7 @@ router.use("/enquiry", enquiryRouter);
 router.use("/rfp", rfpRouter);
 router.use("/lead", leadRouter);
 router.use("/customer", customerRouter);
+// router.use("/adminroutes")
 
 // =======<ryz>====== //
 
