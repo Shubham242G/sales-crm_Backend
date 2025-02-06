@@ -14,6 +14,7 @@ interface IContactPerson {
     lastName: string;
     email: string;
     workPhone: string;
+    mobilePhone: string;
     communicationChannels: communicationChannelsProps;
 }
 
@@ -39,6 +40,9 @@ interface ICustomer {
     priceList: string;
     enablePortal: boolean;
     portalLanguage: string;
+    openingBalanceState: string;
+    openingBalance: string;
+    creditLimit: string;
     // attention: string;
     countryRegion: string;
     addressStreet1: string;
@@ -81,6 +85,9 @@ const CustomerSchema = new Schema(
         prefersEmail: { type: Boolean, default: false },
         prefersSms: { type: Boolean, default: false },
         gstTreatment: String,
+        openingBalanceState: String,
+        openingBalance: String,
+        creditLimit: String,
         taxPreference: { type: String, default: "Taxable" },
         currency: String,
         paymentTerms: String,
