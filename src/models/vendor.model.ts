@@ -2,79 +2,78 @@ import { model, Model, Schema, Types } from "mongoose";
 
 interface IVendor {
   // contactName: string;
-  vendor:{
-    salutation:string,
+  vendor: {
+    salutation: string;
     firstName: string;
     lastName: string;
     email: string;
     companyName: string;
-    landLine : string;
+    landLine: string;
     phoneNumber: string;
     displayName: string;
-  }
+  };
 
-    otherDetails:{
+  otherDetails: {
     sourceOfSupply: string;
     gstTreatment: string;
     gstin: string;
     pan: string;
     msmeRegistered: boolean;
     currency: string;
+    openingBalanceState: string;
+    openingBalance: string;
+    creditLimit: string;
     paymentTerms: string;
     tds: string;
     priceList: string;
     enablePortal: boolean;
     portalLanguage: string;
-    documents:[];
+    documents: [];
     addOtherDetails: [];
-    };
+  };
 
-    billingAddress:{
-      addressId: Types.ObjectId;
-      // attention : string;
-      billingCountry: string;
-      billingAddressStreet1: string;
-      billingAddressStreet2: string;
-      billingCity: string;
-      billingState: string;
-      billingPincode: string;
-      billingPhone: string;
-      billingFaxNumber:string;
-    };
+  billingAddress: {
+    addressId: Types.ObjectId;
+    // attention : string;
+    billingCountry: string;
+    billingAddressStreet1: string;
+    billingAddressStreet2: string;
+    billingCity: string;
+    billingState: string;
+    billingPincode: string;
+    billingPhone: string;
+    billingFaxNumber: string;
+  };
 
-
-
-    shipppingAddress:{
-      // attention : string;
-      shippingCountry: string;
-      shippingAddressStreet1: string;
-      shippingAddressStreet2: string;
-      shippingCity: string;
-      shippingState: string;
-      shippingPincode: string;
-      shippingPhone: string;
-      shippingFaxNumber:string;
-    }
-    // contactPersons
-    contactPersons:{
-      salutation: string;
-      contactPersonId: Types.ObjectId;
-      contactPersonFirstName: string;
-      contactPersonLastName: string;
-      contactPersonEmail: string;
-      contactPersonWorkPhone: string;
-      contactPersonMobile: string;
-    }[];
- 
-  
-
+  shipppingAddress: {
+    // attention : string;
+    shippingCountry: string;
+    shippingAddressStreet1: string;
+    shippingAddressStreet2: string;
+    shippingCity: string;
+    shippingState: string;
+    shippingPincode: string;
+    shippingPhone: string;
+    shippingFaxNumber: string;
+  };
+  // contactPersons
+  contactPersons: {
+    salutation: string;
+    contactPersonId: Types.ObjectId;
+    contactPersonFirstName: string;
+    contactPersonLastName: string;
+    contactPersonEmail: string;
+    contactPersonWorkPhone: string;
+    contactPersonMobilePhone: string;
+    contactPersonMobile: string;
+  }[];
 
   // companyName: string;
   // displayName: string;
   // salutation: string;
   // firstName: string;
   // lastName: string;
-  
+
   // mobileNumber: string;
   // paymentTerms: string;
   // currencyCode: string;
@@ -93,10 +92,6 @@ interface IVendor {
   // // social media
   // facebook: string;
   // twitter: string;
-
- 
-
-
 
   // // udyam
   // msmeUdyamNo: string;
@@ -190,33 +185,36 @@ interface IVendor {
 
 const vendorSchema = new Schema({
   // contactName: string;
-  vendor:{
-  salutation:String,
-  firstName: String,
-  lastName: String,
-  email: String,
-  companyName: String,
-  landLine : String,
-  phoneNumber: String,
-  displayName: String,
+  vendor: {
+    salutation: String,
+    firstName: String,
+    lastName: String,
+    email: String,
+    companyName: String,
+    landLine: String,
+    phoneNumber: String,
+    displayName: String,
   },
-  otherDetails:{
-  sourceOfSupply: String,
-  gstTreatment: String,
-  gstin: String,
-  pan: String,
-  msmeRegistered: Boolean,
-  currency: String,
-  paymentTerms: String,
-  tds: String,
-  priceList: String,
-  enablePortal: Boolean,
-  portalLanguage: String,
-  documents: [],
-  addOtherDetails: [],
+  otherDetails: {
+    sourceOfSupply: String,
+    gstTreatment: String,
+    gstin: String,
+    pan: String,
+    msmeRegistered: Boolean,
+    currency: String,
+    openingBalanceState: String,
+    openingBalance: String,
+    creditLimit: String,
+    paymentTerms: String,
+    tds: String,
+    priceList: String,
+    enablePortal: Boolean,
+    portalLanguage: String,
+    documents: [],
+    addOtherDetails: [],
   },
 
-  billingAddress:{
+  billingAddress: {
     addressId: String,
     // attention : String,
     billingCountry: String,
@@ -226,31 +224,33 @@ const vendorSchema = new Schema({
     billingState: String,
     billingPincode: String,
     billingPhone: String,
-    billingFaxNumber:String,
+    billingFaxNumber: String,
   },
 
-
-  shippingAddress:{
-  // attention : String,
-  shippingCountry: String,
-  shippingAddressStreet1: String,
-  shippingAddressStreet2: String,
-  shippingCity: String,
-  shippingState: String,
-  shippingPincode: String,
-  shippingPhone: String,
-  shippingFaxNumber:String,
+  shippingAddress: {
+    // attention : String,
+    shippingCountry: String,
+    shippingAddressStreet1: String,
+    shippingAddressStreet2: String,
+    shippingCity: String,
+    shippingState: String,
+    shippingPincode: String,
+    shippingPhone: String,
+    shippingFaxNumber: String,
   },
   // contactPersons
-  contactPersons:[{
-    salutation: String,
-    contactPersonId: String,
-    contactPersonFirstName: String,
-    contactPersonLastName: String,
-    contactPersonEmail: String,
-    contactPersonWorkPhone: String,
-    contactPersonMobile: String,
-  }],
+  contactPersons: [
+    {
+      salutation: String,
+      contactPersonId: String,
+      contactPersonFirstName: String,
+      contactPersonLastName: String,
+      contactPersonEmail: String,
+      contactPersonWorkPhone: String,
+      contactPersonMobilePhone: String,
+      contactPersonMobile: String,
+    },
+  ],
 });
 
 export const Vendor = model<IVendor>("vendor", vendorSchema);
