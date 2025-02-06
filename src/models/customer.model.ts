@@ -63,6 +63,12 @@ interface ICustomer {
     shippingFaxNumber: string;
     contactPersons: IContactPerson[];
     documentArray: string[];
+    websiteUrl: string;
+    department: string;
+    designation: string;
+    twitter: string;
+    skype: string;
+    facebook: string;
     // communicationChannels: communicationChannelsProps;
 }
 
@@ -114,6 +120,12 @@ const CustomerSchema = new Schema(
         shippingFaxNumber: String,
         contactPersons: Array,
         documentArray: Array,
+        websiteUrl: String,
+        department: String,
+        designation: String,
+        twitter: String,
+        skype: String,
+        facebook: String,
         // communicationChannels: Array
     },
     { timestamps: true }
