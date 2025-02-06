@@ -474,19 +474,19 @@ export const BulkUploadEnquiry: RequestHandler = async (req, res, next) => {
 //             if (enquiry) {
 
 
-//                 const rpf = new Rpf({
-//                     name: enquiry.name,
-//                     phone: enquiry.phone,
-//                     email: enquiry.email,
-//                     contactId: enquiry._id,
-//                     subject: 'New Enquiry',
-//                     details: 'Initial enquiry created automatically.',
-//                     priority: 'Normal',
+//                 const rfp = new Rfp({
+//                     rfpId:"",
+//                     eventDate: enquiry.eventSetup.eventDates,
+//                     eventDetails: "",
+//                     deadlineOfProposal: "",
+//                     vendorList: [],
+//                     additionalInstructions: "",
+//                     serviceType: []
 //                 });
 
-//                 await rpf.save();
+//                 await rfp.save();
 
-//                 res.status(200).json({ message: "RPF conversion completed successfully", data: rpf });
+//                 res.status(200).json({ message: "RFP conversion completed successfully", data: rfp });
 
 //             }
 
