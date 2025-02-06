@@ -7,7 +7,9 @@ import { model, Model, Schema, Types } from "mongoose";
 interface IEnquiry {
 
     _id: Types.ObjectId;
-    name: string;
+    salutation: string;
+    firstName: string;
+    lastName: string;
     phone: string;
     email: string;
     companyName: string;
@@ -22,9 +24,9 @@ interface IEnquiry {
     city: string;
     area: string;
     noOfRooms: string;
-    categoryOfHotel: { type: string }[];
+    categoryOfHotel:  string [];
     // priority: string;
-    occupancy: { type: string }[]
+    occupancy: string []
     banquet: {
         date: Date;
         session: string;
@@ -81,7 +83,9 @@ interface IEnquiry {
 
 
 const EnquirySchema = new Schema({
-    name: String,
+    salutation: String,
+    firstName: String,
+    lastName: String,
     phone: String,
     email: String,
     companyName: String,
@@ -97,9 +101,9 @@ const EnquirySchema = new Schema({
     city: String,
     area: String,
     noOfRooms: String,
-    categoryOfHotel: [{ type: String }],
+    categoryOfHotel: [String ],
     priority: String,
-    occupancy: [{ type: String }],
+    occupancy: [String ],
     banquet: [{
         date: Date,
         session: String,

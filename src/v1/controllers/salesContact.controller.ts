@@ -27,18 +27,7 @@ export const addSalesContact = async (req: Request, res: Response, next: NextFun
         const Salescontact = await new SalesContact(req.body).save();
         res.status(201).json({ message: "salesContact Created" });
 
-        const enquiry = new Enquiry({
-            salutation: Salescontact.salutation,
-            firstName: Salescontact.firstName,
-            lastName: Salescontact.lastName,
-            phone: Salescontact.phone,
-            email: Salescontact.email,
-            contactId: Salescontact._id,
-            subject: 'New Enquiry',
-            details: 'Initial enquiry created automatically.',
-            priority: 'Normal',
-        });
-        await enquiry.save();
+        
     } catch (error) {
         next(error);
     }
@@ -465,10 +454,75 @@ export const convertEnquiry = async (req: Request, res: Response, next: NextFunc
                     phone: contact.phone,
                     email: contact.email,
                     contactId: contact._id,
-                    subject: 'New Enquiry',
-                    details: 'Initial enquiry created automatically.',
-                    priority: 'Normal',
+                    companyName: contact.company,
+                    typeOfContact: "",
+                    levelOfEnquiry: "",
+                    hotelName: "",
+                    othersPreference: "",
+                    approxPassengers: "",
+                    enquiryType: "",
+                    hotelPreferences: "",
+                    checkIn: "",
+                    checkOut: "",
+                    city: "",
+                    area: "",
+                    noOfRooms: "",
+                    categoryOfHotel: [],
+                    priority: "",
+                    occupancy: [],
+                    banquet: [{
+                        date: "",
+                        session: "",
+                        seatingStyle: "",
+                        avSetup: "",
+                        menuType: "",
+                        minPax: "",
+                        seatingRequired: "",
+                    }],
+                    room: [{
+                        date: "",
+                        noOfRooms: "",
+                        roomCategory: "",
+                        occupancy: "",
+                        mealPlan: [],
+                    }],
+                    eventSetup: {
+                        functionType: "",
+                        eventDates: [{
+                            startDate: "",
+                            endDate: "",
+                        }],
+                        setupRequired: "",
+                        eventStartDate:"",
+                        eventEndDate: "",
+                    },
+                    airTickets: {
+                        tripType: "",
+                        numberOfPassengers: "",
+                        fromCity: "",
+                        toCity: "",
+                        departureDate: "",
+                        returnDate: "",
+                
+                    },
+                    cab: [{
+                        date: "",
+                        fromCity: "",
+                        toCity: "",
+                        vehicleType: "",
+                        tripType: "",
+                        noOfVehicles: "",
+                        typeOfVehicle: "",
+                        cabTripType: "",
+                        mealPlan: [],
+                    }],
+                    billingAddress: "",
+                
+                
+        
+            
                 });
+    
 
                 await enquiry.save();
 
