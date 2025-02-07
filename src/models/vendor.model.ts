@@ -29,7 +29,12 @@ interface IVendor {
     enablePortal: boolean;
     portalLanguage: string;
     documents: [];
-    addOtherDetails: [];
+    websiteUrl: string;
+    department: string;
+    designation: string;
+    twitter: string;
+    facebook: string;
+    skype: string;
   };
 
   billingAddress: {
@@ -211,7 +216,12 @@ const vendorSchema = new Schema({
     enablePortal: Boolean,
     portalLanguage: String,
     documents: [],
-    addOtherDetails: [],
+    websiteUrl: String,
+    facebook: String,
+    twitter: String,
+    skype: String,
+    department: String,
+    designation: String,
   },
 
   billingAddress: {
