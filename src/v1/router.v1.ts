@@ -12,6 +12,7 @@ import rfpRouter from "@routesv1/rfp.routes";
 import leadRouter from "@routesv1/lead.routes";
 import customerRouter from "@routesv1/customer.routes";
 import taskManagementRouter from "@routesv1/taskManagement.routes";
+import rolesRouter from "@routesv1/roles.routes";
 import express from "express";
 
 const router = express.Router();
@@ -30,6 +31,7 @@ router.use("/rfp", rfpRouter);
 router.use("/lead", leadRouter);
 router.use("/customer", customerRouter);
 router.use("/task", taskManagementRouter);
+router.use("/roles", rolesRouter);
 // router.use("/adminroutes")
 
 // =======<ryz>====== //
