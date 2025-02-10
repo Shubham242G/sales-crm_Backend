@@ -2,6 +2,7 @@ import { NextFunction, Request, Response, RequestHandler } from "express";
 import { paginateAggregate } from "@helpers/paginateAggregate";
 import mongoose, { PipelineStage } from "mongoose";
 import { storeFileAndReturnNameBase64 } from "@helpers/fileSystem";
+import { Enquiry } from "@models/enquiry.model";
 import ExcelJs from "exceljs";
 import XLSX from "xlsx";
 import path from 'path'
@@ -439,53 +440,59 @@ export const BulkUploadRfp: RequestHandler = async (req, res, next) => {
 
 
 
-// export const convertRfp = async (req: Request, res: Response, next: NextFunction) => {
-//     try {
-//         // let existsCheck = await Banquet.findOne({ name: req.body.name }).exec();
-//         // if (existsCheck) {
-//         //     throw new Error("Banquet with same name already exists");
-//         // }
+export const convertRfp = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // let existsCheck = await Banquet.findOne({ name: req.body.name }).exec();
+        // if (existsCheck) {
+        //     throw new Error("Banquet with same name already exists");
+        // }
 
-//         // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
-//         //     console.log("first", req.body.imagesArr)
-//         //     for (const el of req.body.imagesArr) {
-//         //         if (el.image && el.image !== "") {
-//         //             el.image = await storeFileAndReturnNameBase64(el.image);
-//         //         }
-//         //     }
-//         // }
-//         if (req.params.id) {
+        // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
+        //     console.log("first", req.body.imagesArr)
+        //     for (const el of req.body.imagesArr) {
+        //         if (el.image && el.image !== "") {
+        //             el.image = await storeFileAndReturnNameBase64(el.image);
+        //         }
+        //     }
+        // }
+        if (req.params.id) {
 
-//             const enquiry = await Enquiry.findOne({ _id: req.params.id })
-//             if (enquiry) {
-
-
-//                 const rfp = new Rfp({
-//                     name: enquiry.name,
-//                     phone: enquiry.phone,
-//                     email: enquiry.email,
-//                     typeOfContact: enquiry.typeOfContact,
-//                     contactId: enquiry._id,
-//                     subject: 'New Enquiry',
-//                     details: 'Initial enquiry created automatically.',
-//                     priority: 'Normal',
-//                 });
-
-//                 await rfp.save();
-
-//                 res.status(200).json({ message: "RPF conversion completed successfully", data: rfp });
-
-//             }
+          
+            const enquiry = await Enquiry.findOne({ _id: req.params.id })
+            let exitsRfP = await Rfp.findOne({ enquiryId:enquiry?._id }).lean().exec();
+            console.log(exitsRfP,"exitsRfPexitsRfP")
+            if (exitsRfP) {
+                throw new Error("RFP already exists");
+            }
+            if (enquiry) {
 
 
-//         }
+                const rfp = new Rfp({
+                    serviceType:"",
+                    eventDates: enquiry.eventSetup.eventDates,
+                    eventDetails: "",
+                    deadlineOfProposal: "",
+                    enquiryId: enquiry._id,
+                    vendorList: [],
+                    additionalInstructions: "",
 
-//         res.status(500).json({ message: "Something Went Wrong", });
+                });
+
+                await rfp.save();
+
+                res.status(200).json({ message: "RPF conversion completed successfully", data: rfp });
+
+            }
+
+
+        }
+
+        res.status(500).json({ message: "Something Went Wrong", });
 
 
 
-//     } catch (error) {
-//         next(error);
-//     }
-// };
+    } catch (error) {
+        next(error);
+    }
+};
 

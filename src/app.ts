@@ -20,7 +20,7 @@ import v1Router from './v1/router.v1';
 
 mongoose.connect(CONFIG.MONGOURI).then(() => console.log("DB Connected to ", CONFIG.MONGOURI)).catch((err) => console.error(err));
 
-// mongoose.set("debug", true);
+mongoose.set("debug", true);
 
 app.use(cors());
 app.set("trust proxy", true);
