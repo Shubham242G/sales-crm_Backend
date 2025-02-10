@@ -1,23 +1,29 @@
-import { comparePassword, encryptPassword } from '@helpers/bcrypt';
-import { generateAccessJwt, generateRefreshJwt } from '@helpers/jwt';
-import { User } from '@models/user.model';
-import { Request, Response, NextFunction } from 'express'
-import { addLogs } from '@helpers/addLog';
-import mongoose from 'mongoose';
-import { DEPARTMENT, ROLES } from '@common/constant.common';
+import { comparePassword, encryptPassword } from "@helpers/bcrypt";
+import { generateAccessJwt, generateRefreshJwt } from "@helpers/jwt";
+import { User } from "@models/user.model";
+import { Request, Response, NextFunction } from "express";
+import { addLogs } from "@helpers/addLog";
+import mongoose from "mongoose";
+import { DEPARTMENT, ROLES } from "@common/constant.common";
 
-
-
-export const webLogin = async (req: Request, res: Response, next: NextFunction) => {
+export const webLogin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-
-    const UserExistCheck = await User.findOne({ email: new RegExp(`^${req.body.email}$`) }).exec();
+    const UserExistCheck = await User.findOne({
+      email: new RegExp(`^${req.body.email}$`),
+    }).exec();
 
     if (!UserExistCheck) {
       throw new Error(`User Does Not Exist`);
     }
 
-    const passwordCheck = await comparePassword(UserExistCheck.password, req.body.password);
+    const passwordCheck = await comparePassword(
+      UserExistCheck.password,
+      req.body.password
+    );
     if (!passwordCheck) {
       throw new Error(`Invalid Credentials`);
     }
@@ -42,31 +48,37 @@ export const webLogin = async (req: Request, res: Response, next: NextFunction) 
       phone: UserExistCheck.phone,
       email: UserExistCheck.email,
     });
-    addLogs('Login', UserExistCheck.name, UserExistCheck.email);
+    addLogs("Login", UserExistCheck.name, UserExistCheck.email);
     res.status(200).json({
-      message: "User Logged In", token, refreshToken, user: {
+      message: "User Logged In",
+      token,
+      refreshToken,
+      user: {
         name: UserExistCheck.name,
         email: UserExistCheck.email,
         phone: UserExistCheck.phone,
         role: UserExistCheck.role,
         department: UserExistCheck.department,
         _id: UserExistCheck._id,
-      }
+      },
     });
   } catch (error) {
     next(error);
   }
 };
 
-
-
-export const refreshToken = async (req: Request, res: Response, next: NextFunction) => {
+export const refreshToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-
     if (!req.body?.email) {
       throw { status: 401, message: "Email is require" };
     }
-    const userObj = await User.findOne({ email: new RegExp(`^${req.body.email}$`) })
+    const userObj = await User.findOne({
+      email: new RegExp(`^${req.body.email}$`),
+    })
       .lean()
       .exec();
     if (!userObj) {
@@ -94,23 +106,30 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
       email: userObj.email,
     });
     res.status(200).json({
-      message: "Refresh Token", token: accessToken, refreshToken, user: {
+      message: "Refresh Token",
+      token: accessToken,
+      refreshToken,
+      user: {
         name: userObj.name,
         email: userObj.email,
         phone: userObj.phone,
         role: userObj.role,
         department: userObj.department,
         _id: userObj._id,
-      }, success: true
+      },
+      success: true,
     });
-
   } catch (err) {
     console.error(err);
     next(err);
   }
 };
 
-export const addUser = async (req: Request, res: Response, next: NextFunction) => {
+export const addUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const UserExistNameCheck = await User.findOne({
       name: new RegExp(`^${req.body.name}$`, "i"),
@@ -135,7 +154,6 @@ export const addUser = async (req: Request, res: Response, next: NextFunction) =
     // }
 
     if (req.body.userName && req.body.userName != "") {
-
       const UserExistUserNameCheck = await User.findOne({
         userName: new RegExp(`^${req.body.userName}$`, "i"),
       }).exec();
@@ -145,19 +163,30 @@ export const addUser = async (req: Request, res: Response, next: NextFunction) =
       }
     }
 
-if (req.body.password) {
-    req.body.password = await encryptPassword(req.body.password);
-
-}
+    if (req.body.password) {
+      req.body.password = await encryptPassword(req.body.password);
+    }
     const user = await new User({ ...req.body }).save();
 
-    res.status(201).json({ message: ((req.body.role && req.body.role != "") ? `${req.body.role}`.toLowerCase() : "User") + " Created", data: user._id });
+    res
+      .status(201)
+      .json({
+        message:
+          (req.body.role && req.body.role != ""
+            ? `${req.body.role}`.toLowerCase()
+            : "User") + " Created",
+        data: user._id,
+      });
   } catch (error) {
     next(error);
   }
 };
 
-export const registerUser = async (req: Request, res: Response, next: NextFunction) => {
+export const registerUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const UserExistNameCheck = await User.findOne({
       name: new RegExp(`^${req.body.name}$`, "i"),
@@ -181,7 +210,6 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
     }
 
     if (req.body.userName && req.body.userName != "") {
-
       const UserExistUserNameCheck = await User.findOne({
         userName: new RegExp(`^${req.body.userName}$`, "i"),
       }).exec();
@@ -201,7 +229,11 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-export const deleteUserById = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteUserById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const user = await User.findByIdAndDelete(req.params.userId).exec();
     res.status(201).json({ message: "User deleted" });
@@ -210,16 +242,26 @@ export const deleteUserById = async (req: Request, res: Response, next: NextFunc
   }
 };
 
-export const approveUserById = async (req: Request, res: Response, next: NextFunction) => {
+export const approveUserById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    const user = await User.findByIdAndUpdate(req.params.userId, { approved: true }).exec();
+    const user = await User.findByIdAndUpdate(req.params.userId, {
+      approved: true,
+    }).exec();
     res.status(201).json({ message: "User Approved" });
   } catch (error) {
     next(error);
   }
 };
 
-export const uploadDocuments = async (req: Request, res: Response, next: NextFunction) => {
+export const uploadDocuments = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     if (!req.file) {
       throw new Error("Error Uploading File");
@@ -239,17 +281,21 @@ export const uploadDocuments = async (req: Request, res: Response, next: NextFun
   }
 };
 
-export const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
+export const getAllUsers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-
-    let queryObj: any = { role: { $ne: ROLES.ADMIN }, _id: { $ne: new mongoose.Types.ObjectId(req.user?.userId) } }
+    let queryObj: any = {
+      role: { $ne: ROLES.ADMIN },
+      _id: { $ne: new mongoose.Types.ObjectId(req.user?.userId) },
+    };
     if (req.query.role && req.query.role != "undefined") {
-      queryObj.role.$eq = req.query.role
+      queryObj.role.$eq = req.query.role;
     }
 
-
     if (req.query.searchQuery) {
-
       queryObj = {
         ...queryObj,
         $or: [],
@@ -258,72 +304,77 @@ export const getAllUsers = async (req: Request, res: Response, next: NextFunctio
       queryObj.$or.push({ name: new RegExp(`${req.query.searchQuery}`, "i") });
       queryObj.$or.push({ email: new RegExp(`${req.query.searchQuery}`, "i") });
       queryObj.$or.push({ phone: new RegExp(`${req.query.searchQuery}`, "i") });
-      queryObj.$or.push({ mobile: new RegExp(`${req.query.searchQuery}`, "i") });
+      queryObj.$or.push({
+        mobile: new RegExp(`${req.query.searchQuery}`, "i"),
+      });
       queryObj.$or.push({ role: new RegExp(`${req.query.searchQuery}`, "i") });
     }
 
-
-
     let pipeline: any = [
       {
-        '$match': queryObj
+        $match: queryObj,
       },
-    ]
+    ];
     if (req.query.department == DEPARTMENT.STORES) {
-
-      pipeline.push({
-        '$match': {
-          'department': DEPARTMENT.STORES
-        }
-      }, {
-        '$unwind': {
-          'path': '$rawMaterialArr',
-          'preserveNullAndEmptyArrays': true
-        }
-      }, {
-        '$lookup': {
-          'from': 'rawmaterials',
-          'localField': 'rawMaterialArr.rawMaterialId',
-          'foreignField': '_id',
-          'as': 'rawMaterialObj'
-        }
-      }, {
-        '$unwind': {
-          'path': '$rawMaterialObj',
-          'preserveNullAndEmptyArrays': true
-        }
-      }, {
-        '$addFields': {
-          'rawMaterialArr.label': '$rawMaterialObj.name',
-          'rawMaterialArr.value': '$rawMaterialObj._id'
-        }
-      }, {
-        '$group': {
-          '_id': '$_id',
-          'name': {
-            '$first': '$name'
+      pipeline.push(
+        {
+          $match: {
+            department: DEPARTMENT.STORES,
           },
-          'email': {
-            '$first': '$email'
+        },
+        {
+          $unwind: {
+            path: "$rawMaterialArr",
+            preserveNullAndEmptyArrays: true,
           },
-          'password': {
-            '$first': '$password'
+        },
+        {
+          $lookup: {
+            from: "rawmaterials",
+            localField: "rawMaterialArr.rawMaterialId",
+            foreignField: "_id",
+            as: "rawMaterialObj",
           },
-          'rawMaterialArr': {
-            '$addToSet': '$rawMaterialArr'
-          }
+        },
+        {
+          $unwind: {
+            path: "$rawMaterialObj",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $addFields: {
+            "rawMaterialArr.label": "$rawMaterialObj.name",
+            "rawMaterialArr.value": "$rawMaterialObj._id",
+          },
+        },
+        {
+          $group: {
+            _id: "$_id",
+            name: {
+              $first: "$name",
+            },
+            email: {
+              $first: "$email",
+            },
+            password: {
+              $first: "$password",
+            },
+            rawMaterialArr: {
+              $addToSet: "$rawMaterialArr",
+            },
+          },
         }
-      })
-
+      );
     }
 
     if (req.query.isForSelectInput) {
       pipeline.push({
-        '$project': {
-          'label': '$name',
-          'value': '$_id'
-        }
-      })
+        $project: {
+          label: "$name",
+          value: "$_id",
+        },
+      });
     }
     const users = await User.aggregate(pipeline);
     res.json({ message: "ALL Users", data: users });
@@ -332,9 +383,11 @@ export const getAllUsers = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
-
-
-export const getProfile = async (req: Request, res: Response, next: NextFunction) => {
+export const getProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     res.json({ message: "User Data", data: req.user?.userObj });
   } catch (error) {
@@ -342,7 +395,11 @@ export const getProfile = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-export const updateProfile = async (req: Request, res: Response, next: NextFunction) => {
+export const updateProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const obj: any = {};
     if (req.body.name) {
@@ -350,12 +407,14 @@ export const updateProfile = async (req: Request, res: Response, next: NextFunct
     }
     if (req.body.password && req.body.password != "") {
       obj.password = await encryptPassword(req.body.password);
-    }
-    else {
-      delete obj.password
+    } else {
+      delete obj.password;
     }
     if (req.body.email) {
-      const user = await User.find({ email: new RegExp(`^${req.body.email}$`, "i"), _id: { $ne: req.user?.userId } }).exec();
+      const user = await User.find({
+        email: new RegExp(`^${req.body.email}$`, "i"),
+        _id: { $ne: req.user?.userId },
+      }).exec();
       if (user.length) {
         throw new Error("This email is already being used");
       }
@@ -369,37 +428,54 @@ export const updateProfile = async (req: Request, res: Response, next: NextFunct
     //   obj.name = req.body.name;
     // }
 
-    const user = await User.findByIdAndUpdate(req.user?.userId, obj, { new: true }).exec();
+    const user = await User.findByIdAndUpdate(req.user?.userId, obj, {
+      new: true,
+    }).exec();
     if (!user) throw new Error("User Not Found");
     res.json({ message: "Updated" });
   } catch (error) {
     next(error);
   }
 };
-export const updateUserById = async (req: Request, res: Response, next: NextFunction) => {
+export const updateUserById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const user = await User.findById(req?.params?.id).exec();
     if (!user) {
       throw new Error("User does not exists");
     }
 
-
-
-    let nameExists = await User.findOne({ name: new RegExp(`^${req.body.name}$`, "i"), _id: { $ne: new mongoose.Types.ObjectId(req.params.id) } }).lean().exec();
+    let nameExists = await User.findOne({
+      name: new RegExp(`^${req.body.name}$`, "i"),
+      _id: { $ne: new mongoose.Types.ObjectId(req.params.id) },
+    })
+      .lean()
+      .exec();
     if (nameExists) {
-      throw new Error("Name you are trying to add already exists in our database for another user");
+      throw new Error(
+        "Name you are trying to add already exists in our database for another user"
+      );
     }
     // let phoneExists = await User.findOne({phone:new RegExp(`^${req.body.phone}$`, "i"), _id:{$ne:new mongoose.Types.ObjectId(req.params.id)}}).lean().exec();
     // if (phoneExists) {
     // 	throw new Error("Phone number you are trying to add already exists in our database for another user");
     // }
-    let emailExists = await User.findOne({ email: new RegExp(`^${req.body.email}$`, "i"), _id: { $ne: new mongoose.Types.ObjectId(req.params.id) } }).lean().exec();
+    let emailExists = await User.findOne({
+      email: new RegExp(`^${req.body.email}$`, "i"),
+      _id: { $ne: new mongoose.Types.ObjectId(req.params.id) },
+    })
+      .lean()
+      .exec();
     if (emailExists) {
-      throw new Error("Email you are trying to add already exists in our database for another user");
+      throw new Error(
+        "Email you are trying to add already exists in our database for another user"
+      );
     }
 
     if (req.body.userName && req.body.userName != "") {
-
       const UserExistUserNameCheck = await User.findOne({
         userName: new RegExp(`^${req.body.userName}$`, "i"),
       }).exec();
@@ -409,17 +485,15 @@ export const updateUserById = async (req: Request, res: Response, next: NextFunc
       }
     }
 
-
-
     if (req.body.password && req.body.password != "") {
       req.body.password = await encryptPassword(req.body.password);
-    }
-    else {
-      delete req.body.password
+    } else {
+      delete req.body.password;
     }
 
-
-    await User.findByIdAndUpdate(req?.params?.id, req.body, { new: true }).exec();
+    await User.findByIdAndUpdate(req?.params?.id, req.body, {
+      new: true,
+    }).exec();
     if (!user) throw new Error("User Not Found");
     res.json({ message: "Updated" });
   } catch (error) {
@@ -427,8 +501,11 @@ export const updateUserById = async (req: Request, res: Response, next: NextFunc
   }
 };
 
-
-export const getUserById = async (req: Request, res: Response, next: NextFunction) => {
+export const getUserById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     let user: any = await User.findById(req?.params?.id).lean().exec();
     if (!user) {
@@ -450,72 +527,64 @@ export const getUserById = async (req: Request, res: Response, next: NextFunctio
     if (user.role == DEPARTMENT.STORES) {
       let pipeline = [
         {
-          '$match': {
-            'department': DEPARTMENT.STORES,
-            '_id': new mongoose.Types.ObjectId(req?.params?.id),
-          }
-        }, {
-          '$unwind': {
-            'path': '$rawMaterialArr',
-            'preserveNullAndEmptyArrays': true
-          }
-        }, {
-          '$lookup': {
-            'from': 'rawmaterials',
-            'localField': 'rawMaterialArr.rawMaterialId',
-            'foreignField': '_id',
-            'as': 'rawMaterialObj'
-          }
-        }, {
-          '$unwind': {
-            'path': '$rawMaterialObj',
-            'preserveNullAndEmptyArrays': true
-          }
-        }, {
-          '$addFields': {
-            'rawMaterialArr.label': '$rawMaterialObj.name',
-            'rawMaterialArr.value': '$rawMaterialObj._id'
-          }
-        }, {
-          '$group': {
-            '_id': '$_id',
-            'name': {
-              '$first': '$name'
+          $match: {
+            department: DEPARTMENT.STORES,
+            _id: new mongoose.Types.ObjectId(req?.params?.id),
+          },
+        },
+        {
+          $unwind: {
+            path: "$rawMaterialArr",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "rawmaterials",
+            localField: "rawMaterialArr.rawMaterialId",
+            foreignField: "_id",
+            as: "rawMaterialObj",
+          },
+        },
+        {
+          $unwind: {
+            path: "$rawMaterialObj",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $addFields: {
+            "rawMaterialArr.label": "$rawMaterialObj.name",
+            "rawMaterialArr.value": "$rawMaterialObj._id",
+          },
+        },
+        {
+          $group: {
+            _id: "$_id",
+            name: {
+              $first: "$name",
             },
-            'email': {
-              '$first': '$email'
+            email: {
+              $first: "$email",
             },
-            'password': {
-              '$first': '$password'
+            password: {
+              $first: "$password",
             },
-            'rawMaterialArr': {
-              '$addToSet': '$rawMaterialArr'
-            }
-          }
-        }
-      ]
+            rawMaterialArr: {
+              $addToSet: "$rawMaterialArr",
+            },
+          },
+        },
+      ];
       let tempUser = await User.aggregate(pipeline);
       if (tempUser && tempUser.length == 0) {
-        throw new Error("User not found")
+        throw new Error("User not found");
       }
       user = tempUser[0];
     }
-
-
-
-
 
     res.json({ message: "found user", data: user, token });
   } catch (error) {
     next(error);
   }
 };
-
-
-
-
-
-
-
-
-
