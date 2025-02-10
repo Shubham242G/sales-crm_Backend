@@ -24,7 +24,7 @@ router.post('/login', webLogin)
 router.post("/register", registerUser);
 
 // Route for adding a new user (restricted by JWT authorization)
-router.post("/addUser", authorizeJwt, addUser);
+router.post("/create-user", authorizeJwt, addUser);
 
 // Route for getting all users
 router.get("/getAllUsers",authorizeJwt, getAllUsers);

@@ -8,6 +8,7 @@ import { Enquiry } from "@models/enquiry.model";
 import { Rfp } from "@models/rfp.model";
 import { last } from "lodash";
 import { SalesContact } from "@models/salesContact.model";
+import { User } from "@models/user.model";
 
 
 
@@ -118,6 +119,41 @@ export const deleterolesById = async (req: Request, res: Response, next: NextFun
     }
 };
 
+
+
+export const getrolesByUser = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+
+
+        const user= await User.findById(req.params.id).exec();
+
+
+
+        let pipeline: PipelineStage[] = [];
+        let matchObj: Record<string, any> = {};
+        if (req.params.id) {
+            matchObj._id = new mongoose.Types.ObjectId(req.params.id);
+        }
+        pipeline.push({
+            $match: matchObj,
+        });
+
+        let checkRoles = await Roles.findOne({ role: user?.role}).exec();
+
+        console.log()
+        let existsCheck = await Roles.aggregate(pipeline);
+        if (!existsCheck || existsCheck.length == 0) {
+            throw new Error("Roles does not exists");
+        }
+        existsCheck = existsCheck[0];
+        res.status(201).json({
+            message: "found specific Contact",
+            data: existsCheck,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
 
 
 

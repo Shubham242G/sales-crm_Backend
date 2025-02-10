@@ -145,9 +145,10 @@ export const addUser = async (req: Request, res: Response, next: NextFunction) =
       }
     }
 
-
+if (req.body.password) {
     req.body.password = await encryptPassword(req.body.password);
 
+}
     const user = await new User({ ...req.body }).save();
 
     res.status(201).json({ message: ((req.body.role && req.body.role != "") ? `${req.body.role}`.toLowerCase() : "User") + " Created", data: user._id });
