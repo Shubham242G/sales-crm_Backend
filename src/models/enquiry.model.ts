@@ -60,7 +60,9 @@ interface IEnquiry {
         toCity: string;
         departureDate: Date;
         returnDate: Date;
-
+        multiFromCity:string;
+        multiToCity:string;
+        multiDepartureDate:Date;
     };
     cab: {
         date: Date;
@@ -137,7 +139,9 @@ const EnquirySchema = new Schema({
         toCity: String,
         departureDate: Date,
         returnDate: Date,
-
+        multiFromCity: String,
+        multiToCity: String,
+        multiDepartureDate: Date,
     },
     cab: [{
         date: Date,
