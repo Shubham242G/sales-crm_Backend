@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invitation Email</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+        .email-container {
+            background-color: #ffffff;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #dddddd;
+            border-radius: 8px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header img {
+            max-height: 50px;
+        }
+        .content {
+            color: #333333;
+            line-height: 1.6;
+        }
+        .portal-info {
+            background-color: #f0f8ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .button-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .button-container a {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666666;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <img src="/Users/meetkapoor/Desktop/WOrk/360/360_Admin/src/assets/mainlogo/logo.png" alt="360 Solutions Logo">
+        </div>
+        <div class="content">
+            <p>Hi <strong>{email}</strong>,</p>
+            <p>You are invited to 360 Solutions' client portal.</p>
+            <p>In the portal, you can view your invoices, estimates, payment history, and make payments via secure payment gateways.</p>
+
+            <div class="portal-info">
+                <p>You can login to the portal anytime using the following details:</p>
+                <p><strong>Portal URL:</strong> <a href="{url}">{url}</a></p>
+                <p><strong>Email:</strong> {email}</p>
+                <p><strong>Password:</strong> {password}</p>
+            </div>
+
+            <div class="button-container">
+                <a href="{url}" target="_blank">Accept Invitation</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>If you have any questions, feel free to contact us.</p>
+        </div>
+    </div>
+</body>
+</html>
