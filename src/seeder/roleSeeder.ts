@@ -1,6 +1,8 @@
 import { Roles } from "@models/roles.model";
 
 export const roleSeeder = async () => {
+
+   
   try {
 
     const adminExist = await Roles.findOne({ roleName: "ADMIN" }).exec();
