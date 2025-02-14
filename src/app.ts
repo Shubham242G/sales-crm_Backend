@@ -15,6 +15,7 @@ const app = express();
 import { adminSeeder } from "@seeder/adminSeeder";
 
 import v1Router from './v1/router.v1';
+import { roleSeeder } from "@seeder/roleSeeder";
 
 // ==============<>============== //
 
@@ -35,6 +36,7 @@ app.use(express.static(path.join(process.cwd(), "public")));
 
 
 adminSeeder();
+roleSeeder();
 
 
 // ==============<>============== //
