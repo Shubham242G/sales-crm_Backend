@@ -157,7 +157,29 @@ export const getrolesByUser = async (req: Request, res: Response, next: NextFunc
 
 
 
-    
+export const getrolesByRole = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        let pipeline: PipelineStage[] = [];
+        let matchObj: Record<string, any> = {};
+        if (req.params.role) {
+            matchObj.roleName = req.params.role
+        }
+        pipeline.push({
+            $match: matchObj,
+        });
+        let existsCheck = await Roles.aggregate(pipeline);
+        if (!existsCheck || existsCheck.length == 0) {
+            throw new Error("Roles does not exists");
+        }
+        existsCheck = existsCheck[0];
+        res.status(201).json({
+            message: "found specific Contact",
+            data: existsCheck,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
 
 
 
