@@ -26,6 +26,8 @@ export const storeFileAndReturnNameBase64 = async (base64: string) => {
     });
   };
 
+  // check
+
 // export const storeFileAndReturnNameBase64 = async (base64: string, includesFileName: boolean = false) => {
 //     console.log(base64.slice(0,200), "herr 0")
 //     let tempBase64 = base64.split("base64,");
