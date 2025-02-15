@@ -140,7 +140,7 @@ export const getrolesByUser = async (req: Request, res: Response, next: NextFunc
 
         let checkRoles = await Roles.findOne({ role: user?.role}).exec();
 
-        console.log()
+     
         let existsCheck = await Roles.aggregate(pipeline);
         if (!existsCheck || existsCheck.length == 0) {
             throw new Error("Roles does not exists");
@@ -161,7 +161,10 @@ export const getrolesByRole = async (req: Request, res: Response, next: NextFunc
     try {
         let pipeline: PipelineStage[] = [];
         let matchObj: Record<string, any> = {};
+
+
         if (req.params.role) {
+            console.log( req.params.role, matchObj.roleName,  "req.params.role")
             matchObj.roleName = req.params.role
         }
         pipeline.push({
