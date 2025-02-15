@@ -21,3 +21,4 @@ export const adminSeeder = async () => {
     console.error(error);
   }
 };
+

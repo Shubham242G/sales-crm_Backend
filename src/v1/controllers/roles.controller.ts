@@ -53,6 +53,8 @@ export const getAllroles = async (req: any, res: any, next: any) => {
         pipeline.push({
             $match: matchObj,
         });
+
+        console.log(req.query, "req, query");
         let rolesArr = await paginateAggregate(Roles, pipeline, req.query);
 
         res.status(201).json({ message: "found all Device", data: rolesArr.data, total: rolesArr.total });
@@ -183,6 +185,8 @@ export const getrolesByRole = async (req: Request, res: Response, next: NextFunc
         next(error);
     }
 };
+
+
 
 
 
