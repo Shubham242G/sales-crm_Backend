@@ -14,6 +14,7 @@ import customerRouter from "@routesv1/customer.routes";
 import taskManagementRouter from "@routesv1/taskManagement.routes";
 import rolesRouter from "@routesv1/roles.routes";
 import departmentMasterRouter from "@routesv1/departmentMaster.routes";
+import reassignRouter from "@routesv1/reassignTask.routes";
 import express from "express";
 
 const router = express.Router();
@@ -34,6 +35,7 @@ router.use("/customer", customerRouter);
 router.use("/task", taskManagementRouter);
 router.use("/roles", rolesRouter);
 router.use('/departmentMaster', departmentMasterRouter)
+router.use("/reassign-task", reassignRouter);
 // router.use("/adminroutes")
 
 // =======<ryz>====== //

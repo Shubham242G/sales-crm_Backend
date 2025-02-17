@@ -3,22 +3,23 @@ import { NextFunction, Request, Response, RequestHandler } from "express";
 import { paginateAggregate } from "@helpers/paginateAggregate";
 import mongoose, { PipelineStage } from "mongoose";
 import { storeFileAndReturnNameBase64 } from "@helpers/fileSystem";
-import { Task} from "@models/taskManagement.model"
+import { ReassignTask} from "@models/reassignTask.model"
 import { Enquiry } from "@models/enquiry.model";
 import { Rfp } from "@models/rfp.model";
 import { last } from "lodash";
 import { SalesContact } from "@models/salesContact.model";
+import { Task } from "@models/taskManagement.model";
 
 
 
 
 
 
-export const addTaskManagement = async (req: Request, res: Response, next: NextFunction) => {
+export const addReassignTask = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // let existsCheck = await TaskManagement.findOne({ name: req.body.phone }).exec();
+        // let existsCheck = await ReassignTask.findOne({ name: req.body.phone }).exec();
         // if (existsCheck) {
-        //     throw new Error("TaskManagement with same email already exists");
+        //     throw new Error("ReassignTask with same email already exists");
         // }
 
         // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
@@ -31,10 +32,10 @@ export const addTaskManagement = async (req: Request, res: Response, next: NextF
         // }
 
         console.log(
-            "check 2 ", "for check TaskManagement"
+            "check 2 ", "for check ReassignTask"
         )
-        const TaskManagement = await new Task(req.body).save();
-        res.status(201).json({ message: "TaskManagement Created" });
+        const reassignTask = await new ReassignTask(req.body).save();
+        res.status(201).json({ message: "ReassignTask Created" });
 
 
     } catch (error) {
@@ -42,7 +43,7 @@ export const addTaskManagement = async (req: Request, res: Response, next: NextF
     }
 };
 
-export const getAllTaskManagement = async (req: any, res: any, next: any) => {
+export const getAllReassignTask = async (req: any, res: any, next: any) => {
     try {
         let pipeline: PipelineStage[] = [];
         let matchObj: Record<string, any> = {};
@@ -52,15 +53,15 @@ export const getAllTaskManagement = async (req: any, res: any, next: any) => {
         pipeline.push({
             $match: matchObj,
         });
-        let TaskManagementArr = await paginateAggregate(Task, pipeline, req.query);
+        let ReassignTaskArr = await paginateAggregate(ReassignTask, pipeline, req.query);
 
-        res.status(201).json({ message: "found all Device", data: TaskManagementArr.data, total: TaskManagementArr.total });
+        res.status(201).json({ message: "found all Device", data: ReassignTaskArr.data, total: ReassignTaskArr.total });
     } catch (error) {
         next(error);
     }
 };
 
-export const getTaskManagementById = async (req: Request, res: Response, next: NextFunction) => {
+export const getReassignTaskById = async (req: Request, res: Response, next: NextFunction) => {
     try {
         let pipeline: PipelineStage[] = [];
         let matchObj: Record<string, any> = {};
@@ -70,9 +71,9 @@ export const getTaskManagementById = async (req: Request, res: Response, next: N
         pipeline.push({
             $match: matchObj,
         });
-        let existsCheck = await Task.aggregate(pipeline);
-        if (!existsCheck || existsCheck.length == 0) {
-            throw new Error("TaskManagement does not exists");
+        let existsCheck = await ReassignTask.aggregate(pipeline);
+        if (!existsCheck ) {
+            throw new Error("ReassignTask does not exists");
         }
         existsCheck = existsCheck[0];
         res.status(201).json({
@@ -80,15 +81,22 @@ export const getTaskManagementById = async (req: Request, res: Response, next: N
             data: existsCheck,
         });
     } catch (error) {
+        console.log(error);
         next(error);
     }
 };
 
-export const updateTaskManagementById = async (req: Request, res: Response, next: NextFunction) => {
+export const updateReassignTaskById = async (req: Request, res: Response, next: NextFunction) => {
+    console.log(req.params.id, "check request params")
+    
+    
     try {
         let existsCheck = await Task.findById(req.params.id).lean().exec();
+
+
+        console.log(existsCheck, "existsCheck");
         if (!existsCheck) {
-            throw new Error("TaskManagement does not exists");
+            throw new Error("ReassignTask does not exists");
         }
 
         // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
@@ -98,21 +106,21 @@ export const updateTaskManagementById = async (req: Request, res: Response, next
         //         }
         //     }
         // }
-        let Obj = await Task.findByIdAndUpdate(req.params.id, req.body).exec();
-        res.status(201).json({ message: "TaskManagement Updated" });
+        let Obj = await ReassignTask.findByIdAndUpdate(req.params.id, req.body).exec();
+        res.status(201).json({ message: "ReassignTask Updated" });
     } catch (error) {
         next(error);
     }
 };
 
-export const deleteTaskManagementById = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteReassignTaskById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        let existsCheck = await Task.findById(req.params.id).exec();
+        let existsCheck = await ReassignTask.findById(req.params.id).exec();
         if (!existsCheck) {
-            throw new Error("TaskManagement does not exists or already deleted");
+            throw new Error("ReassignTask does not exists or already deleted");
         }
-        await Task.findByIdAndDelete(req.params.id).exec();
-        res.status(201).json({ message: "TaskManagement Deleted" });
+        await ReassignTask.findByIdAndDelete(req.params.id).exec();
+        res.status(201).json({ message: "ReassignTask Deleted" });
     } catch (error) {
         next(error);
     }

@@ -155,6 +155,15 @@ export const roleSeeder = async () => {
         },
       },
       {
+        routeName: "Task Management",
+        permissions: {
+          create: true,
+          updatet: true,
+          delete: true,
+          view: true,
+        },
+      },
+      {
         routeName: "Add Department",
         permissions: {
           create: true,
