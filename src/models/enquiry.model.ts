@@ -7,6 +7,7 @@ import { model, Model, Schema, Types } from "mongoose";
 interface IEnquiry {
 
     _id: Types.ObjectId;
+    contactId: Types.ObjectId;
     salutation: string;
     firstName: string;
     lastName: string;
@@ -85,6 +86,7 @@ interface IEnquiry {
 
 
 const EnquirySchema = new Schema({
+    contactId: { type: Schema.Types.ObjectId, ref: "Contact" },
     salutation: String,
     firstName: String,
     lastName: String,

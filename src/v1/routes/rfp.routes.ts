@@ -1,6 +1,6 @@
 import express from 'express';
 import { authorizeJwt } from '@middlewares/auth.middleware';
-import { addRfp, convertRfp, deleteRfpById, getAllRfp, getRfpById, updateRfpById } from '../controllers/rfp.controller';
+import { addRfp,  deleteRfpById, getAllRfp, getRfpById, updateRfpById } from '../controllers/rfp.controller';
 import { upload } from '@middlewares/multer.middleware';
 const router = express.Router();
 router.post('/', addRfp);
@@ -10,7 +10,7 @@ router.patch('/updateById/:id', updateRfpById);
 router.delete('/deleteById/:id', deleteRfpById);
 // router.post("/BulkUploadContacts", upload.single('file'), BulkUploadRfp);
 // router.get('/getExel', downloadExcelRfp);
-router.post('/convertRfp/:id', convertRfp);
 
+// router.post('/convertRfp/:id', convertRfp);
 
 export default router;

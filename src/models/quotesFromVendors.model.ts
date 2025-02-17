@@ -3,9 +3,16 @@ import { model, Model, Schema, Types } from "mongoose";
 
 
 
+
+
+
+
+
 interface IQuotesFromVendors {
 
     quotesId: string;
+    rfqId: string;
+    rfpEnquiryId:string;
     vendorName: string ;
     serviceType : [];
     rfpId: string;
@@ -27,6 +34,8 @@ interface IQuotesFromVendors {
 const QuotesFromVendorsSchema = new Schema({
   
     quotesId: String,
+    rfqId: String,
+    rfpEnquiryId: String,
     vendorName: String ,
     serviceType : [],
     rfpId: String,

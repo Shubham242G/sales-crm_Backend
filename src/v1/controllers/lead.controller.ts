@@ -167,7 +167,7 @@ export const deleteLeadById = async (req: Request, res: Response, next: NextFunc
                         email: lead.email,
                         company: lead.company,
                         salutation: lead.salutation,
-                        contactId: lead._id,
+                        leadId: lead._id,
                         
                     });
     

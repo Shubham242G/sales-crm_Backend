@@ -8,6 +8,7 @@ import XLSX from "xlsx";
 import path from 'path'
 
 import { QuotesFromVendors } from "@models/quotesFromVendors.model"
+import { Rfp } from "@models/rfp.model";
 
 
 export const addQuotesFromVendors = async (req: Request, res: Response, next: NextFunction) => {
@@ -424,58 +425,85 @@ export const BulkUploadQuotesFromVendors: RequestHandler = async (req, res, next
 
 
 
-// export const convertQuotesFromVendors = async (req: Request, res: Response, next: NextFunction) => {
-//     try {
-//         // let existsCheck = await Banquet.findOne({ name: req.body.name }).exec();
-//         // if (existsCheck) {
-//         //     throw new Error("Banquet with same name already exists");
-//         // }
+export const convertQuotesFromVendors = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // let existsCheck = await Banquet.findOne({ name: req.body.name }).exec();
+        // if (existsCheck) {
+        //     throw new Error("Banquet with same name already exists");
+        // }
 
-//         // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
-//         //     console.log("first", req.body.imagesArr)
-//         //     for (const el of req.body.imagesArr) {
-//         //         if (el.image && el.image !== "") {
-//         //             el.image = await storeFileAndReturnNameBase64(el.image);
-//         //         }
-//         //     }
-//         // }
-//         if (req.params.id) {
+        // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
+        //     console.log("first", req.body.imagesArr)
+        //     for (const el of req.body.imagesArr) {
+        //         if (el.image && el.image !== "") {
+        //             el.image = await storeFileAndReturnNameBase64(el.image);
+        //         }
+        //     }
+        // }
+        if (req.params.id) {
 
           
-//             const enquiry = await Enquiry.findOne({ _id: req.params.id })
-//             let exitsRfP = await QuotesFromVendors.findOne({ enquiryId:enquiry?._id }).lean().exec();
-//             console.log(exitsRfP,"exitsRfPexitsRfP")
-//             if (exitsRfP) {
-//                 throw new Error("RFP already exists");
-//             }
-//             if (enquiry) {
+            const rfp = await Rfp.findOne({ _id: req.params.id })
 
 
-//                 const quotesFromVendors = new QuotesFromVendors({
-//                     serviceType:"",
-//                     eventDates: enquiry.eventSetup.eventDates,
-//                     eventDetails: "",
-//                     deadlineOfProposal: "",
-//                     enquiryId: enquiry._id,
-//                     vendorList: [],
-//                     additionalInstructions: "",
+            console.log(rfp?.rfpId, "check rfp id in rfp controller")
+            let exitsRfP = await QuotesFromVendors.findOne({ rfpEnquiryId:rfp?._id }).lean().exec();
+            console.log(exitsRfP,"exitsRfPexitsRfP")
+            if (exitsRfP) {
+                throw new Error("Quotes From Vendors already exists");
+            }
+            if (rfp) {
 
-//                 });
-
-//                 await quotesFromVendors.save();
-
-//                 res.status(200).json({ message: "RPF conversion completed successfully", data: quotesFromVendors });
-
-//             }
-
-
-//         }
-
-//         res.status(500).json({ message: "Something Went Wrong", });
+                const lastDocument = await QuotesFromVendors.findOne().sort({ _id: -1 });
+                let quoteId;
+        
+                if (lastDocument && lastDocument.quotesId) {
+                    // Extract numeric part from the last ID (removing "RFP")
+                    let lastId = Number(lastDocument.quotesId.replace(/\D/g, "")) || 0;
+                    lastId += 1; // Increment the ID
+                
+                    // Format with leading zeros and prefix "RFP"
+                    quoteId = "Quote" + lastId.toString().padStart(6, "0");
+                } else {
+                    quoteId = "Quote000001"; // First entry case
+                }
 
 
 
-//     } catch (error) {
-//         next(error);
-//     }
-// };
+                console.log(rfp.vendorList, "vendorsList")
+                for(let i=0;i<rfp.vendorList.length;i++){
+
+            
+
+    const quotesFromVendors = new QuotesFromVendors({
+        quotesId: quoteId,
+        serviceType: rfp.serviceType,
+        rfpEnquiryId: rfp._id,
+        rfqId: rfp.rfpId,
+        eventDates: rfp.eventDates,
+        amount:"",
+        status: "",
+        attachment:"",
+        vendorName: rfp.vendorList[i],
+        
+    });
+    await quotesFromVendors.save();
+    
+                
+                
+
+                res.status(200).json({ message: "Quotes From Vendors converted successfully", data: quotesFromVendors });
+
+            }
+
+
+        }
+
+        res.status(500).json({ message: "Something Went Wrong", });
+
+    }
+
+    } catch (error) {
+        next(error);
+    }
+};
