@@ -92,6 +92,15 @@ export const roleSeeder = async () => {
         },
       },
       {
+        routeName: "Customers",
+        permissions: {
+          create: true,
+          updatet: true,
+          delete: true,
+          view: true,
+        },
+      },
+      {
         routeName: "Quotes for Customer",
         permissions: {
           create: true,
