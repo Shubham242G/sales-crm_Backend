@@ -6,7 +6,9 @@ const router = express.Router();
 router.post('/', addDepartmentMaster);
 router.get('/', getAllDepartmentMaster);
 router.get('/getById/:id', getDepartmentMasterById);
+router.get('/getAllDepartmentMaster', getAllDepartmentMaster);
 router.patch('/updateById/:id', updateDepartmentMasterById);
 router.delete('/deleteById/:id', deleteDepartmentMasterById);
+
 
 export default router;

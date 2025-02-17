@@ -36,6 +36,14 @@ export const getAllDepartmentMaster = async (req: any, res: any, next: any) => {
     if (req.query.query && req.query.query != "") {
       matchObj.name = new RegExp(req.query.query, "i");
     }
+    if (req.query.isForSelectInput) {
+      pipeline.push({
+        $project: {
+          label: "$department",
+          value: "$_id",
+        },
+      });
+    }
     pipeline.push({
       $match: matchObj,
     });

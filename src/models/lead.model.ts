@@ -12,7 +12,7 @@ interface ILead {
     email: string;
     phone: string;
     company: string;
-    leadId: Types.ObjectId;
+   
 
 
     // displayName: string;
@@ -102,7 +102,7 @@ const LeadSchema = new Schema(
         email: String,
         phone: String,
         company: String,
-        leadId: Types.ObjectId,
+     
 
 
 

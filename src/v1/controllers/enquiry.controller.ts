@@ -470,44 +470,120 @@ export const downloadExcelEnquiry = async (req: Request, res: Response, next: Ne
 
 
 
-export const convertRpf = async (req: Request, res: Response, next: NextFunction) => {
+// export const convertRpf = async (req: Request, res: Response, next: NextFunction) => {
+//     try {
+//         if (!req.params.id) {
+//             return res.status(400).json({ message: "Enquiry ID is required" });
+//         }
+
+//         // Fetch the enquiry
+//         const enquiry = await Enquiry.findById(req.params.id).exec();
+//         if (!enquiry) {
+//             return res.status(404).json({ message: "Enquiry not found" });
+//         }
+
+//         // Extract eventDates from enquiry
+//         let eventDates = enquiry.eventSetup?.eventDates || [];
+
+//         // Map event dates into an array of strings (or Date objects)
+//         let formattedEventDates = eventDates.map(event => ({
+//             startDate: event.startDate,
+//             endDate: event.endDate
+//         }));
+
+//         // Create a new Rfp with autofilled event dates
+//         const rfp = new Rfp({
+//             rfpId: new mongoose.Types.ObjectId(),
+//             serviceType: [], // You can populate this based on business logic
+//             eventDate: formattedEventDates, // Autofilled event dates
+//             eventDetails: "",
+//             deadlineOfProposal: "",
+//             vendorList: [],
+//             additionalInstructions: ""
+//         });
+
+//         await rfp.save();
+
+//         res.status(200).json({ message: "RFP created successfully", data: rfp });
+
+//     } catch (error) {
+//         next(error);
+//     }
+// };
+
+
+
+export const convertRfp = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        if (!req.params.id) {
-            return res.status(400).json({ message: "Enquiry ID is required" });
+        // let existsCheck = await Banquet.findOne({ name: req.body.name }).exec();
+        // if (existsCheck) {
+        //     throw new Error("Banquet with same name already exists");
+        // }
+
+        // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
+        //     console.log("first", req.body.imagesArr)
+        //     for (const el of req.body.imagesArr) {
+        //         if (el.image && el.image !== "") {
+        //             el.image = await storeFileAndReturnNameBase64(el.image);
+        //         }
+        //     }
+        // }
+        if (req.params.id) {
+
+
+            const enquiry = await Enquiry.findOne({ _id: req.params.id })
+            let exitsRfP = await Rfp.findOne({ enquiryId: enquiry?._id }).lean().exec();
+            console.log(exitsRfP, "exitsRfPexitsRfP")
+            if (exitsRfP) {
+                throw new Error("RFP already exists");
+            }
+            if (enquiry) {
+
+                let counter = 1; // Initialize the counter
+
+                function generateRFPId() {
+                    // Convert the counter to a 6-digit string, padding with leading zeros if necessary
+                    const numberPart = String(counter).padStart(6, '0');
+
+                    // Construct the RFP ID
+                    const rfpId = `RFP${numberPart}`;
+
+                    // Increment the counter for the next ID
+                    counter++;
+
+                    return rfpId;
+                }
+
+
+                const rfp = new Rfp({
+                    rfpId: generateRFPId(),
+                    serviceType: "",
+                    eventDates: enquiry.eventSetup.eventDates,
+                    eventDetails: "",
+                    deadlineOfProposal: "",
+                    enquiryId: enquiry._id,
+                    vendorList: [],
+                    additionalInstructions: "",
+
+                    
+
+
+                });
+
+                await rfp.save();
+
+                res.status(200).json({ message: "RPF conversion completed successfully", data: rfp });
+
+            }
+
+
         }
 
-        // Fetch the enquiry
-        const enquiry = await Enquiry.findById(req.params.id).exec();
-        if (!enquiry) {
-            return res.status(404).json({ message: "Enquiry not found" });
-        }
+        res.status(500).json({ message: "Something Went Wrong", });
 
-        // Extract eventDates from enquiry
-        let eventDates = enquiry.eventSetup?.eventDates || [];
 
-        // Map event dates into an array of strings (or Date objects)
-        let formattedEventDates = eventDates.map(event => ({
-            startDate: event.startDate,
-            endDate: event.endDate
-        }));
-
-        // Create a new Rfp with autofilled event dates
-        const rfp = new Rfp({
-            rfpId: new mongoose.Types.ObjectId(),
-            serviceType: [], // You can populate this based on business logic
-            eventDate: formattedEventDates, // Autofilled event dates
-            eventDetails: "",
-            deadlineOfProposal: "",
-            vendorList: [],
-            additionalInstructions: ""
-        });
-
-        await rfp.save();
-
-        res.status(200).json({ message: "RFP created successfully", data: rfp });
 
     } catch (error) {
         next(error);
     }
 };
-

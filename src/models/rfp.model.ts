@@ -7,7 +7,7 @@ import { model, Model, Schema, Types } from "mongoose";
 interface IRfp {
 
     rfpId: String;
-    enquiryId: String;
+    enquiryId: Types.ObjectId;
     serviceType: [];
 
 
@@ -30,7 +30,7 @@ interface IRfp {
 const RfpSchema = new Schema({
   
     rfpId: String ,
-    enquiryId: String ,
+    enquiryId: Types.ObjectId,
     serviceType: [],
     eventDates: [{
         startDate: Date,
