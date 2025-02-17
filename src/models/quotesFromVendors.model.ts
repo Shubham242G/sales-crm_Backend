@@ -11,11 +11,10 @@ import { model, Model, Schema, Types } from "mongoose";
 interface IQuotesFromVendors {
 
     quotesId: string;
-    rfqId: string;
+    rfpId: string;
     rfpEnquiryId:string;
     vendorName: string ;
     serviceType : [];
-    rfpId: string;
     amount: string;
     receivedDate: string;
     status: string;

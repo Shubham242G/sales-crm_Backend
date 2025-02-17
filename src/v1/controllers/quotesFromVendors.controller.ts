@@ -479,7 +479,7 @@ export const convertQuotesFromVendors = async (req: Request, res: Response, next
         quotesId: quoteId,
         serviceType: rfp.serviceType,
         rfpEnquiryId: rfp._id,
-        rfqId: rfp.rfpId,
+        rfpId: rfp.rfpId,
         eventDates: rfp.eventDates,
         amount:"",
         status: "",
