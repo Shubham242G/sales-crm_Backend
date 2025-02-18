@@ -3,7 +3,7 @@ import { NextFunction, Request, Response, RequestHandler } from "express";
 import { paginateAggregate } from "@helpers/paginateAggregate";
 import mongoose, { PipelineStage } from "mongoose";
 import { storeFileAndReturnNameBase64 } from "@helpers/fileSystem";
-import { Task} from "@models/taskManagement.model"
+import { TaskManagement} from "@models/taskManagement.model"
 import { Enquiry } from "@models/enquiry.model";
 import { Rfp } from "@models/rfp.model";
 import { last } from "lodash";
@@ -33,7 +33,7 @@ export const addTaskManagement = async (req: Request, res: Response, next: NextF
         console.log(
             "check 2 ", "for check TaskManagement"
         )
-        const TaskManagement = await new Task(req.body).save();
+        const tTaskManagement = await new TaskManagement(req.body).save();
         res.status(201).json({ message: "TaskManagement Created" });
 
 
@@ -52,7 +52,7 @@ export const getAllTaskManagement = async (req: any, res: any, next: any) => {
         pipeline.push({
             $match: matchObj,
         });
-        let TaskManagementArr = await paginateAggregate(Task, pipeline, req.query);
+        let TaskManagementArr = await paginateAggregate(TaskManagement, pipeline, req.query);
 
         res.status(201).json({ message: "found all Device", data: TaskManagementArr.data, total: TaskManagementArr.total });
     } catch (error) {
@@ -70,7 +70,7 @@ export const getTaskManagementById = async (req: Request, res: Response, next: N
         pipeline.push({
             $match: matchObj,
         });
-        let existsCheck = await Task.aggregate(pipeline);
+        let existsCheck = await TaskManagement.aggregate(pipeline);
         if (!existsCheck || existsCheck.length == 0) {
             throw new Error("TaskManagement does not exists");
         }
@@ -86,7 +86,7 @@ export const getTaskManagementById = async (req: Request, res: Response, next: N
 
 export const updateTaskManagementById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        let existsCheck = await Task.findById(req.params.id).lean().exec();
+        let existsCheck = await TaskManagement.findById(req.params.id).lean().exec();
         if (!existsCheck) {
             throw new Error("TaskManagement does not exists");
         }
@@ -98,7 +98,7 @@ export const updateTaskManagementById = async (req: Request, res: Response, next
         //         }
         //     }
         // }
-        let Obj = await Task.findByIdAndUpdate(req.params.id, req.body).exec();
+        let Obj = await TaskManagement.findByIdAndUpdate(req.params.id, req.body).exec();
         res.status(201).json({ message: "TaskManagement Updated" });
     } catch (error) {
         next(error);
@@ -107,11 +107,11 @@ export const updateTaskManagementById = async (req: Request, res: Response, next
 
 export const deleteTaskManagementById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        let existsCheck = await Task.findById(req.params.id).exec();
+        let existsCheck = await TaskManagement.findById(req.params.id).exec();
         if (!existsCheck) {
             throw new Error("TaskManagement does not exists or already deleted");
         }
-        await Task.findByIdAndDelete(req.params.id).exec();
+        await TaskManagement.findByIdAndDelete(req.params.id).exec();
         res.status(201).json({ message: "TaskManagement Deleted" });
     } catch (error) {
         next(error);
