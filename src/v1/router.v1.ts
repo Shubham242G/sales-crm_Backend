@@ -14,7 +14,6 @@ import customerRouter from "@routesv1/customer.routes";
 import taskManagementRouter from "@routesv1/taskManagement.routes";
 import rolesRouter from "@routesv1/roles.routes";
 import departmentMasterRouter from "@routesv1/departmentMaster.routes";
-import reassignRouter from "@routesv1/reassignTask.routes";
 import quotesFromVendorsRouter from "@routesv1/quotesFromVendors.route" 
 import express from "express";
 
@@ -36,7 +35,6 @@ router.use("/customer", customerRouter);
 router.use("/task", taskManagementRouter);
 router.use("/roles", rolesRouter);
 router.use('/departmentMaster', departmentMasterRouter)
-router.use("/reassign-task", reassignRouter);
 router.use('/quotesFromVendors', quotesFromVendorsRouter)
 // router.use("/adminroutes")
 

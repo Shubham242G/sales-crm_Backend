@@ -1,6 +1,12 @@
 import { model, Model, Schema, Types } from "mongoose";
 import mongoose from "mongoose";
 
+export interface IReassignment {
+    reAssignedTo: string;
+    remark: string;
+    previousAssignee: string;
+    reAssignmentDate: string;
+  }
 
 export interface ITaskManagement {
     id?: string;
@@ -15,7 +21,15 @@ export interface ITaskManagement {
     timeValue: number | "";
     completionTime: string;
     options: number[];
+    reassignments?: IReassignment[];
 }
+
+const reassignmentSchema = new mongoose.Schema({
+    reAssignedTo: String,
+    remark: String,
+    previousAssignee: String,
+    reAssignmentDate: String
+});
 
 const taskSchema = new mongoose.Schema({
     assignedTo: String,
@@ -29,6 +43,7 @@ const taskSchema = new mongoose.Schema({
     timeValue: Number,
     completionTime: String,
     options: [Number],
+    reassignments: [reassignmentSchema]
 });
 
 
