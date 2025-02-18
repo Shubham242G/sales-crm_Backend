@@ -2,7 +2,10 @@
 import { model, Model, Schema, Types } from "mongoose";
 
 
-
+interface IVendorList {
+    label: string;
+    value: string;
+}
 
 interface IRfp {
 
@@ -10,14 +13,13 @@ interface IRfp {
     enquiryId: Types.ObjectId;
     serviceType: [];
 
-
     eventDates: [{
             startDate: Date,
         }],
     eventDetails: string;
 
     deadlineOfProposal: string;
-    vendorList: [];
+    vendorList: IVendorList[];
     additionalInstructions: string;
 
 
@@ -32,12 +34,12 @@ const RfpSchema = new Schema({
     rfpId: String ,
     enquiryId: Types.ObjectId,
     serviceType: [],
-    eventDates: [{
+ eventDates: [{
         startDate: Date,
-    }],
+    }],   
     eventDetails: String,
     deadlineOfProposal: String,
-    vendorList: [],
+    vendorList: [], 
     additionalInstructions: String,
 
 

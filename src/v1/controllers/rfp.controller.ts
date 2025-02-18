@@ -8,6 +8,7 @@ import XLSX from "xlsx";
 import path from 'path'
 
 import { Rfp } from "@models/rfp.model"
+import { QuotesFromVendors } from "@models/quotesFromVendors.model";
 
 
 // serviceType: '',
@@ -104,6 +105,9 @@ export const getRfpById = async (req: Request, res: Response, next: NextFunction
 };
 
 export const updateRfpById = async (req: Request, res: Response, next: NextFunction) => {
+
+    console.log(req.body, "check req body ")
+    console.log(req.body.vendorList , "check vendor List")
     try {
         let existsCheck = await Rfp.findById(req.params.id).lean().exec();
         if (!existsCheck) {
@@ -455,153 +459,55 @@ export const BulkUploadRfp: RequestHandler = async (req, res, next) => {
 
 
 
-// export const convertRfp = async (req: Request, res: Response, next: NextFunction) => {
-//     try {
-//         // let existsCheck = await Banquet.findOne({ name: req.body.name }).exec();
-//         // if (existsCheck) {
-//         //     throw new Error("Banquet with same name already exists");
-//         // }
-
-//         // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
-//         //     console.log("first", req.body.imagesArr)
-//         //     for (const el of req.body.imagesArr) {
-//         //         if (el.image && el.image !== "") {
-//         //             el.image = await storeFileAndReturnNameBase64(el.image);
-//         //         }
-//         //     }
-//         // }
-//         if (req.params.id) {
 
 
-//             const enquiry = await Enquiry.findOne({ _id: req.params.id })
-//             let exitsRfP = await Rfp.findOne({ enquiryId: enquiry?._id }).lean().exec();
-//             console.log(exitsRfP, "exitsRfPexitsRfP")
-//             if (exitsRfP) {
-//                 throw new Error("RFP already exists");
-//             }
-//             if (enquiry) {
+export const convertRfp = async (req: Request, res: Response, next: NextFunction) => {
+ 
 
-//                 let counter = 1; // Initialize the counter
+    try {
+      
 
-//                 function generateRFPId() {
-//                     // Convert the counter to a 6-digit string, padding with leading zeros if necessary
-//                     const numberPart = String(counter).padStart(6, '0');
+        if (!req.params.id) {
+            return res.status(400).json({ message: "Missing RFP ID" });
+        }
 
-//                     // Construct the RFP ID
-//                     const rfpId = `RFP${numberPart}`;
+        const rfp = await Rfp.findOne({ _id: req.params.id });
 
-//                     // Increment the counter for the next ID
-//                     counter++;
+        if (!rfp) {
+            throw new Error("RFP does not exist");
+        }
 
-//                     return rfpId;
-//                 }
+        console.log("vendorList ==>", rfp?.vendorList);
 
+        // Fetch the latest RFP ID
+        const lastRfp = await QuotesFromVendors.findOne()
+            .sort({ rfpId: -1 })
+            .select("rfpId");
 
-//                 const rfp = new Rfp({
-//                     rfpId: generateRFPId(),
-//                     serviceType: "",
-//                     eventDates: enquiry.eventSetup.eventDates,
-//                     eventDetails: "",
-//                     deadlineOfProposal: "",
-//                     enquiryId: enquiry._id,
-//                     vendorList: [],
-//                     additionalInstructions: "",
+        let lastRfpId = lastRfp?.rfpId
+            ? parseInt(lastRfp.rfpId.replace("RFP", ""), 10)
+            : 0;
 
-//                      enquiryId: enquiry._id,
-//                         salutation: string;
-//                         firstName: string;
-//                         lastName: string;
-//                         phone: string;
-//                         email: string;
-//                         companyName: string;
-//                         hotelName: string;
-//                         othersPreference: string;
-//                         approxPassengers: string;
-//                         levelOfEnquiry: string;
-//                         enquiryType: string;
-//                         hotelPreferences: string;
-//                         checkIn: Date;
-//                         checkOut: Date;
-//                         city: string;
-//                         area: string;
-//                         noOfRooms: string;
-//                         categoryOfHotel:  string [];
-//                         // priority: string;
-//                         occupancy: string []
-//                         banquet: {
-//                             date: Date;
-//                             session: string;
-//                             seatingStyle: string;
-//                             avSetup: string;
-//                             menuType: string;
-//                             minPax: string;
-//                             seatingRequired: string;
-//                         }[];
-//                         room: {
-//                             date: string;
-//                             noOfRooms: string;
-//                             roomCategory: string;
-//                             occupancy: string;
-//                             mealPlan: [];
-//                         }[];
-//                         eventSetup: {
-//                             functionType: string;
-//                             eventDates: {
-//                                 startDate: string;
-//                                 endDate: string;
-//                             }[]
-//                             setupRequired: string;
-//                             eventStartDate:string,
-//                             eventEndDate: string;
-//                         };
-//                         airTickets: {
-//                             tripType: string;
-//                             numberOfPassengers: string;
-//                             fromCity: string;
-//                             toCity: string;
-//                             departureDate: Date;
-//                             returnDate: Date;
-//                             multiFromCity:string;
-//                             multiToCity:string;
-//                             multiDepartureDate:Date;
-//                         };
-//                         cab: {
-//                             date: Date;
-//                             fromCity: string;
-//                             toCity: string;
-//                             vehicleType: string;
-//                             tripType: string;
-//                             noOfVehicles: string;
-//                             typeOfVehicle: string;
-//                             cabTripType: string;
-//                             mealPlan: [];
-//                         }[];
-//                         billingAddress: string;
-                    
-//                         createdAt: Date;
-//                         updateAt: Date;
-//                     }
+        // Loop through vendorList and create new quotes
+        for (let i = 0; i < rfp.vendorList.length; i++) {
+            lastRfpId++; // Increment ID for each vendor
 
+            const newQuote = new QuotesFromVendors({
+                rfpId: `RFP${String(lastRfpId).padStart(6, "0")}`,
+                serviceType: "",
+                eventDetails: "",
+                deadlineOfProposal: "",
+                vendorName: rfp.vendorList[i].label,
+                additionalInstructions: "",
+            });
 
+            await newQuote.save();
+        }
 
+        return res.status(200).json({ message: "RFP conversion completed successfully" });
 
-//                 });
-
-//                 await rfp.save();
-
-//                 res.status(200).json({ message: "RPF conversion completed successfully", data: rfp });
-
-//             }
-
-
-//         }
-
-//         res.status(500).json({ message: "Something Went Wrong", });
-
-
-
-//     } catch (error) {
-//         next(error);
-//     }
-// };
+    } catch (error) {
+        next(error);
+    }
+};
 

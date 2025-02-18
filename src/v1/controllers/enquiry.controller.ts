@@ -533,31 +533,51 @@ export const convertRfp = async (req: Request, res: Response, next: NextFunction
 
             const enquiry = await Enquiry.findOne({ _id: req.params.id })
             let exitsRfP = await Rfp.findOne({ enquiryId: enquiry?._id }).lean().exec();
+
+           
             console.log(exitsRfP, "exitsRfPexitsRfP")
             if (exitsRfP) {
                 throw new Error("RFP already exists");
             }
+
+            const lastDocument = await Rfp.findOne().sort({ _id: -1 }).exec();
+
+        
+    let rfpId;
+
+    if (lastDocument && lastDocument.rfpId) {
+      // Extract the numeric part and increment it
+      const numericPart = parseInt(lastDocument.rfpId.replace("RFP", ""), 10) + 1;
+      rfpId = `RFP${numericPart.toString().padStart(6, "0")}`;
+    } else {
+      // Default first ID if no documents exist
+      rfpId = "RFP000001";
+    }
+
+
+
+        const serviceTypeArr = [];
+      if(enquiry && enquiry.cab && enquiry.cab.length > 0) {
+          serviceTypeArr.push("Transport")
+      }
+      if(enquiry && enquiry.banquet && enquiry.banquet.length > 0) {
+        serviceTypeArr.push("Banquet")
+    }
+    if(enquiry && enquiry.room && enquiry.room.length > 0) {
+        serviceTypeArr.push("Hotel")
+    }   
+    if(enquiry && enquiry.eventSetup && enquiry.enquiryType.length > 0) {
+        serviceTypeArr.push("Event")
+    }
+
+
             if (enquiry) {
 
-                let counter = 1; // Initialize the counter
-
-                function generateRFPId() {
-                    // Convert the counter to a 6-digit string, padding with leading zeros if necessary
-                    const numberPart = String(counter).padStart(6, '0');
-
-                    // Construct the RFP ID
-                    const rfpId = `RFP${numberPart}`;
-
-                    // Increment the counter for the next ID
-                    counter++;
-
-                    return rfpId;
-                }
-
+                
 
                 const rfp = new Rfp({
-                    rfpId: generateRFPId(),
-                    serviceType: "",
+                    rfpId: rfpId,
+                    serviceType: serviceTypeArr,
                     eventDates: enquiry.eventSetup.eventDates,
                     eventDetails: "",
                     deadlineOfProposal: "",
