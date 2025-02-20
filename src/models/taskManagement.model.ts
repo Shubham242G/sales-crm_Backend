@@ -11,7 +11,8 @@ export interface IReassignment {
 
 export interface ITaskManagement {
     id?: string;
-    assignedTo: string;
+    userId: Types.ObjectId;
+    assignedTo: Types.ObjectId;
     department: string;
     taskType: string;
     taskTitle: string;
@@ -26,7 +27,8 @@ export interface ITaskManagement {
 }
 
 const taskSchema = new mongoose.Schema({
-    assignedTo: String,
+    userId: Types.ObjectId,
+    assignedTo: Types.ObjectId,
     department: String,
     taskType: String,
     taskTitle: String,
@@ -42,7 +44,8 @@ const taskSchema = new mongoose.Schema({
         remark: String,
         previousAssignee: String,
         reAssignmentDate: String,
-    }]
+    }],
+   
 });
 
 
