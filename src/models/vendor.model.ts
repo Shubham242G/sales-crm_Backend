@@ -1,16 +1,103 @@
 import { model, Model, Schema, Types } from "mongoose";
 
 interface IVendor {
-  // contactName: string;
   vendor: {
     salutation: string;
     firstName: string;
     lastName: string;
     email: string;
     companyName: string;
+    contactName: string;
+    contactOwner: string;
+    panNumber: string;
+    gst: string;
+    vendorType: string[];
     landLine: string;
     phoneNumber: string;
     displayName: string;
+  };
+  isBanquetDetailsVisible: boolean;
+  isRestaurantDetailsVisible: boolean;
+
+  location: {
+    state: string;
+    city: string;
+    area: string;
+    address: string;
+  };
+
+  category: {
+    categoryType: string;
+  };
+
+  rooms: { 
+    roomCategory: string;
+    numberOfRooms: number;
+    roomSize: string;
+    roomImageUpload: string[];
+    prices: {
+      roomType: string;
+      roomPrice: string;
+    }[];
+  }[];
+
+  banquets: { 
+    numberOfBanquests: string;
+    banquetCategory: string;
+    banquetSize: string;
+    banquetImageUpload: string[];
+    banquetName: string;
+    banquetSetup: string;
+    banquetVegPrice: string;
+    banquetNonVegPrice: string;
+    banquetFloor: string;
+    prefuntionAreaSize: string;
+  }[];
+
+  restaurant: {
+    restaurantMenuType: string[];
+    restaurantImageUpload: string[];
+    restaurantCovers: string;
+    restaurantFloor: string;
+    restaurantSwimmingPool: string;
+  };
+
+  bankDetails: {
+    bankName: string;
+    bankAccountNumber: string;
+    ifsc: string;
+    pointOfContact: string;
+    email: string;
+    phoneNumber: string;
+    billingAddress: string;
+  };
+
+  eventServices: { 
+    services: string;
+    rate: string;
+  }[];
+
+  eventLocation: {
+    state: string;
+    city: string;
+    area: string;
+    serviceAreas: string[];
+  };
+
+  transportLocation: {
+    state: string;
+    city: string;
+    travelLocal: boolean;
+    travelOutStation: boolean;
+    serviceAreas: string[];
+    carDetails: {
+      carType: string;
+      numberOfCars: number;
+      fourHr40Km: string;
+      eightHr80Km: string;
+      fullDay100Km: string;
+      airportTransfer: string;
+    }[];
   };
 
   otherDetails: {
@@ -28,7 +115,7 @@ interface IVendor {
     priceList: string;
     enablePortal: boolean;
     portalLanguage: string;
-    documents: [];
+    documents: string[];
     websiteUrl: string;
     department: string;
     designation: string;
@@ -39,7 +126,6 @@ interface IVendor {
 
   billingAddress: {
     addressId: Types.ObjectId;
-    // attention : string;
     billingCountry: string;
     billingAddressStreet1: string;
     billingAddressStreet2: string;
@@ -50,8 +136,7 @@ interface IVendor {
     billingFaxNumber: string;
   };
 
-  shipppingAddress: {
-    // attention : string;
+  shippingAddress: {
     shippingCountry: string;
     shippingAddressStreet1: string;
     shippingAddressStreet2: string;
@@ -61,7 +146,7 @@ interface IVendor {
     shippingPhone: string;
     shippingFaxNumber: string;
   };
-  // contactPersons
+
   contactPersons: {
     salutation: string;
     contactPersonId: Types.ObjectId;
@@ -72,6 +157,7 @@ interface IVendor {
     contactPersonMobilePhone: string;
     contactPersonMobile: string;
   }[];
+}
 
   // companyName: string;
   // displayName: string;
@@ -186,81 +272,157 @@ interface IVendor {
 
   // createdAt: Date;
   // updatedAt: Date;
-}
 
-const vendorSchema = new Schema({
-  // contactName: string;
-  vendor: {
-    salutation: String,
-    firstName: String,
-    lastName: String,
-    email: String,
-    companyName: String,
-    landLine: String,
-    phoneNumber: String,
-    displayName: String,
-  },
-  otherDetails: {
-    sourceOfSupply: String,
-    gstTreatment: String,
-    gstin: String,
-    pan: String,
-    msmeRegistered: Boolean,
-    currency: String,
-    openingBalanceState: String,
-    openingBalance: String,
-    creditLimit: String,
-    paymentTerms: String,
-    tds: String,
-    priceList: String,
-    enablePortal: Boolean,
-    portalLanguage: String,
-    documents: [],
-    websiteUrl: String,
-    facebook: String,
-    twitter: String,
-    skype: String,
-    department: String,
-    designation: String,
-  },
 
-  billingAddress: {
-    addressId: String,
-    // attention : String,
-    billingCountry: String,
-    billingAddressStreet1: String,
-    billingAddressStreet2: String,
-    billingCity: String,
-    billingState: String,
-    billingPincode: String,
-    billingPhone: String,
-    billingFaxNumber: String,
-  },
-
-  shippingAddress: {
-    // attention : String,
-    shippingCountry: String,
-    shippingAddressStreet1: String,
-    shippingAddressStreet2: String,
-    shippingCity: String,
-    shippingState: String,
-    shippingPincode: String,
-    shippingPhone: String,
-    shippingFaxNumber: String,
-  },
-  // contactPersons
-  contactPersons: [
-    {
+  const vendorSchema = new Schema<IVendor>({
+    vendor: {
       salutation: String,
-      contactPersonId: String,
+      firstName: String,
+      lastName: String,
+      email: String,
+      companyName: String,
+      contactName: String,
+      contactOwner: String,
+      panNumber: String,
+      gst: String,
+      vendorType: [String],
+      landLine: String,
+      phoneNumber: String,
+      displayName: String,
+    },
+    isBanquetDetailsVisible: Boolean,
+    isRestaurantDetailsVisible: Boolean,
+    otherDetails: {
+      sourceOfSupply: String,
+      gstTreatment: String,
+      gstin: String,
+      pan: String,
+      msmeRegistered: Boolean,
+      currency: String,
+      openingBalanceState: String,
+      openingBalance: String,
+      creditLimit: String,
+      paymentTerms: String,
+      tds: String,
+      priceList: String,
+      enablePortal: Boolean,
+      portalLanguage: String,
+      documents: [String],
+      websiteUrl: String,
+      facebook: String,
+      twitter: String,
+      skype: String,
+      department: String,
+      designation: String,
+    },
+    location: {
+      state: String,
+      city: String,
+      area: String,
+      address: String,
+    },
+    category: {
+      categoryType: String,
+    },
+    rooms: [{
+      roomCategory: String,
+      numberOfRooms: Number,
+      roomSize: String,
+      roomImageUpload: [String],
+      prices: [{
+        roomType: String,
+        roomPrice: String,
+      }],
+    }],
+    banquets: [{
+      numberOfBanquests: String,
+      banquetCategory: String,
+      banquetSize: String,
+      banquetImageUpload: [String],
+      banquetName: String,
+      banquetSetup: String,
+      banquetVegPrice: String,
+      banquetNonVegPrice: String,
+      banquetFloor: String,
+      prefuntionAreaSize: String,  
+    }],
+    restaurant: {
+      restaurantMenuType: [String],
+      restaurantImageUpload: [String],
+      restaurantCovers: String,
+      restaurantFloor: String,
+      restaurantSwimmingPool: String,
+    },
+    bankDetails: {
+      bankName: String,
+      bankAccountNumber: String,
+      ifsc: String,
+      pointOfContact: String,
+      email: String,
+      phoneNumber: String,
+      billingAddress: String,
+    },
+
+    eventServices: [{ 
+      services: String,
+      rate: String,
+    }],
+
+    eventLocation: {
+      state: String,
+      city: String,
+      area: String,
+      serviceAreas: [String],
+    },
+
+    transportLocation: {
+      state: String,
+      city: String,
+      travelLocal: Boolean,
+      travelOutStation: Boolean,
+      serviceAreas: [String],
+      carDetails: [
+        {
+          carType: String,
+          numberOfCars: Number,
+          fourHr40Km: String,
+          eightHr80Km: String,
+          fullDay100Km: String,
+          airportTransfer: String,
+        },
+      ],
+    },
+
+    billingAddress: {
+      addressId: String,
+      billingCountry: String,
+      billingAddressStreet1: String,
+      billingAddressStreet2: String,
+      billingCity: String,
+      billingState: String,
+      billingPincode: String,
+      billingPhone: String,
+      billingFaxNumber: String,
+    },
+    shippingAddress: {
+      shippingCountry: String,
+      shippingAddressStreet1: String,
+      shippingAddressStreet2: String,
+      shippingCity: String,
+      shippingState: String,
+      shippingPincode: String,
+      shippingPhone: String,
+      shippingFaxNumber: String,
+    },
+    contactPersons: [{
+      salutation: String,
+      contactPersonId: Schema.Types.ObjectId,
       contactPersonFirstName: String,
       contactPersonLastName: String,
       contactPersonEmail: String,
       contactPersonWorkPhone: String,
       contactPersonMobilePhone: String,
       contactPersonMobile: String,
-    },
-  ],
-});
-
+    }],
+  }, { timestamps: true });
 export const Vendor = model<IVendor>("vendor", vendorSchema);

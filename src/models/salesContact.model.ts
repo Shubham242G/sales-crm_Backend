@@ -14,7 +14,11 @@ interface ISalesContact {
     email: string;
     company:string;
     salutation:string;
-    
+    vendorId?: Types.ObjectId;
+    state: string;
+    city: string;
+    area: string;
+    phoneNumber: string;
 }
 
 
@@ -28,9 +32,14 @@ const SalesContactSchema = new Schema(
         email: String,
         company:String,
         salutation:String,
+        vendorId: {type:Types.ObjectId, ref: "Vendor"},
+        state: String,
+        city: String,
+        area: String,
+        phoneNumber: String
 
     },
     { timestamps: true }
 );
 
-export const SalesContact = model<ISalesContact>("Contact", SalesContactSchema);
+export const SalesContact = model<ISalesContact>("Sales Contact", SalesContactSchema);

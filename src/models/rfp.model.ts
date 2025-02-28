@@ -15,6 +15,7 @@ interface IRfp {
 
     eventDates: [{
             startDate: Date,
+            endDate: Date
         }],
     eventDetails: string;
 
@@ -36,6 +37,7 @@ const RfpSchema = new Schema({
     serviceType: [],
  eventDates: [{
         startDate: Date,
+        endDate: Date,
     }],   
     eventDetails: String,
     deadlineOfProposal: String,

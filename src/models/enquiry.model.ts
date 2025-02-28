@@ -11,7 +11,7 @@ interface IEnquiry {
     salutation: string;
     firstName: string;
     lastName: string;
-    phone: string;
+    phoneNumber: string;
     email: string;
     companyName: string;
     hotelName: string;
@@ -27,7 +27,7 @@ interface IEnquiry {
     noOfRooms: string;
     categoryOfHotel:  string [];
     // priority: string;
-    occupancy: string []
+    occupancy: string [];
     banquet: {
         date: Date;
         session: string;
@@ -90,7 +90,7 @@ const EnquirySchema = new Schema({
     salutation: String,
     firstName: String,
     lastName: String,
-    phone: String,
+    phoneNumber: String,
     email: String,
     companyName: String,
     typeOfContact: String,

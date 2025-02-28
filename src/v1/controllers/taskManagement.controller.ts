@@ -248,6 +248,8 @@ export const getTaskManagementById = async (
           _id: "$_id",
           assignedTo: { $first: "$assignedTo" },
           assignedToName: { $first: "$assignedToName" },
+          department: { $first: "$department" },
+          taskType: { $first: "$taskType" },
           taskTitle: { $first: "$taskTitle" },
           description: { $first: "$description" },
           startDate: { $first: "$startDate" },
@@ -272,6 +274,8 @@ export const getTaskManagementById = async (
           _id: 1,
           assignedTo: 1,
           assignedToName: 1,
+          department: 1,
+          taskType: 1,
           taskTitle: 1,
           description: 1,
           startDate: 1,
@@ -313,6 +317,9 @@ export const updateTaskManagementById = async (
   res: Response,
   next: NextFunction
 ) => {
+
+
+  console.log(req.body, "check req.body ")
   try {
     let existsCheck = await TaskManagement.findById(req.params.id)
       .lean()

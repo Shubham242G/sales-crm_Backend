@@ -13,7 +13,7 @@ export const addSalesContact = async (req: Request, res: Response, next: NextFun
     try {
         let existsCheck = await SalesContact.findOne({ firstName: req.body.name, lastName: req.body.lastName, phone: req.body.phone }).exec();
         if (existsCheck) {
-            throw new Error("Banquet with same name already exists");
+            throw new Error("sales contact with same name already exists");
         }
 
         // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
@@ -64,7 +64,7 @@ export const getSalesContactById = async (req: Request, res: Response, next: Nex
         });
         let existsCheck = await SalesContact.aggregate(pipeline);
         if (!existsCheck || existsCheck.length == 0) {
-            throw new Error("Banquet does not exists");
+            throw new Error("Sales contact does not exists");
         }
         existsCheck = existsCheck[0];
         res.status(201).json({
@@ -451,7 +451,7 @@ export const convertEnquiry = async (req: Request, res: Response, next: NextFunc
                     salutation: contact.salutation,
                     firstName: contact.firstName,
                     lastName: contact.lastName,
-                    phone: contact.phone,
+                    phoneNumber: contact.phoneNumber,
                     email: contact.email,
                     contactId: contact._id,
                     companyName: contact.company,
@@ -464,8 +464,8 @@ export const convertEnquiry = async (req: Request, res: Response, next: NextFunc
                     hotelPreferences: "",
                     checkIn: "",
                     checkOut: "",
-                    city: "",
-                    area: "",
+                    city: contact.city,
+                    area: contact.area,
                     noOfRooms: "",
                     categoryOfHotel: [],
                     priority: "",
