@@ -18,9 +18,12 @@ export const addQuotesFromVendors = async (req: Request, res: Response, next: Ne
         //     throw new Error("Banquet with same name already exists");
         // }
 
-        if (req?.body?.attachment && req?.body?.attachment && req?.body?.attachment != "" && String(req?.body?.attachment).includes("base64")) {
+        console.log(req.body.attachment.include("base64"), "check attachment")
+        for(let i=0; i<req.body.attachment.length; i++) {
+        if (req?.body && req?.body?.attachment && req?.body?.attachment.includes("base64")) {
             req.body.attachment = await storeFileAndReturnNameBase64(req.body.attachment);
-          }
+        }
+    }
         const quotesFromVendors = await new QuotesFromVendors(req.body).save();
         res.status(201).json({ message: "Quote From Vendor Created" });
 
@@ -78,14 +81,28 @@ export const getQuotesFromVendorsById = async (req: Request, res: Response, next
 
 export const updateQuotesFromVendorsById = async (req: Request, res: Response, next: NextFunction) => {
     try {
+
+
+  
+
         let existsCheck = await QuotesFromVendors.findById(req.params.id).lean().exec();
         if (!existsCheck) {
             throw new Error("Quote From Vendor does not exists");
         }
 
-        if (req?.body?.attachment && req?.body?.attachment && req?.body?.attachment != "" && String(req?.body?.attachment).includes("base64")) {
-              req.body.attachment = await storeFileAndReturnNameBase64(req.body.attachment);
-              await deleteFileUsingUrl(`uploads/${existsCheck?.attachment}`);
+
+        
+        if (req?.body && req?.body?.attachment && req?.body?.attachment.length > 0) {
+
+            for(let i=0; i<req.body.attachment.length; i++) {
+                if (req?.body && req?.body?.attachment[i] && req?.body?.attachment[i].includes("base64")) {
+                    req.body.attachment[i] = await storeFileAndReturnNameBase64(req.body.attachment[i]);
+                    await deleteFileUsingUrl(`uploads/${existsCheck?.attachment[i]}`);
+                  }
+            }
+
+            //   req.body.attachment = await storeFileAndReturnNameBase64(req.body.attachment);
+            //   await deleteFileUsingUrl(`uploads/${existsCheck?.attachment}`);
             }
         let Obj = await QuotesFromVendors.findByIdAndUpdate(req.params.id, req.body).exec();
         res.status(201).json({ message: "Quote From Vendor Updated" });
@@ -425,85 +442,88 @@ export const BulkUploadQuotesFromVendors: RequestHandler = async (req, res, next
 
 
 
-export const convertQuotesFromVendors = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        // let existsCheck = await Banquet.findOne({ name: req.body.name }).exec();
-        // if (existsCheck) {
-        //     throw new Error("Banquet with same name already exists");
-        // }
+// export const convertQuotesFromVendors = async (req: Request, res: Response, next: NextFunction) => {
+//     try {
+//         // let existsCheck = await Banquet.findOne({ name: req.body.name }).exec();
+//         // if (existsCheck) {
+//         //     throw new Error("Banquet with same name already exists");
+//         // }
 
-        // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
-        //     console.log("first", req.body.imagesArr)
-        //     for (const el of req.body.imagesArr) {
-        //         if (el.image && el.image !== "") {
-        //             el.image = await storeFileAndReturnNameBase64(el.image);
-        //         }
-        //     }
-        // }
-        if (req.params.id) {
+//         // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
+//         //     console.log("first", req.body.imagesArr)
+//         //     for (const el of req.body.imagesArr) {
+//         //         if (el.image && el.image !== "") {
+//         //             el.image = await storeFileAndReturnNameBase64(el.image);
+//         //         }
+//         //     }
+//         // }
+//         if (req.params.id) {
 
           
-            const rfp = await Rfp.findOne({ _id: req.params.id })
+//             const rfp = await Rfp.findOne({ _id: req.params.id })
 
 
-            console.log(rfp?.rfpId, "check rfp id in rfp controller")
-            let exitsRfP = await QuotesFromVendors.findOne({ rfpEnquiryId:rfp?._id }).lean().exec();
-            console.log(exitsRfP,"exitsRfPexitsRfP")
-            if (exitsRfP) {
-                throw new Error("Quotes From Vendors already exists");
-            }
-            if (rfp) {
+//             console.log(rfp?.rfpId, "check rfp id in rfp controller")
+//             let exitsRfP = await QuotesFromVendors.findOne({ rfpEnquiryId:rfp?._id }).lean().exec();
+//             console.log(exitsRfP,"exitsRfPexitsRfP")
+//             if (exitsRfP) {
+//                 throw new Error("Quotes From Vendors already exists");
+//             }
+//             if (rfp) {
 
-                const lastDocument = await QuotesFromVendors.findOne().sort({ _id: -1 });
-                let quoteId;
+//                 const lastDocument = await QuotesFromVendors.findOne().sort({ _id: -1 });
+//                 let quoteId;
         
-                if (lastDocument && lastDocument.quotesId) {
-                    // Extract numeric part from the last ID (removing "RFP")
-                    let lastId = Number(lastDocument.quotesId.replace(/\D/g, "")) || 0;
-                    lastId += 1; // Increment the ID
+//                 if (lastDocument && lastDocument.quotesId) {
+//                     // Extract numeric part from the last ID (removing "RFP")
+//                     let lastId = Number(lastDocument.quotesId.replace(/\D/g, "")) || 0;
+//                     lastId += 1; // Increment the ID
                 
-                    // Format with leading zeros and prefix "RFP"
-                    quoteId = "Quote" + lastId.toString().padStart(6, "0");
-                } else {
-                    quoteId = "Quote000001"; // First entry case
-                }
+//                     // Format with leading zeros and prefix "RFP"
+//                     quoteId = "Quote" + lastId.toString().padStart(6, "0");
+//                 } else {
+//                     quoteId = "Quote000001"; // First entry case
+//                 }
 
 
 
-                console.log(rfp.vendorList, "vendorsList")
-                for(let i=0;i<rfp.vendorList.length;i++){
+//                 console.log(rfp.vendorList, "vendorsList")
+//                 for(let i=0;i<rfp.vendorList.length;i++){
 
             
 
-    const quotesFromVendors = new QuotesFromVendors({
-        quotesId: quoteId,
-        serviceType: rfp.serviceType,
-        rfpEnquiryId: rfp._id,
-        rfpId: rfp.rfpId,
-        eventDates: rfp.eventDates,
-        amount:"",
-        status: "",
-        attachment:"",
-        vendorName: rfp.vendorList[i],
+//     const quotesFromVendors = new QuotesFromVendors({
+//         quotesId: quoteId,
+//         serviceType: rfp.serviceType,
+//         rfpEnquiryId: rfp.id,
+//         rfpId: rfp.rfpId,
+//         eventDates: rfp.eventDates,
+//         amount:"",
+//         status: "",
+//         attachment:"",
+//         vendorName: rfp.vendorList[i],
         
-    });
-    await quotesFromVendors.save();
+//     });
+//     await quotesFromVendors.save();
     
                 
                 
 
-                res.status(200).json({ message: "Quotes From Vendors converted successfully", data: quotesFromVendors });
+//                 res.status(200).json({ message: "Quotes From Vendors converted successfully", data: quotesFromVendors });
 
-            }
+//             }
 
 
-        }
+//         }
 
-        res.status(500).json({ message: "Something Went Wrong", });
+//         res.status(500).json({ message: "Something Went Wrong", });
 
-    }
+//     }
 
-    } catch (error) {
-        next(error);
-    }
-};
+
+
+
+//     } catch (error) {
+//         next(error);
+//     }
+// };

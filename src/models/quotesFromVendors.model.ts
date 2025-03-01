@@ -13,12 +13,15 @@ interface IQuotesFromVendors {
     quotesId: string;
     rfpId: string;
     rfpEnquiryId:string;
-    vendorName: string ;
+    vendorList: {
+        label: string,
+        value: string
+    }
     serviceType : [];
     amount: string;
     receivedDate: string;
     status: string;
-    attachment: string;
+    attachment: string[];
     eventDates: [{
             startDate: Date,
         }],
@@ -35,13 +38,16 @@ const QuotesFromVendorsSchema = new Schema({
     quotesId: String,
     rfqId: String,
     rfpEnquiryId: String,
-    vendorName: String ,
+    vendorList: {
+        label: String,
+        value: String
+    },
     serviceType : [],
     rfpId: String,
     amount: String,
     receivedDate: String,
     status: String,
-    attachment: String,
+    attachment: [String],
     eventDates: [{
             startDate: Date,
         }],

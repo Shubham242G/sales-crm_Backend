@@ -11,6 +11,6 @@ router.delete('/deleteById/:id', deleteRfpById);
 // router.post("/BulkUploadContacts", upload.single('file'), BulkUploadRfp);
 // router.get('/getExel', downloadExcelRfp);
 
-router.post('/convert/:id', convertRfp);
+router.post('/convertRfp/:id', convertRfp);
 
 export default router;

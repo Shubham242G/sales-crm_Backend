@@ -488,16 +488,39 @@ export const convertRfp = async (req: Request, res: Response, next: NextFunction
             ? parseInt(lastRfp.rfpId.replace("RFP", ""), 10)
             : 0;
 
-        // Loop through vendorList and create new quotes
+
+
+            let quoteId 
+
+            const lastQuoteId = await QuotesFromVendors.findOne().sort({quotesId:-1})
+            .select("quotesId");
+
+            if(!lastQuoteId){
+                quoteId = "Quotes000001"
+            }
+
+            else{
+                const lastQuoteIdString = lastQuoteId.quotesId;
+                quoteId = lastQuoteIdString.replace(/\d+$/, (num:any) => String(Number(num) + 1).padStart(num.length, '0'));
+            }
+
+
+              
+           
+     
+     
+
+        
         for (let i = 0; i < rfp.vendorList.length; i++) {
-            lastRfpId++; // Increment ID for each vendor
+            lastRfpId++;
 
             const newQuote = new QuotesFromVendors({
-                rfpId: `RFP${String(lastRfpId).padStart(6, "0")}`,
-                serviceType: "",
+                quotesId: quoteId,
+                rfpId: rfp.rfpId || "",
+                serviceType: rfp.serviceType || [],
                 eventDetails: "",
                 deadlineOfProposal: "",
-                vendorName: rfp.vendorList[i].label,
+                vendorList: rfp.vendorList[i] ,
                 additionalInstructions: "",
             });
 
@@ -510,4 +533,7 @@ export const convertRfp = async (req: Request, res: Response, next: NextFunction
         next(error);
     }
 };
+
+
+
 

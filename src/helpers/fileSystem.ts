@@ -69,7 +69,7 @@ export const storeFileAndReturnNameBase64ForExeal = async (base64Data: string) =
     const fileName = `image_${Date.now()}.png`; // Change extension if necessary
     const filePath = path.join(__dirname, '..', 'uploads', fileName);
 
-    await fs.promises.writeFile(filePath, buffer);
+    await fs.promises.writeFile(filePath, buffer.toString());
     return fileName;
 };
 

@@ -17,15 +17,74 @@ export const addVendor = async (
     //   throw new Error("Vendor with same email first name, last name and Email already exists");
     // }
     // console.log(req.body.vendor, "req.body");
-    if (
-      req?.body?.documents &&
-      req?.body?.documents &&
-      req?.body?.documents != "" &&
-      String(req?.body?.documents).includes("base64")
-    ) {
-      req.body.documents = await storeFileAndReturnNameBase64(
-        req.body.documents
-      );
+
+    if (req?.body?.rooms) {
+      for (let i = 0; i < req.body.rooms.length; i++) {
+        const room = req.body.rooms[i];
+        if (room.roomImageUpload) {
+          for (let j = 0; j < room.roomImageUpload.length; j++) {
+            if (room.roomImageUpload[j].includes("base64")) {
+              room.roomImageUpload[j] = await storeFileAndReturnNameBase64(
+                room.roomImageUpload[j]
+              );
+            }
+          }
+        }
+      }
+    }
+
+    if (req?.body?.banquets) {
+      for (let i = 0; i < req.body.banquets.length; i++) {
+        const banquets = req.body.banquets[i];
+        if (banquets.banquetImageUpload) {
+          for (let j = 0; j < banquets.banquetImageUpload.length; j++) {
+            if (banquets.banquetImageUpload[j].includes("base64")) {
+              banquets.banquetImageUpload[j] =
+                await storeFileAndReturnNameBase64(
+                  banquets.banquetImageUpload[j]
+                );
+            }
+          }
+        }
+      }
+    }
+
+    if (req?.body?.restaurant && req?.body?.restaurant?.restaurantImageUpload?.length > 0) {
+
+      
+      for (
+        let i = 0;
+        i < req?.body?.restaurant?.restaurantImageUpload?.length;
+        i++
+      ) {
+
+        
+        if (
+          req?.body?.restaurant?.restaurantImageUpload[i] &&
+          req.body.restaurant.restaurantImageUpload[i].includes("base64")
+        ) {
+          req.body.restaurant.restaurantImageUpload[i] =
+            await storeFileAndReturnNameBase64(
+              req.body.restaurant.restaurantImageUpload[i]
+            );
+        }
+      }
+    }
+
+    if (req?.body?.otherDetails?.documents && req.body.otherDetails.documents.length > 0) {
+      console.log(req?.body?.otherDetails?.documents, "for loop is working 2")
+      for (let i = 0; i < req.body.otherDetails.documents.length; i++) {
+        console.log("for loop is working")
+        if (
+          req?.body?.otherDetails?.documents[i] &&
+          req?.body?.otherDetails?.documents[i].includes("base64")
+        ) {
+          req.body.otherDetails.documents[i] = await storeFileAndReturnNameBase64(
+            req.body.otherDetails.documents[i]
+          );
+          
+        }
+      }
     }
     await new Vendor(req.body).save();
     res.status(201).json({ message: "Vendor Created" });
@@ -36,20 +95,19 @@ export const addVendor = async (
 
 export const getAllVendor = async (req: any, res: any, next: any) => {
   try {
-    
-
     let pipeline: PipelineStage[] = [];
     let matchObj: Record<string, any> = {};
-
-    
 
     console.log("Incoming query:", req.query);
 
     if (req.query.query && req.query.query !== "") {
       matchObj["location.state"] = new RegExp(req.query.query, "i");
-      console.log("Search filter applied for location.state:", matchObj["location.state"]);
+      console.log(
+        "Search filter applied for location.state:",
+        matchObj["location.state"]
+      );
     }
-    
+
     pipeline.push({
       $match: matchObj,
     });
@@ -105,20 +163,91 @@ export const updateVendorById = async (
       throw new Error("Vendor does not exists");
     }
 
+    console.log(req.body.rooms, "check room ");
+
+    if (req?.body?.rooms) {
+      for (let i = 0; i < req.body.rooms.length; i++) {
+        const room = req.body.rooms[i];
+        if (room.roomImageUpload) {
+          for (let j = 0; j < room.roomImageUpload.length; j++) {
+            if (room.roomImageUpload[j].includes("base64")) {
+              room.roomImageUpload[j] = await storeFileAndReturnNameBase64(
+                room.roomImageUpload[j]
+              );
+              await deleteFileUsingUrl(
+                `uploads/${existsCheck?.rooms?.[i].roomImageUpload[j]}`
+              );
+            }
+          }
+        }
+      }
+    }
+
+    console.log(req.body.banquets, "check banquets");
+
+    if (req?.body?.banquets) {
+      for (let i = 0; i < req.body.banquets.length; i++) {
+        const banquets = req.body.banquets[i];
+        if (banquets.banquetImageUpload) {
+          for (let j = 0; j < banquets.banquetImageUpload.length; j++) {
+            if (banquets.banquetImageUpload[j].includes("base64")) {
+              banquets.banquetImageUpload[j] =
+                await storeFileAndReturnNameBase64(
+                  banquets.banquetImageUpload[j]
+                );
+              await deleteFileUsingUrl(
+                `uploads/${existsCheck?.banquets?.[i].banquetImageUpload[j]}`
+              );
+            }
+          }
+        }
+      }
+    }
+
+    console.log( req.body.restaurant.restaurantImageUpload,"checking the restaurant");
+
+    if (req?.body?.restaurant && req?.body?.restaurant?.restaurantImageUpload?.length > 0) {
+
+      console.log(req?.body?.restaurant?.restaurantImageUpload, "for loop is working 2")
+      for (
+        let i = 0;
+        i < req?.body?.restaurant?.restaurantImageUpload?.length;
+        i++
+      ) {
+
+        console.log("for loop is working")
+        if (
+          req?.body?.restaurant?.restaurantImageUpload[i] &&
+          req.body.restaurant.restaurantImageUpload[i].includes("base64")
+        ) {
+          req.body.restaurant.restaurantImageUpload[i] =
+            await storeFileAndReturnNameBase64(
+              req.body.restaurant.restaurantImageUpload[i]
+            );
+          await deleteFileUsingUrl(
+            `uploads/${existsCheck?.restaurant?.restaurantImageUpload[i]}`
+          );
+        }
+      }
+    }
+
     console.log(req.body, "req.body full");
-    if (
-      req?.body?.otherDetails &&
-      req?.body?.otherDetails?.documents &&
-      req?.body?.otherDetails?.documents &&
-      req?.body?.otherDetails?.documents != "" &&
-      String(req.body.otherDetails.documents).includes("base64")
-    ) {
-      req.body.otherDetails.documents = await storeFileAndReturnNameBase64(
-        req.body.otherDetails.documents
-      );
-      await deleteFileUsingUrl(
-        `uploads/${existsCheck?.otherDetails?.documents}`
-      );
+    if (req?.body?.otherDetails?.documents && req.body.otherDetails.documents.length > 0) {
+      console.log(req?.body?.otherDetails?.documents, "for loop is working 2")
+      for (let i = 0; i < req.body.otherDetails.documents.length; i++) {
+        console.log("for loop is working")
+        if (
+          req?.body?.otherDetails?.documents[i] &&
+          req?.body?.otherDetails?.documents[i].includes("base64")
+        ) {
+          req.body.otherDetails.documents[i] = await storeFileAndReturnNameBase64(
+            req.body.otherDetails.documents[i]
+          );
+          await deleteFileUsingUrl(
+            `uploads/${existsCheck?.otherDetails?.documents[i]}`
+          );
+        }
+      }
     }
     let Obj = await Vendor.findByIdAndUpdate(req.params.id, req.body).exec();
     res.status(201).json({ message: "Vendor Updated" });
@@ -177,6 +306,27 @@ export const convertVendorToSalesContact = async (
     res.status(201).json({
       message: "Vendor successfully converted to Sales Contact",
       data: newSalesContact,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAllVendorName = async (req: any, res: any, next: any) => {
+  try {
+    let vendors = await Vendor.find(
+      {},
+      "vendor.firstName vendor.lastName"
+    ).lean();
+
+    let vendorNames = vendors.map((v: any) => ({
+      fullName: `${v.vendor.firstName} ${v.vendor.lastName}`.trim(),
+    }));
+
+    res.status(200).json({
+      message: "Found all vendor names",
+      data: vendorNames,
+      total: vendorNames.length,
     });
   } catch (error) {
     next(error);
