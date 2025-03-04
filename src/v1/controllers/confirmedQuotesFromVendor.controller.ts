@@ -283,13 +283,16 @@ export const getConfirmedQuotesByQuoteId
   try {
     let pipeline: PipelineStage[] = [];
     let matchObj: Record<string, any> = {};
-    if (req.params.id) {
-      matchObj.quoteId = req.params.quotesId;
+    if (req.params.quoteId) {
+  
+      matchObj.quotesId = req.params.quoteId;
     }
     pipeline.push({
       $match: matchObj,
     });
     let existsCheck = await QuotesFromVendors.aggregate(pipeline);
+
+    console.log(existsCheck, "check for the correct")
     if (!existsCheck || existsCheck.length == 0) {
       throw new Error("ConfirmedQuotes does not exists");
     }
