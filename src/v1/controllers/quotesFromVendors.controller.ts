@@ -18,7 +18,7 @@ export const addQuotesFromVendors = async (req: Request, res: Response, next: Ne
         //     throw new Error("Banquet with same name already exists");
         // }
 
-        console.log(req.body.attachment.include("base64"), "check attachment")
+        console.log(req.body.attachment.includes("base64"), "check attachment")
         for(let i=0; i<req.body.attachment.length; i++) {
         if (req?.body && req?.body?.attachment && req?.body?.attachment.includes("base64")) {
             req.body.attachment = await storeFileAndReturnNameBase64(req.body.attachment);
