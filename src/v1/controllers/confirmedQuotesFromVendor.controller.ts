@@ -1,0 +1,304 @@
+import { NextFunction, Request, Response } from "express";
+import { paginateAggregate } from "@helpers/paginateAggregate";
+import mongoose, { PipelineStage } from "mongoose";
+import { ConfirmedQuotes } from "@models/confirmedQuotesFromVendor.model";
+import { storeFileAndReturnNameBase64 } from "@helpers/fileSystem";
+import { deleteFileUsingUrl } from "@helpers/fileSystem";
+import { SalesContact } from "@models/salesContact.model";
+import { QuotesFromVendors } from "@models/quotesFromVendors.model";
+
+export const addConfirmedQuotes = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // let existsCheck = await ConfirmedQuotes.findOne({ name: req.body.firstName, lastName: req.body.lastName, email: req.body.email }).exec();
+    // if (existsCheck) {
+    //   throw new Error("ConfirmedQuotes with same email first name, last name and Email already exists");
+    // }
+    // console.log(req.body.ConfirmedQuotes, "req.body");
+
+    if (req?.body?.rooms) {
+      for (let i = 0; i < req.body.rooms.length; i++) {
+        const room = req.body.rooms[i];
+        if (room.roomImageUpload) {
+          for (let j = 0; j < room.roomImageUpload.length; j++) {
+            if (room.roomImageUpload[j].includes("base64")) {
+              room.roomImageUpload[j] = await storeFileAndReturnNameBase64(
+                room.roomImageUpload[j]
+              );
+            }
+          }
+        }
+      }
+    }
+
+    if (req?.body?.banquets) {
+      for (let i = 0; i < req.body.banquets.length; i++) {
+        const banquets = req.body.banquets[i];
+        if (banquets.banquetImageUpload) {
+          for (let j = 0; j < banquets.banquetImageUpload.length; j++) {
+            if (banquets.banquetImageUpload[j].includes("base64")) {
+              banquets.banquetImageUpload[j] =
+                await storeFileAndReturnNameBase64(
+                  banquets.banquetImageUpload[j]
+                );
+            }
+          }
+        }
+      }
+    }
+
+    if (req?.body?.restaurant && req?.body?.restaurant?.restaurantImageUpload?.length > 0) {
+
+      
+      for (
+        let i = 0;
+        i < req?.body?.restaurant?.restaurantImageUpload?.length;
+        i++
+      ) {
+
+        
+        if (
+          req?.body?.restaurant?.restaurantImageUpload[i] &&
+          req.body.restaurant.restaurantImageUpload[i].includes("base64")
+        ) {
+          req.body.restaurant.restaurantImageUpload[i] =
+            await storeFileAndReturnNameBase64(
+              req.body.restaurant.restaurantImageUpload[i]
+            );
+        }
+      }
+    }
+
+    if (req?.body?.otherDetails?.documents && req.body.otherDetails.documents.length > 0) {
+      console.log(req?.body?.otherDetails?.documents, "for loop is working 2")
+      for (let i = 0; i < req.body.otherDetails.documents.length; i++) {
+        console.log("for loop is working")
+        if (
+          req?.body?.otherDetails?.documents[i] &&
+          req?.body?.otherDetails?.documents[i].includes("base64")
+        ) {
+          req.body.otherDetails.documents[i] = await storeFileAndReturnNameBase64(
+            req.body.otherDetails.documents[i]
+          );
+          
+        }
+      }
+    }
+    await new ConfirmedQuotes(req.body).save();
+    res.status(201).json({ message: "ConfirmedQuotes Created" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAllConfirmedQuotes = async (req: any, res: any, next: any) => {
+  try {
+    let pipeline: PipelineStage[] = [];
+    let matchObj: Record<string, any> = {};
+
+    console.log("Incoming query:", req.query);
+
+    if (req.query.query && req.query.query !== "") {
+      matchObj["location.state"] = new RegExp(req.query.query, "i");
+      console.log(
+        "Search filter applied for location.state:",
+        matchObj["location.state"]
+      );
+    }
+
+    pipeline.push({
+      $match: matchObj,
+    });
+    let confirmedQuotesArr = await paginateAggregate(ConfirmedQuotes, pipeline, req.query);
+
+    res.status(201).json({
+      message: "found all Device",
+      data: confirmedQuotesArr.data,
+      total: confirmedQuotesArr.total,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getConfirmedQuotesById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    let pipeline: PipelineStage[] = [];
+    let matchObj: Record<string, any> = {};
+    if (req.params.id) {
+      matchObj._id = new mongoose.Types.ObjectId(req.params.id);
+    }
+    pipeline.push({
+      $match: matchObj,
+    });
+    let existsCheck = await ConfirmedQuotes.aggregate(pipeline);
+    if (!existsCheck || existsCheck.length == 0) {
+      throw new Error("ConfirmedQuotes does not exists");
+    }
+    existsCheck = existsCheck[0];
+    res.status(201).json({
+      message: "found specific ConfirmedQuotes",
+      data: existsCheck,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateConfirmedQuotesById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  console.log(req.body, "req.body full");
+  try {
+    let existsCheck = await ConfirmedQuotes.findById(req.params.id).lean().exec();
+    if (!existsCheck) {
+      throw new Error("ConfirmedQuotes does not exists");
+    }
+
+    console.log(req.body.rooms, "check room ");
+    let Obj = await ConfirmedQuotes.findByIdAndUpdate(req.params.id, req.body).exec();
+    res.status(201).json({ message: "ConfirmedQuotes Updated" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteConfirmedQuotesById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    let existsCheck = await ConfirmedQuotes.findById(req.params.id).exec();
+    if (!existsCheck) {
+      throw new Error("ConfirmedQuotes does not exists or already deleted");
+    }
+    // await deleteFileUsingUrl(`uploads/${existsCheck.otherDetails.documents}`);
+    await ConfirmedQuotes.findByIdAndDelete(req.params.id).exec();
+    res.status(201).json({ message: "ConfirmedQuotes Deleted" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// export const convertConfirmedQuotesToSalesContact = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ) => {
+//   try {
+//     const confirmedQuotesId = req.params.id;
+
+//     const confirmedQuotes = await ConfirmedQuotes.findById(confirmedQuotesId).lean().exec();
+//     if (!ConfirmedQuotes) {
+//       throw new Error("ConfirmedQuotes does not exist");
+//     }
+
+//     const salesContactData = {
+//       salutation: ConfirmedQuotes.ConfirmedQuotes.salutation || "",
+//       firstName: ConfirmedQuotes.ConfirmedQuotes.firstName || "",
+//       lastName: ConfirmedQuotes.ConfirmedQuotes.lastName || "",
+//       email: ConfirmedQuotes.ConfirmedQuotes.email || "",
+//       phone: ConfirmedQuotes.ConfirmedQuotes.phoneNumber || "",
+//       company: ConfirmedQuotes.ConfirmedQuotes.companyName || "",
+//       confirmedQuotesId: ConfirmedQuotes._id,
+//       state: ConfirmedQuotes.location.state || "",
+//       city: ConfirmedQuotes.location.city || "",
+//       area: ConfirmedQuotes.location.area || "",
+//       phoneNumber: ConfirmedQuotes.ConfirmedQuotes.phoneNumber || "",
+//     };
+
+//     const newSalesContact = await new SalesContact(salesContactData).save();
+
+//     res.status(201).json({
+//       message: "ConfirmedQuotes successfully converted to Sales Contact",
+//       data: newSalesContact,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
+// export const getAllConfirmedQuotesName = async (req: any, res: any, next: any) => {
+//   try {
+//     let confirmedQuotes = await ConfirmedQuotes.find(
+//       {},
+//       "ConfirmedQuotes.firstName ConfirmedQuotes.lastName"
+//     ).lean();
+
+//     let ConfirmedQuotesNames = ConfirmedQuotess.map((v: any) => ({
+//       fullName: `${v.ConfirmedQuotes.firstName} ${v.ConfirmedQuotes.lastName}`.trim(),
+//     }));
+
+//     res.status(200).json({
+//       message: "Found all ConfirmedQuotes names",
+//       data: ConfirmedQuotesNames,
+//       total: ConfirmedQuotesNames.length,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
+export const getAllQuoteId = async (req: any, res: any, next: any) => {
+
+  console.log("check it is working")
+  try {
+    
+    
+    let QuoteIds = await QuotesFromVendors.find({},{ quotesId: 1, _id: 0 })
+
+    console.log(QuoteIds, "check all the quotes id")
+  
+    
+
+    res.status(201).json({
+      message: "found all Device",
+      data: QuoteIds
+      
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const getConfirmedQuotesByQuoteId
+= async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+
+  console.log("check it is working")
+  try {
+    let pipeline: PipelineStage[] = [];
+    let matchObj: Record<string, any> = {};
+    if (req.params.id) {
+      matchObj.quoteId = req.params.quotesId;
+    }
+    pipeline.push({
+      $match: matchObj,
+    });
+    let existsCheck = await QuotesFromVendors.aggregate(pipeline);
+    if (!existsCheck || existsCheck.length == 0) {
+      throw new Error("ConfirmedQuotes does not exists");
+    }
+    existsCheck = existsCheck[0];
+    res.status(201).json({
+      message: "found specific ConfirmedQuotes",
+      data: existsCheck,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

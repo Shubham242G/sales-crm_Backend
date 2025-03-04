@@ -15,6 +15,7 @@ import taskManagementRouter from "@routesv1/taskManagement.routes";
 import rolesRouter from "@routesv1/roles.routes";
 import departmentMasterRouter from "@routesv1/departmentMaster.routes";
 import quotesFromVendorsRouter from "@routesv1/quotesFromVendors.route" 
+import confirmedQuotesFromVendorRouter from "@routesv1/confirmedQuotesFromVendor.routes"
 import express from "express";
 
 const router = express.Router();
@@ -36,6 +37,7 @@ router.use("/task", taskManagementRouter);
 router.use("/roles", rolesRouter);
 router.use('/departmentMaster', departmentMasterRouter)
 router.use('/quotesFromVendors', quotesFromVendorsRouter)
+router.use('/confirmedQuotes', confirmedQuotesFromVendorRouter)
 // router.use("/adminroutes")
 
 // =======<ryz>====== //
