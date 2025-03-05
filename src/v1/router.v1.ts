@@ -14,8 +14,9 @@ import customerRouter from "@routesv1/customer.routes";
 import taskManagementRouter from "@routesv1/taskManagement.routes";
 import rolesRouter from "@routesv1/roles.routes";
 import departmentMasterRouter from "@routesv1/departmentMaster.routes";
-import quotesFromVendorsRouter from "@routesv1/quotesFromVendors.route" 
+import quotesFromVendorsRouter from "@routesv1/quotesFromVendors.routes" 
 import confirmedQuotesFromVendorRouter from "@routesv1/confirmedQuotesFromVendor.routes"
+import quotesToCustomerRouter from "@routesv1/quotesToCustomer.routes"
 import express from "express";
 
 const router = express.Router();
@@ -38,6 +39,7 @@ router.use("/roles", rolesRouter);
 router.use('/departmentMaster', departmentMasterRouter)
 router.use('/quotesFromVendors', quotesFromVendorsRouter)
 router.use('/confirmedQuotes', confirmedQuotesFromVendorRouter)
+router.use('/quotesToCustomer', quotesToCustomerRouter)
 // router.use("/adminroutes")
 
 // =======<ryz>====== //
