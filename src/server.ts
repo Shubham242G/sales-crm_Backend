@@ -1,4 +1,4 @@
-import 'module-alias/register';
+import "module-alias/register";
 
 /**
  * Module dependencies.
@@ -7,6 +7,9 @@ import 'module-alias/register';
 import app from "./app";
 import http from "http";
 import { CONFIG } from "@common/config.common";
+import { Server } from "socket.io";
+// import { setupSocket } from "@controllers/taskManagement.controller";
+import { socketConnection } from "@helpers/socket";
 
 // console.clear();
 console.log("Starting server... \n");
@@ -22,7 +25,26 @@ app.set("port", port);
  * Create HTTP server.
  */
 
-const server = http.createServer(app);
+export const server = http.createServer(app);
+
+socketConnection(server);
+
+// export const io = new Server(server, {
+//   cors: {
+//     origin: "http://localhost:8080",
+//     methods: ["GET", "POST", "PUT", "DELETE"],
+//     credentials: true,
+//   },
+// });
+// io.on("connection", (socket: any) => {
+//   console.log("New connection:", socket.id);
+//   socket.broadcast.emit("check", "how are you");
+
+//   socket.on("disconnect", () => {
+//     console.log("User disconnected:", socket.id);
+//   });
+// });
+// setupSocket();
 
 /**
  * Listen on provided port, on all network interfaces.

@@ -8,6 +8,7 @@ import logger from "morgan";
 import path from "path";
 import { errorHandler } from "./middlewares/errorHandler.middleware";
 
+
 const app = express();
 
 // ==============<>============== //

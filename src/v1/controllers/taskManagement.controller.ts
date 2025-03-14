@@ -8,15 +8,22 @@ import { Rfp } from "@models/rfp.model";
 import { last } from "lodash";
 import { SalesContact } from "@models/salesContact.model";
 import { User } from "@models/user.model";
+import { sendMessageToUser } from "@helpers/socket";
+// import { io } from "../../server"; // Import io from server.ts
 
+// export const setupSocket = () => {
+//   io.on("connection", (socket: any) => {
+//     console.log("New connection:", socket.id);
 
-// import {Server} from "socket.io"
-// import http from "http";
-// import { io } from "../../server";
-// import app from "src/app";
+//     socket.on("disconnect", () => {
+//       console.log("User disconnected:", socket.id);
+//     });
+//   });
+// };
 
-
-
+setTimeout(() => {
+  sendMessageToUser("67ab646fe5d5799c01595d5e", "hello");
+}, 10000);
 
 export const addTaskManagement = async (
   req: Request,
@@ -107,13 +114,11 @@ export const getAllTaskManagement = async (req: any, res: any, next: any) => {
       req.query
     );
 
-    res
-      .status(201)
-      .json({
-        message: "found all Device",
-        data: TaskManagementArr.data,
-        total: TaskManagementArr.total,
-      });
+    res.status(201).json({
+      message: "found all Device",
+      data: TaskManagementArr.data,
+      total: TaskManagementArr.total,
+    });
   } catch (error) {
     next(error);
   }
@@ -168,13 +173,11 @@ export const getMyTasks = async (req: any, res: any, next: any) => {
       req.query
     );
 
-    res
-      .status(201)
-      .json({
-        message: "found all Device",
-        data: TaskManagementArr.data,
-        total: TaskManagementArr.total,
-      });
+    res.status(201).json({
+      message: "found all Device",
+      data: TaskManagementArr.data,
+      total: TaskManagementArr.total,
+    });
   } catch (error) {
     next(error);
   }
@@ -192,7 +195,9 @@ export const getTaskManagementById = async (
     }
 
     let pipeline: PipelineStage[] = [];
-    let matchObj: Record<string, any> = { _id: new mongoose.Types.ObjectId(req.params.id) };
+    let matchObj: Record<string, any> = {
+      _id: new mongoose.Types.ObjectId(req.params.id),
+    };
 
     pipeline = [
       { $match: matchObj },
@@ -201,45 +206,79 @@ export const getTaskManagementById = async (
         $match: {
           $or: [
             { reassignments: { $exists: false } },
-            { "reassignments.reAssignedTo": { $exists: true, $ne: null } }
-          ]
-        }
+            { "reassignments.reAssignedTo": { $exists: true, $ne: null } },
+          ],
+        },
       },
       {
         $addFields: {
           reAssignedTo: {
             $cond: {
-              if: { $and: [
-                { $ifNull: ["$reassignments.reAssignedTo", false] },
-                { $eq: [{ $strLenCP: "$reassignments.reAssignedTo" }, 24] }
-              ] },
+              if: {
+                $and: [
+                  { $ifNull: ["$reassignments.reAssignedTo", false] },
+                  { $eq: [{ $strLenCP: "$reassignments.reAssignedTo" }, 24] },
+                ],
+              },
               then: { $toObjectId: "$reassignments.reAssignedTo" },
-              else: "$reassignments.reAssignedTo"
-            }
+              else: "$reassignments.reAssignedTo",
+            },
           },
           previousAssignee: {
             $cond: {
-              if: { $and: [
-                { $ifNull: ["$reassignments.previousAssignee", false] },
-                { $eq: [{ $strLenCP: "$reassignments.previousAssignee" }, 24] }
-              ] },
+              if: {
+                $and: [
+                  { $ifNull: ["$reassignments.previousAssignee", false] },
+                  {
+                    $eq: [{ $strLenCP: "$reassignments.previousAssignee" }, 24],
+                  },
+                ],
+              },
               then: { $toObjectId: "$reassignments.previousAssignee" },
-              else: "$reassignments.previousAssignee"
-            }
-          }
-        }
+              else: "$reassignments.previousAssignee",
+            },
+          },
+        },
       },
-      { $lookup: { from: "users", localField: "reAssignedTo", foreignField: "_id", as: "reassignedUsers" } },
-      { $lookup: { from: "users", localField: "previousAssignee", foreignField: "_id", as: "previousAssigneeUsers" } },
-      { $unwind: { path: "$reassignedUsers", preserveNullAndEmptyArrays: true } },
-      { $unwind: { path: "$previousAssigneeUsers", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "reAssignedTo",
+          foreignField: "_id",
+          as: "reassignedUsers",
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "previousAssignee",
+          foreignField: "_id",
+          as: "previousAssigneeUsers",
+        },
+      },
+      {
+        $unwind: { path: "$reassignedUsers", preserveNullAndEmptyArrays: true },
+      },
+      {
+        $unwind: {
+          path: "$previousAssigneeUsers",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
       {
         $addFields: {
           "reassignments.previousAssigneeName": "$previousAssigneeUsers.name",
-          "reassignments.assignedName": "$reassignedUsers.name"
-        }
+          "reassignments.assignedName": "$reassignedUsers.name",
+        },
       },
-      { $lookup: { from: "users", localField: "assignedTo", foreignField: "_id", as: "user" } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "assignedTo",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
       { $unwind: { path: "$user", preserveNullAndEmptyArrays: false } },
       { $addFields: { assignedToName: "$user.name" } },
       { $unset: ["user", "reassignedUsers", "previousAssigneeUsers"] },
@@ -263,11 +302,11 @@ export const getTaskManagementById = async (
               $cond: {
                 if: { $eq: ["$reassignments", {}] },
                 then: "$$REMOVE",
-                else: "$reassignments"
-              }
-            }
-          }
-        }
+                else: "$reassignments",
+              },
+            },
+          },
+        },
       },
       {
         $project: {
@@ -291,35 +330,34 @@ export const getTaskManagementById = async (
               else: {
                 $filter: {
                   input: "$reassignments",
-                  cond: { $ne: ["$$this", null] }
-                }
-              }
-            }
-          }
-        }
-      }
+                  cond: { $ne: ["$$this", null] },
+                },
+              },
+            },
+          },
+        },
+      },
     ];
     let existsCheck = await TaskManagement.aggregate(pipeline);
     if (!existsCheck || existsCheck.length === 0) {
       throw new Error("TaskManagement does not exist");
     }
     existsCheck = existsCheck[0];
-    res.status(200).json({ message: "Found specific Contact", data: existsCheck });
+    res
+      .status(200)
+      .json({ message: "Found specific Contact", data: existsCheck });
   } catch (error) {
     console.log(error, "check error in taskManagment");
     next(error);
   }
 };
 
-
 export const updateTaskManagementById = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-
-
-  console.log(req.body, "check req.body ")
+  console.log(req.body, "check req.body ");
   try {
     let existsCheck = await TaskManagement.findById(req.params.id)
       .lean()
