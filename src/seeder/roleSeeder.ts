@@ -215,6 +215,15 @@ export const roleSeeder = async () => {
             view: true,
           },
         },
+        {
+          routeName: "Venue Search",
+          permissions: {
+            create: true,
+            updatet: true,
+            delete: true,
+            view: true,
+          }
+        }
       ],
     }).save();
   } catch (error) {

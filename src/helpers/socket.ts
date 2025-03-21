@@ -4,6 +4,7 @@ let io: Server | null = null;
 const userSocketMap = new Map<string, string>(); // Store userId -> socketId mapping
 
 export const socketConnection = (server: any) => {
+  console.log("socketConnection working");
   io = new Server(server, {
     cors: {
       origin: "http://localhost:8080", // Change for production
@@ -41,6 +42,8 @@ export const socketConnection = (server: any) => {
 
 // Send message to a specific user
 export const sendMessageToUser = (userId: string, message: string) => {
+
+  console.log("working  ")
   if (!io) {
     console.error("Socket.io not initialized");
     return;

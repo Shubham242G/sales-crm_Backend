@@ -50,9 +50,19 @@ export const getAllLead = async (req: any, res: any, next: any) => {
         if (req.query.query && req.query.query != "") {
             matchObj.name = new RegExp(req.query.query, "i");
         }
-        pipeline.push({
-            $match: matchObj,
-        });
+        pipeline.push(
+            {
+                $match: matchObj,
+            }
+        );
+        if (req?.query?.isForSelectInput) {
+            pipeline.push({
+                $project: {
+                    label:{ $concat: [ "$firstName", " ", "$lastName" ] } ,
+                    value: "$_id"
+                },
+            })
+        }
         let LeadArr = await paginateAggregate(Lead, pipeline, req.query);
 
         res.status(201).json({ message: "found all Device", data: LeadArr.data, total: LeadArr.total });
@@ -120,102 +130,103 @@ export const deleteLeadById = async (req: Request, res: Response, next: NextFunc
 };
 
 
- export const convertToContact = async (req: Request, res: Response, next: NextFunction) => {
-        // try {
-        //     let existsCheck = await SalesContact.findOne({ firstName: req.body.first,  lastName: req.body.last, companyName: req.body.company }).exec();
-        //     if (existsCheck) {
-        //         throw new Error("Contact with same name already exists");
-        //     }
+// export const convertToContact = async (req: Request, res: Response, next: NextFunction) => {
+//     // try {
+//     //     let existsCheck = await SalesContact.findOne({ firstName: req.body.first,  lastName: req.body.last, companyName: req.body.company }).exec();
+//     //     if (existsCheck) {
+//     //         throw new Error("Contact with same name already exists");
+//     //     }
 
-        console.log( req.params.id , 
-            
-        "check params id lead"
-            
-        )
+//     console.log(req.params.id,
 
-        try{
-            const lead = await Lead.findById(req.params.id).exec();
-            if (!lead) {
-                throw new Error("Lead not found");
+//         "check params id lead"
+
+//     )
+
+//     try {
+//         const lead = await Lead.findById(req.params.id).exec();
+//         if (!lead) {
+//             throw new Error("Lead not found");
+//         }
+
+//         // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
+//         //     console.log("first", req.body.imagesArr)
+//         //     for (const el of req.body.imagesArr) {
+//         //         if (el.image && el.image !== "") {
+//         //             el.image = await storeFileAndReturnNameBase64(el.image);
+//         //         }
+//         //     }
+//         // }
+
+
+
+//         const existingContact = await SalesContact.findOne({ leadId: req.params.id }).exec();
+//         if (existingContact) {
+//             throw new Error("A contact already exists for this lead.");
+//         }
+
+
+
+//         if (lead) {
+
+
+//             const salesContact = new SalesContact({
+//                 firstName: lead.firstName,
+//                 lastName: lead.lastName,
+//                 phone: lead.phone,
+//                 email: lead.email,
+//                 company: lead.company,
+//                 salutation: lead.salutation,
+//                 leadId: lead._id,
+
+//             });
+
+//             await salesContact.save();
+
+//             res.status(200).json({ message: "Contact conversion completed successfully", data: salesContact });
+//         }
+
+
+
+
+
+
+//         res.status(500).json({ message: "Something Went Wrong", });
+
+
+
+//     } catch (error) {
+//         next(error);
+//     };
+// }
+
+export const BulkUploadLead: RequestHandler = async (req, res, next) => {
+
+
+    console.log("Uploading File", req.body.file);
+    try {
+        let xlsxFile: any = req.file?.path;
+        if (!xlsxFile) throw new Error("File Not Found");
+
+        // Read the Excel file
+        let workbook = XLSX.readFile(xlsxFile);
+        let sheet_nameList = workbook.SheetNames;
+
+        let xlData: any = [];
+        sheet_nameList.forEach((element: any) => {
+            console.log(element, "check element")
+            xlData.push(...XLSX.utils.sheet_to_json(workbook.Sheets[element]));
+        });
+
+        if (xlData && xlData.length > 0) {
+            xlData.map(async (el: any) => await new Lead(el).save())
         }
-    
-            // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
-            //     console.log("first", req.body.imagesArr)
-            //     for (const el of req.body.imagesArr) {
-            //         if (el.image && el.image !== "") {
-            //             el.image = await storeFileAndReturnNameBase64(el.image);
-            //         }
-            //     }
-            // }
-
-
-         
-            const existingContact = await SalesContact.findOne({ leadId: req.params.id}).exec();
-            if (existingContact) {
-                throw new Error("A contact already exists for this lead.");
-              }
-
-  
-
-            if (lead) {
-    
-    
-                    const salesContact = new SalesContact({
-                        firstName: lead.firstName, 
-                        lastName: lead.lastName,
-                        phone: lead.phone,
-                        email: lead.email,
-                        company: lead.company,
-                        salutation: lead.salutation,
-                        leadId: lead._id,
-                        
-                    });
-    
-                    await salesContact.save();
-    
-                    res.status(200).json({ message: "Contact conversion completed successfully", data: salesContact }); }
-    
-             
-    
-    
-          
-    
-            res.status(500).json({ message: "Something Went Wrong", });
-    
-    
-    
-        } catch (error) {
-            next(error);
-        };
+        res.status(200).json({ message: "File Uploaded Successfully" });
+        console.log(xlData, "check xlData")
+    } catch (error) {
+        next(error);
     }
-
-    export const BulkUploadLead: RequestHandler = async (req, res, next) => {
-    
-    
-        console.log("Uploading File", req.body.file);
-        try {
-            let xlsxFile: any = req.file?.path;
-            if (!xlsxFile) throw new Error("File Not Found");
-    
-            // Read the Excel file
-            let workbook = XLSX.readFile(xlsxFile);
-            let sheet_nameList = workbook.SheetNames;
-    
-            let xlData: any = [];
-            sheet_nameList.forEach((element: any) => {
-                console.log(element, "check element")
-                xlData.push(...XLSX.utils.sheet_to_json(workbook.Sheets[element]));
-            });
-    
-            if(xlData && xlData.length > 0) {
-                xlData.map(async (el: any) => await new Lead(el).save())
-            }
-            res.status(200).json({ message: "File Uploaded Successfully" });
-            console.log(xlData, "check xlData")
-        } catch (error) {
-            next(error);
-        }
-    }
+}
 
 
 export const downloadExcelLead = async (req: Request, res: Response, next: NextFunction) => {
@@ -333,7 +344,7 @@ export const downloadExcelLead = async (req: Request, res: Response, next: NextF
                 // checkIn: Enquiry.checkIn,
                 // checkOut: Enquiry.checkOut,
                 // noOfRooms: Enquiry.noOfRooms,
-                
+
 
 
                 // displayName: contact.displayName,
@@ -376,7 +387,27 @@ export const downloadExcelLead = async (req: Request, res: Response, next: NextF
     }
 };
 
+export const getAllLeadName = async (req: any, res: any, next: any) => {
+    try {
+        let leads = await Lead.find(
+            {},
+            { firstName: 1, lastName: 1, _id: 0 }
+        ).lean();
 
 
+        let leadNames = leads.map((v: any) => ({
+            fullName: `${v.firstName} ${v.lastName}`.trim(),
+        }));
 
 
+        res.status(200).json({
+            message: "Found all leads names",
+            data: leadNames,
+            total: leadNames.length,
+        });
+    } catch (error) {
+        console.log(error, "ERROR")
+        next(error);
+    }
+
+};

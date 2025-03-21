@@ -7,7 +7,7 @@ import "module-alias/register";
 import app from "./app";
 import http from "http";
 import { CONFIG } from "@common/config.common";
-import { Server } from "socket.io";
+
 // import { setupSocket } from "@controllers/taskManagement.controller";
 import { socketConnection } from "@helpers/socket";
 
@@ -27,7 +27,7 @@ app.set("port", port);
 
 export const server = http.createServer(app);
 
-socketConnection(server);
+socketConnection(server); 
 
 // export const io = new Server(server, {
 //   cors: {

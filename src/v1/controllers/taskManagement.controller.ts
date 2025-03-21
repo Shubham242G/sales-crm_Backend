@@ -9,6 +9,7 @@ import { last } from "lodash";
 import { SalesContact } from "@models/salesContact.model";
 import { User } from "@models/user.model";
 import { sendMessageToUser } from "@helpers/socket";
+import { Notification } from "@models/notification.model";
 // import { io } from "../../server"; // Import io from server.ts
 
 // export const setupSocket = () => {
@@ -21,9 +22,9 @@ import { sendMessageToUser } from "@helpers/socket";
 //   });
 // };
 
-setTimeout(() => {
-  sendMessageToUser("67ab646fe5d5799c01595d5e", "hello");
-}, 10000);
+// setTimeout(() => {
+//   sendMessageToUser("67ab646fe5d5799c01595d5e", "hello");
+// }, 10000);
 
 export const addTaskManagement = async (
   req: Request,
@@ -45,10 +46,21 @@ export const addTaskManagement = async (
     //     }
     // }
 
+    sendMessageToUser(req.body.assignedTo, `You have been assigned a new task: ${req.body.taskTitle}`);
+
     const taskManagement = await new TaskManagement({
       ...req.body,
       userId: req.body.reassignments.res,
     }).save();
+
+    
+  if(taskManagement.assignedTo){
+    const notification = await new Notification({
+      message: `You have been assigned a new task: ${req.body.taskTitle}`,
+      userId: taskManagement.assignedTo.toString(),
+  }).save();
+  }
+    
 
     // const taskManagement1 = await new TaskManagement({
     //   ...req.body,
@@ -64,6 +76,10 @@ export const addTaskManagement = async (
     //   description: taskManagement1.description,
     //   startDate: taskManagement1.startDate,
     // });
+
+
+
+
 
     res
       .status(201)
@@ -377,6 +393,11 @@ export const updateTaskManagementById = async (
       req.params.id,
       req.body
     ).exec();
+
+    // let notification = await new Notification({
+    //   assignedTo: req.body.assignedTo,
+    // })
+
     res.status(201).json({ message: "TaskManagement Updated" });
   } catch (error) {
     next(error);

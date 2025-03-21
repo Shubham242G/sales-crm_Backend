@@ -288,7 +288,7 @@ export const getAllUsers = async (
 ) => {
   try {
     let queryObj: any = {
-      role: { $ne: ROLES.ADMIN },
+      role: { $ne: ROLES.STOREINCHARGE },
       _id: { $ne: new mongoose.Types.ObjectId(req.user?.userId) },
     };
     if (req.query.role && req.query.role != "undefined") {
