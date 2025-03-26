@@ -561,6 +561,8 @@ export const convertRfp = async (
           },
         ];
 
+
+
     
     const rfp = new Rfp({
       rfpId,
@@ -570,16 +572,20 @@ export const convertRfp = async (
         enquiry.eventSetup?.setupRequired || ""
       }`.trim(),
       enquiryId: enquiry._id,
-      vendorList: [
-        {
-          label: `${enquiry.firstName} ${enquiry.lastName || ""}`.trim(),
-          value: enquiry._id.toString(),
-        },
-      ],
+      fullName : `${enquiry.firstName} ${enquiry.lastName || ""}`.trim(),
+      vendorList: [],
+      // vendorList: [
+      //   {
+      //     label: `${enquiry.firstName} ${enquiry.lastName || ""}`.trim(),
+      //     value: enquiry._id.toString(),
+      //   },
+      // ],
       additionalInstructions: "",
     });
 
     await rfp.save();
+    
+    console.log(rfp.vendorList, "vendorList");
 
     return res.status(200).json({
       message: "RFP conversion completed successfully",

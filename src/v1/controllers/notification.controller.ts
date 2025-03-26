@@ -15,6 +15,8 @@ export const addNotification = async (req: Request, res: Response, next: NextFun
         //     throw new Error("Banquet with same name already exists");
         // }
 
+        console.log(req.body, "check req body");
+
         await new Notification(req.body).save();
         res.status(201).json({ message: "Notification Created" });
     } catch (error) {
@@ -24,8 +26,11 @@ export const addNotification = async (req: Request, res: Response, next: NextFun
 
 export const getAllNotification = async (req: any, res: any, next: any) => {
     try {
+
+        console.log(req.user, "check req user");req.user.userId;
         let pipeline: PipelineStage[] = [];
         let matchObj: Record<string, any> = {};
+    
         if (req.query.query && req.query.query != "") {
             matchObj.name = new RegExp(req.query.query, "i");
         }

@@ -6,7 +6,7 @@ const router = express.Router();
 
 
 router.post('/', addNotification);
-router.get('/', getAllNotification);
+router.get('/', authorizeJwt, getAllNotification);
 router.get('/getById/:id', getNotificationById);
 router.patch('/updateById/:id', updateNotificationById);
 router.delete('/deleteById/:id', deleteNotificationById);

@@ -17,7 +17,8 @@ interface IRfp {
             startDate: Date,
             endDate: Date
         }],
-    eventDetails: string;
+    eventDetails: string ; 
+    fullName : string;
 
     deadlineOfProposal: string;
     vendorList: IVendorList[];
@@ -39,6 +40,7 @@ const RfpSchema = new Schema({
         startDate: Date,
         endDate: Date,
     }],   
+    fullName : String,
     eventDetails: String,
     deadlineOfProposal: String,
     vendorList: [], 
