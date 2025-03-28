@@ -8,7 +8,6 @@ interface customerName {
 
 export interface IDailyActivityReport {
     companyName: string;
-    salesPerson:string;
     purposeOfVisit: string;
     dateOfVisit: string;
     modeOfMeeting: string;
@@ -22,7 +21,6 @@ export interface IDailyActivityReport {
 const dailyActivityReportSchema = new Schema<IDailyActivityReport>(
     {
         companyName: String,
-        salesPerson:String,
         purposeOfVisit: String,
         dateOfVisit: String,
         modeOfMeeting: String,
