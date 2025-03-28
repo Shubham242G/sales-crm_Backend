@@ -75,7 +75,7 @@ export const getDailyActivityReportById = async (req: Request, res: Response, ne
         });
         let existsCheck = await DailyActivityReport.aggregate(pipeline);
         if (!existsCheck || existsCheck.length == 0) {
-            throw new Error("Banquet does not exists");
+            throw new Error("Daily Activity Report does not exists");
         }
         existsCheck = existsCheck[0];
         res.status(201).json({
