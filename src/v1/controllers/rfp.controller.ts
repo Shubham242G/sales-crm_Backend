@@ -106,8 +106,7 @@ export const getRfpById = async (req: Request, res: Response, next: NextFunction
 
 export const updateRfpById = async (req: Request, res: Response, next: NextFunction) => {
 
-    console.log(req.body, "check req body ")
-    console.log(req.body.vendorList , "check vendor List")
+
     try {
         let existsCheck = await Rfp.findById(req.params.id).lean().exec();
         if (!existsCheck) {
@@ -153,11 +152,9 @@ export const BulkUploadRfp: RequestHandler = async (req, res, next) => {
 
         let xlData: any = [];
         sheet_nameList.forEach((element: any) => {
-            console.log(element, "check element")
             xlData.push(...XLSX.utils.sheet_to_json(workbook.Sheets[element]));
         });
 
-        console.log(xlData, "check xlData")
 
         // Caching
         // const countryCache = new Map();
@@ -299,7 +296,6 @@ export const BulkUploadRfp: RequestHandler = async (req, res, next) => {
         }
 
 
-        console.log(finalArr, "check finalArr")
         if (finalArr.length > 0) {
             await Rfp.insertMany(finalArr);
 
@@ -477,7 +473,6 @@ export const convertRfp = async (req: Request, res: Response, next: NextFunction
             throw new Error("RFP does not exist");
         }
 
-        console.log("vendorList ==>", rfp?.vendorList);
 
         // Fetch the latest RFP ID
         const lastRfp = await QuotesFromVendors.findOne()

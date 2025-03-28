@@ -99,7 +99,6 @@ export const updateDepartmentMasterById = async (
 
     }
 
-    console.log(req.body, "req.body full");
     
     let Obj = await DepartmentMaster.findByIdAndUpdate(req.params.id, req.body).exec();
     res.status(201).json({ message: "DepartmentMaster Updated" });

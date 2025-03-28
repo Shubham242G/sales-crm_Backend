@@ -16,7 +16,6 @@ export const addResturant = async (req: Request, res: Response, next: NextFuncti
         // }
 
         if(req.body.imagesArr && req.body.imagesArr.length > 0){
-            console.log("first",req.body.imagesArr)
             for(const el of req.body.imagesArr){
                 if (el.image && el.image !== "") {
                     el.image = await storeFileAndReturnNameBase64(el.image);

@@ -133,11 +133,10 @@ export const BulkUploadPurchaseContact: RequestHandler = async (req, res, next) 
 
         let xlData: any = [];
         sheet_nameList.forEach((element: any) => {
-            console.log(element, "check element")
             xlData.push(...XLSX.utils.sheet_to_json(workbook.Sheets[element]));
         });
 
-        console.log(xlData, "check xlData")
+        
 
         // Caching
         // const countryCache = new Map();
@@ -278,7 +277,6 @@ export const BulkUploadPurchaseContact: RequestHandler = async (req, res, next) 
         }
 
 
-        console.log(finalArr, "check finalArr")
         if (finalArr.length > 0) {
             await PurchaseContact.insertMany(finalArr);
 
@@ -388,7 +386,6 @@ export const downloadExcelPurchaseContact = async (req: Request, res: Response, 
         let contacts = await PurchaseContact.find({}).lean().exec();
 
         contacts.forEach((contact) => {
-            console.log(contact, "check contact")
             worksheet.addRow({
                 _id: contact._id,
                 displayName: contact.firstName,

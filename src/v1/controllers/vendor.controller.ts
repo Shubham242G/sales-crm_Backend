@@ -72,9 +72,7 @@ export const addVendor = async (
     }
 
     if (req?.body?.otherDetails?.documents && req.body.otherDetails.documents.length > 0) {
-      console.log(req?.body?.otherDetails?.documents, "for loop is working 2")
       for (let i = 0; i < req.body.otherDetails.documents.length; i++) {
-        console.log("for loop is working")
         if (
           req?.body?.otherDetails?.documents[i] &&
           req?.body?.otherDetails?.documents[i].includes("base64")
@@ -98,14 +96,10 @@ export const getAllVendor = async (req: any, res: any, next: any) => {
     let pipeline: PipelineStage[] = [];
     let matchObj: Record<string, any> = {};
 
-    console.log("Incoming query:", req.query);
 
     if (req.query.query && req.query.query !== "") {
       matchObj["location.state"] = new RegExp(req.query.query, "i");
-      console.log(
-        "Search filter applied for location.state:",
-        matchObj["location.state"]
-      );
+      
     }
 
     pipeline.push({
@@ -156,14 +150,12 @@ export const updateVendorById = async (
   res: Response,
   next: NextFunction
 ) => {
-  console.log(req.body, "req.body full");
   try {
     let existsCheck = await Vendor.findById(req.params.id).lean().exec();
     if (!existsCheck) {
       throw new Error("Vendor does not exists");
     }
 
-    console.log(req.body.rooms, "check room ");
 
     if (req?.body?.rooms) {
       for (let i = 0; i < req.body.rooms.length; i++) {
@@ -183,7 +175,6 @@ export const updateVendorById = async (
       }
     }
 
-    console.log(req.body.banquets, "check banquets");
 
     if (req?.body?.banquets) {
       for (let i = 0; i < req.body.banquets.length; i++) {
@@ -204,18 +195,15 @@ export const updateVendorById = async (
       }
     }
 
-    console.log( req.body.restaurant.restaurantImageUpload,"checking the restaurant");
 
     if (req?.body?.restaurant && req?.body?.restaurant?.restaurantImageUpload?.length > 0) {
 
-      console.log(req?.body?.restaurant?.restaurantImageUpload, "for loop is working 2")
       for (
         let i = 0;
         i < req?.body?.restaurant?.restaurantImageUpload?.length;
         i++
       ) {
 
-        console.log("for loop is working")
         if (
           req?.body?.restaurant?.restaurantImageUpload[i] &&
           req.body.restaurant.restaurantImageUpload[i].includes("base64")
@@ -231,11 +219,8 @@ export const updateVendorById = async (
       }
     }
 
-    console.log(req.body, "req.body full");
     if (req?.body?.otherDetails?.documents && req.body.otherDetails.documents.length > 0) {
-      console.log(req?.body?.otherDetails?.documents, "for loop is working 2")
       for (let i = 0; i < req.body.otherDetails.documents.length; i++) {
-        console.log("for loop is working")
         if (
           req?.body?.otherDetails?.documents[i] &&
           req?.body?.otherDetails?.documents[i].includes("base64")

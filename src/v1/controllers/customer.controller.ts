@@ -15,7 +15,6 @@ export const addCustomer = async (req: Request, res: Response, next: NextFunctio
         // if (existsCheck) {
         //     throw new Error("Banquet with same name already exists");
         // }
-        console.log(req.body.documentArray, "checking the document array in controller");
         // if (req?.body?.documentArray && req?.body?.documentArray?.length > 0 && req?.body?.documentArray?.includes("base64"))  {
             
         //     for (let el of req?.body?.documentArray) {
@@ -32,7 +31,6 @@ export const addCustomer = async (req: Request, res: Response, next: NextFunctio
             req.body.documentArray = await Promise.all(
               req.body.documentArray.map(async (el: any) => {
                 if (el && el.includes("base64")) {
-                  console.log("el check for store", el);
                   return await storeFileAndReturnNameBase64(el);
                 }
                 return el; // Return the same value if no update is needed
@@ -40,7 +38,7 @@ export const addCustomer = async (req: Request, res: Response, next: NextFunctio
             );
           }
 
-        console.log(req.body.documentArray, 'checking the document array after conversion');
+   
         const customer = await new Customer(req.body).save();
         res.status(201).json({ message: "Customer Created" });
 
@@ -51,7 +49,7 @@ export const addCustomer = async (req: Request, res: Response, next: NextFunctio
 };
 
 export const getAllCustomer = async (req: any, res: any, next: any) => {
-    console.log("check")
+
     try {
         let pipeline: PipelineStage[] = [];
         let matchObj: Record<string, any> = {};
@@ -96,7 +94,6 @@ export const getCustomerById = async (req: Request, res: Response, next: NextFun
 export const updateCustomerById = async (req: Request, res: Response, next: NextFunction) => {
     try {
 
-        console.log(req.body.documentArray, "check the document array in updateCustomer"); 
         let existsCheck = await Customer.findById(req.params.id).lean().exec();
         if (!existsCheck) {
             throw new Error("Customer does not exists");
@@ -120,7 +117,6 @@ export const updateCustomerById = async (req: Request, res: Response, next: Next
             req.body.documentArray = await Promise.all(
               req.body.documentArray.map(async (el: any) => {
                 if (el && el.includes("base64")) {
-                  console.log("el check for store", el);
                   return await storeFileAndReturnNameBase64(el);
                 }
                 return el; // Return the same value if no update is needed
@@ -129,7 +125,6 @@ export const updateCustomerById = async (req: Request, res: Response, next: Next
           }
 
 
-        console.log(req.body.documentArray, "check after conversion");
         let Obj = await Customer.findByIdAndUpdate(req.params.id, req.body).exec();
         res.status(201).json({ message: "Customer Updated" });
     } catch (error) {

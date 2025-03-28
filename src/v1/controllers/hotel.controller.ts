@@ -14,7 +14,6 @@ export const addHotel = async (req: Request, res: Response, next: NextFunction) 
         }
 
         if(req.body.imagesArr && req.body.imagesArr.length > 0){
-            console.log("first",req.body.imagesArr)
             for(const el of req.body.imagesArr){
                 if (el.image && el.image !== "") {
                     el.image = await storeFileAndReturnNameBase64(el.image);
@@ -40,7 +39,6 @@ export const getAllHotel = async (req: any, res: any, next: any) => {
         });
 
         let HotelArr = await paginateAggregate(Hotel, pipeline, req.query);
-        console.log(HotelArr,"dscm")
         res.status(201).json({ message: "found all Hotel", data: HotelArr.data, total: HotelArr.total });
     } catch (error) {
         next(error);

@@ -19,7 +19,6 @@ export const addQuotesFromVendors = async (req: Request, res: Response, next: Ne
         //     throw new Error("Banquet with same name already exists");
         // }
 
-        console.log(req.body.attachment.includes("base64"), "check attachment")
         for(let i=0; i<req.body.attachment.length; i++) {
         if (req?.body && req?.body?.attachment && req?.body?.attachment.includes("base64")) {
             req.body.attachment = await storeFileAndReturnNameBase64(req.body.attachment);
@@ -137,11 +136,9 @@ export const BulkUploadQuotesFromVendors: RequestHandler = async (req, res, next
 
         let xlData: any = [];
         sheet_nameList.forEach((element: any) => {
-            console.log(element, "check element")
             xlData.push(...XLSX.utils.sheet_to_json(workbook.Sheets[element]));
         });
 
-        console.log(xlData, "check xlData")
 
         // Caching
         // const countryCache = new Map();
@@ -175,7 +172,6 @@ export const BulkUploadQuotesFromVendors: RequestHandler = async (req, res, next
         }
 
 
-        console.log(finalArr, "check finalArr")
         if (finalArr.length > 0) {
             await QuotesFromVendors.insertMany(finalArr);
 

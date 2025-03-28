@@ -73,9 +73,9 @@ export const addConfirmedQuotes = async (
     }
 
     if (req?.body?.otherDetails?.documents && req.body.otherDetails.documents.length > 0) {
-      console.log(req?.body?.otherDetails?.documents, "for loop is working 2")
+ 
       for (let i = 0; i < req.body.otherDetails.documents.length; i++) {
-        console.log("for loop is working")
+
         if (
           req?.body?.otherDetails?.documents[i] &&
           req?.body?.otherDetails?.documents[i].includes("base64")
@@ -99,14 +99,10 @@ export const getAllConfirmedQuotes = async (req: any, res: any, next: any) => {
     let pipeline: PipelineStage[] = [];
     let matchObj: Record<string, any> = {};
 
-    console.log("Incoming query:", req.query);
 
     if (req.query.query && req.query.query !== "") {
       matchObj["location.state"] = new RegExp(req.query.query, "i");
-      console.log(
-        "Search filter applied for location.state:",
-        matchObj["location.state"]
-      );
+      
     }
 
     pipeline.push({
@@ -157,14 +153,14 @@ export const updateConfirmedQuotesById = async (
   res: Response,
   next: NextFunction
 ) => {
-  console.log(req.body, "req.body full");
+
   try {
     let existsCheck = await ConfirmedQuotes.findById(req.params.id).lean().exec();
     if (!existsCheck) {
       throw new Error("ConfirmedQuotes does not exists");
     }
 
-    console.log(req.body.rooms, "check room ");
+
     let Obj = await ConfirmedQuotes.findByIdAndUpdate(req.params.id, req.body).exec();
     res.status(201).json({ message: "ConfirmedQuotes Updated" });
   } catch (error) {
@@ -251,13 +247,12 @@ export const deleteConfirmedQuotesById = async (
 
 export const getAllQuoteId = async (req: any, res: any, next: any) => {
 
-  console.log("check it is working")
+
   try {
     
     
     let QuoteIds = await QuotesFromVendors.find({},{ quotesId: 1, _id: 0 })
 
-    console.log(QuoteIds, "check all the quotes id")
   
     
 
@@ -292,7 +287,6 @@ export const getConfirmedQuotesByQuoteId
     });
     let existsCheck = await QuotesFromVendors.aggregate(pipeline);
 
-    console.log(existsCheck, "check for the correct")
     if (!existsCheck || existsCheck.length == 0) {
       throw new Error("ConfirmedQuotes does not exists");
     }

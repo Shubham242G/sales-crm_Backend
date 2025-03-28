@@ -31,9 +31,7 @@ export const addLead = async (req: Request, res: Response, next: NextFunction) =
         //     }
         // }
 
-        console.log(
-            "check 2 ", "for check lead"
-        )
+        
         const lead = await new Lead(req.body).save();
         res.status(201).json({ message: "Lead Created" });
 
@@ -203,7 +201,7 @@ export const deleteLeadById = async (req: Request, res: Response, next: NextFunc
 export const BulkUploadLead: RequestHandler = async (req, res, next) => {
 
 
-    console.log("Uploading File", req.body.file);
+    
     try {
         let xlsxFile: any = req.file?.path;
         if (!xlsxFile) throw new Error("File Not Found");
@@ -214,7 +212,7 @@ export const BulkUploadLead: RequestHandler = async (req, res, next) => {
 
         let xlData: any = [];
         sheet_nameList.forEach((element: any) => {
-            console.log(element, "check element")
+          
             xlData.push(...XLSX.utils.sheet_to_json(workbook.Sheets[element]));
         });
 
@@ -222,7 +220,7 @@ export const BulkUploadLead: RequestHandler = async (req, res, next) => {
             xlData.map(async (el: any) => await new Lead(el).save())
         }
         res.status(200).json({ message: "File Uploaded Successfully" });
-        console.log(xlData, "check xlData")
+        
     } catch (error) {
         next(error);
     }
@@ -330,7 +328,7 @@ export const downloadExcelLead = async (req: Request, res: Response, next: NextF
         let Leads = await Lead.find({}).lean().exec();
 
         Leads.forEach((Lead) => {
-            console.log(Lead, "check lead")
+            
             worksheet.addRow({
                 _id: Lead._id,
                 firstName: Lead.firstName,
@@ -406,7 +404,7 @@ export const getAllLeadName = async (req: any, res: any, next: any) => {
             total: leadNames.length,
         });
     } catch (error) {
-        console.log(error, "ERROR")
+        
         next(error);
     }
 

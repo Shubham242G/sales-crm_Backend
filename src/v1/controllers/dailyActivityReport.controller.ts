@@ -32,16 +32,14 @@ export const addDailyActivityReport = async (req: Request, res: Response, next: 
         //     }
         // }
 
-        console.log(
-            "check 2 ", "for check dailyActivityReport"
-        )
+        
         const dailyActivityReport = await new DailyActivityReport(req.body).save();
         res.status(201).json({ message: "DailyActivityReport Created" });
 
 
     } catch (error) {
         next(error);
-        console.log(error)
+        
     }
 };
 
@@ -190,7 +188,6 @@ export const deleteDailyActivityReportById = async (req: Request, res: Response,
     export const BulkUploadDailyActivityReport: RequestHandler = async (req, res, next) => {
     
     
-        console.log("Uploading File", req.body.file);
         try {
             let xlsxFile: any = req.file?.path;
             if (!xlsxFile) throw new Error("File Not Found");
@@ -201,7 +198,7 @@ export const deleteDailyActivityReportById = async (req: Request, res: Response,
     
             let xlData: any = [];
             sheet_nameList.forEach((element: any) => {
-                console.log(element, "check element")
+     
                 xlData.push(...XLSX.utils.sheet_to_json(workbook.Sheets[element]));
             });
     
@@ -209,7 +206,7 @@ export const deleteDailyActivityReportById = async (req: Request, res: Response,
                 xlData.map(async (el: any) => await new DailyActivityReport(el).save())
             }
             res.status(200).json({ message: "File Uploaded Successfully" });
-            console.log(xlData, "check xlData")
+  
         } catch (error) {
             next(error);
         }

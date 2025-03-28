@@ -111,7 +111,7 @@ export const updateEnquiryById = async (
     if (!existsCheck) {
       throw new Error("Enquiry does not exists");
     }
-    console.log(req.body);
+
     // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
     //     for (const el of req.body.imagesArr) {
     //         if (el.images && el.images !== "" && el.images.includes("base64")) {
@@ -144,7 +144,6 @@ export const deleteEnquiryById = async (
 };
 
 export const BulkUploadEnquiry: RequestHandler = async (req, res, next) => {
-  console.log("Uploading File", req.body.file);
   try {
     let xlsxFile: any = req.file?.path;
     if (!xlsxFile) throw new Error("File Not Found");
@@ -155,7 +154,6 @@ export const BulkUploadEnquiry: RequestHandler = async (req, res, next) => {
 
     let xlData: any = [];
     sheet_nameList.forEach((element: any) => {
-      console.log(element, "check element");
       xlData.push(...XLSX.utils.sheet_to_json(workbook.Sheets[element]));
     });
 
@@ -163,7 +161,6 @@ export const BulkUploadEnquiry: RequestHandler = async (req, res, next) => {
       xlData.map(async (el: any) => await new Enquiry(el).save());
     }
     res.status(200).json({ message: "File Uploaded Successfully" });
-    console.log(xlData, "check xlData");
   } catch (error) {
     next(error);
   }
@@ -420,7 +417,6 @@ export const downloadExcelEnquiry = async (
     let Enquiries = await Enquiry.find({}).lean().exec();
 
     Enquiries.forEach((Enquiry) => {
-      console.log(Enquiry, "check enquiry");
       worksheet.addRow({
         _id: Enquiry._id,
         firstName: Enquiry.firstName,
@@ -585,7 +581,6 @@ export const convertRfp = async (
 
     await rfp.save();
     
-    console.log(rfp.vendorList, "vendorList");
 
     return res.status(200).json({
       message: "RFP conversion completed successfully",

@@ -204,7 +204,6 @@ export const getTaskManagementById = async (
   res: Response,
   next: NextFunction
 ) => {
-  console.log("getTaskManagementById is working");
   try {
     if (!req.params.id || !mongoose.Types.ObjectId.isValid(req.params.id)) {
       throw new Error("Invalid TaskManagement ID");
@@ -363,7 +362,6 @@ export const getTaskManagementById = async (
       .status(200)
       .json({ message: "Found specific Contact", data: existsCheck });
   } catch (error) {
-    console.log(error, "check error in taskManagment");
     next(error);
   }
 };
@@ -373,7 +371,6 @@ export const updateTaskManagementById = async (
   res: Response,
   next: NextFunction
 ) => {
-  console.log(req.body, "check req.body ");
   try {
     let existsCheck = await TaskManagement.findById(req.params.id)
       .lean()

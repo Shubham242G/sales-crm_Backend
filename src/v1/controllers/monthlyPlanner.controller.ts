@@ -153,7 +153,7 @@ export const getMonthlyPlannerByDate = async (req: Request, res: Response, next:
 export const BulkUploadMonthlyPlanner: RequestHandler = async (req, res, next) => {
 
 
-    console.log("Uploading File", req.body.file);
+
     try {
         let xlsxFile: any = req.file?.path;
         if (!xlsxFile) throw new Error("File Not Found");
@@ -164,7 +164,7 @@ export const BulkUploadMonthlyPlanner: RequestHandler = async (req, res, next) =
 
         let xlData: any = [];
         sheet_nameList.forEach((element: any) => {
-            console.log(element, "check element")
+           
             xlData.push(...XLSX.utils.sheet_to_json(workbook.Sheets[element]));
         });
 
@@ -172,7 +172,7 @@ export const BulkUploadMonthlyPlanner: RequestHandler = async (req, res, next) =
             xlData.map(async (el: any) => await new MonthlyPlanner(el).save())
         }
         res.status(200).json({ message: "File Uploaded Successfully" });
-        console.log(xlData, "check xlData")
+   
     } catch (error) {
         next(error);
     }

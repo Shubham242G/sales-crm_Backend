@@ -120,7 +120,6 @@ export const refreshToken = async (
       success: true,
     });
   } catch (err) {
-    console.error(err);
     next(err);
   }
 };

@@ -31,9 +31,7 @@ export const addroles = async (req: Request, res: Response, next: NextFunction) 
         //     }
         // }
 
-        console.log(
-            "check 2 ", "for check roles"
-        )
+        
         const roles = await new Roles(req.body).save();
         res.status(201).json({ message: "roles Created" });
 
@@ -54,7 +52,6 @@ export const getAllroles = async (req: any, res: any, next: any) => {
             $match: matchObj,
         });
 
-        console.log(req.query, "req, query");
         let rolesArr = await paginateAggregate(Roles, pipeline, req.query);
 
         res.status(201).json({ message: "found all Device", data: rolesArr.data, total: rolesArr.total });
@@ -166,7 +163,6 @@ export const getrolesByRole = async (req: Request, res: Response, next: NextFunc
 
 
         if (req.params.role) {
-            console.log( req.params.role, matchObj.roleName,  "req.params.role")
             matchObj.roleName = req.params.role
         }
         pipeline.push({
