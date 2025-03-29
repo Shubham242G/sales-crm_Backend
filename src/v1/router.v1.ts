@@ -21,6 +21,7 @@ import notificationRouter from "@routesv1/notification.routes"
 import dailyActivityReport from "@routesv1/dailyActivityReport.routes";
 import monthlyPlannerRouter from "@routesv1/monthyPlanner.routes";
 import express from "express";
+import dashboardRouter from "@routesv1/dashboard.routes";
 
 const router = express.Router();
 
@@ -46,6 +47,7 @@ router.use('/quotesToCustomer', quotesToCustomerRouter)
 router.use('/notification', notificationRouter)
 router.use("/dailyActivityReport", dailyActivityReport);
 router.use("/monthlyPlanner", monthlyPlannerRouter);
+router.use("/dashboard", dashboardRouter);
 // router.use("/adminroutes")
 
 // =======<ryz>====== //
