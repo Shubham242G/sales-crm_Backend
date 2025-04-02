@@ -19,13 +19,16 @@ export const addQuotesFromVendors = async (req: Request, res: Response, next: Ne
         //     throw new Error("Banquet with same name already exists");
         // }
 
-        for(let i=0; i<req.body.attachment.length; i++) {
-        if (req?.body && req?.body?.attachment && req?.body?.attachment.includes("base64")) {
-            req.body.attachment = await storeFileAndReturnNameBase64(req.body.attachment);
+        for (let i = 0; i < req.body.attachment.length; i++) {
+            if (req?.body && req?.body?.attachment && req?.body?.attachment.includes("base64")) {
+                req.body.attachment = await storeFileAndReturnNameBase64(req.body.attachment);
+            }
         }
-    }
-        const quotesFromVendors = await new QuotesFromVendors(req.body).save();
+        const quotesFromVendors = await new QuotesFromVendors({ ...req.body, status: "Quote received from vendor" }).save();
         res.status(201).json({ message: "Quote From Vendor Created" });
+        await quotesFromVendors.save();
+
+
 
 
 
@@ -83,28 +86,63 @@ export const updateQuotesFromVendorsById = async (req: Request, res: Response, n
     try {
 
 
-  
+
 
         let existsCheck = await QuotesFromVendors.findById(req.params.id).lean().exec();
+
+        console.log(existsCheck, "existsCheck for enquiry id ");
         if (!existsCheck) {
             throw new Error("Quote From Vendor does not exists");
         }
 
 
-        
+
         if (req?.body && req?.body?.attachment && req?.body?.attachment.length > 0) {
 
-            for(let i=0; i<req.body.attachment.length; i++) {
+            for (let i = 0; i < req.body.attachment.length; i++) {
                 if (req?.body && req?.body?.attachment[i] && req?.body?.attachment[i].includes("base64")) {
                     req.body.attachment[i] = await storeFileAndReturnNameBase64(req.body.attachment[i]);
                     await deleteFileUsingUrl(`uploads/${existsCheck?.attachment[i]}`);
-                  }
+                }
             }
 
             //   req.body.attachment = await storeFileAndReturnNameBase64(req.body.attachment);
             //   await deleteFileUsingUrl(`uploads/${existsCheck?.attachment}`);
-            }
-        let Obj = await QuotesFromVendors.findByIdAndUpdate(req.params.id, req.body).exec();
+        }
+
+        let Obj = await QuotesFromVendors.findByIdAndUpdate(existsCheck._id, { status: "Under negotitation with vendor" }).exec();
+
+ 
+
+        const rfp = await Rfp.findOne({ enquiryId: existsCheck.enquiryId });
+
+
+        console.log("rfp------------------->", rfp);
+
+        if (!rfp?._id) {
+            throw new Error("RFP does not exist");
+        }
+
+
+        let rfpObj = await Rfp.findByIdAndUpdate(rfp._id, { status: "Under negotitation with vendor" }).exec();
+        await rfpObj?.save();
+        console.log("rfpObj------------------->", rfpObj);
+
+        if (!rfpObj?.enquiryId) {
+
+            throw new Error(" rfpObj Enquiry does not exist");
+        }
+
+        const enquiry = await Enquiry.findOne({ _id: rfpObj?.enquiryId });
+        if (!enquiry) {
+            throw new Error("Enquiry does not exist");
+        }
+
+
+        let enquiryObj = await Enquiry.findByIdAndUpdate(enquiry._id, { status: "Under negotitation with client" }).exec();
+        await enquiryObj?.save();
+
+        await Obj?.save();
         res.status(201).json({ message: "Quote From Vendor Updated" });
     } catch (error) {
         next(error);
@@ -187,49 +225,105 @@ export const convertQuotesFromVendorToQuotesToCustomer = async (
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
+) => {
+
+
+    console.log("working ")
     try {
-      const vendorQuoteId = req.params.id;
-  
-      const vendorQuote = await QuotesFromVendors.findById(vendorQuoteId).lean().exec();
-      if (!vendorQuote) {
-        throw new Error("Quote from Vendor does not exist");
-      }
-  
-      
-      const updatedMarkupDetails = vendorQuote.markupDetails?.map((item: any) => {
-        const baseAmount = parseFloat(vendorQuote.amount || "0");
-        const markupPercentage = parseFloat(item.markupAmount || "0");
-  
-        
-        const markupAmount = baseAmount + (baseAmount * (markupPercentage / 100));
-  
-        return {
-          ...item,
-          markupAmount: markupAmount.toFixed(2), 
+        const vendorQuoteId = req.params.id;
+
+        const vendorQuote = await QuotesFromVendors.findById(vendorQuoteId).lean().exec();
+        if (!vendorQuote) {
+            throw new Error("Quote from Vendor does not exist");
+        }
+
+
+
+
+        const updatedMarkupDetails = vendorQuote.markupDetails?.map((item: any) => {
+            const baseAmount = parseFloat(vendorQuote.amount || "0");
+            const markupPercentage = parseFloat(item.markupAmount || "0");
+
+
+            const markupAmount = baseAmount + (baseAmount * (markupPercentage / 100));
+
+            return {
+                ...item,
+                markupAmount: markupAmount.toFixed(2),
+            };
+        }) || [];
+
+
+        const totalAmount = updatedMarkupDetails.reduce((acc, item) => acc + parseFloat(item.markupAmount), 0).toFixed(2);
+
+        const quotesToCustomerData = {
+            quotesId: vendorQuote.quotesId,
+            serviceType: vendorQuote.serviceType,
+            amount: vendorQuote.amount,
+            markupDetails: updatedMarkupDetails,
+            totalAmount,
+            status: "Quote sent to customer",
+            enquiryId: vendorQuote.enquiryId,
+            customerName: "",
         };
-      }) || [];
-  
-      
-      const totalAmount = updatedMarkupDetails.reduce((acc, item) => acc + parseFloat(item.markupAmount), 0).toFixed(2);
-  
-      const quotesToCustomerData = {
-        quotesId: vendorQuote.quotesId,
-        serviceType: vendorQuote.serviceType,
-        amount: vendorQuote.amount,
-        markupDetails: updatedMarkupDetails, 
-        totalAmount,
-      };
-  
-      const newQuotesToCustomer = await new QuotesToCustomer(quotesToCustomerData).save();
-  
-      res.status(201).json({
-        message: "Quote from Vendor successfully converted to Quote to Customer",
-        data: newQuotesToCustomer,
-      });
-    } catch (error) {
-      next(error);
+
+        if(vendorQuote?.enquiryId && vendorQuote?.enquiryId) {
+        var newQuotesToCustomer = await new QuotesToCustomer(quotesToCustomerData).save();
+        
+
+
+        const result = await Enquiry.findByIdAndUpdate(vendorQuote.enquiryId, { status: "Quote sent to customer" }).exec();
+
+        console.log(result, 'check result is working ')
+
+        const result1 = await Rfp.updateOne(
+            { enquiryId: vendorQuote.enquiryId }, // Find by enquiryId
+            { $set: { status: "Quote sent to customer", updatedAt: new Date() } } // Update status and timestamp
+        );
+
+
+        const result2 = await QuotesFromVendors.updateOne(
+            { enquiryId: vendorQuote.enquiryId }, // Find by enquiryId
+            { $set: { status: "Quote sent to customer", updatedAt: new Date() } } // Update status and timestamp
+        );
+
+
+
+
+
+        // let quote
+
+        // if (newQuotesToCustomer) {
+
+        //     quote = await QuotesFromVendors.findByIdAndUpdate(newQuotesToCustomer._id, { status: "Quote sent to customer" })
+        //     await quote?.save();
+        // }
+
+        // let rfp = await Rfp.findOne({ enquiryId: quote?.enquiryId }).exec();
+        // if (!rfp?.enquiryId) {
+        //     throw new Error("RFP does not exist");
+        // }
+
+        // await Rfp.findByIdAndUpdate(rfp.enquiryId, { status: "Quote sent to customer" });
+        // rfp.save();
+
+        // let enquiry = await Enquiry.findOne({ enquiryId: rfp.enquiryId });
+
+        // console.log("enquiry------------------->", enquiry);
+        // if (!enquiry?._id) {
+        //     throw new Error("Enquiry does not exist");
+        // }
+
+        // await Enquiry.findByIdAndUpdate(enquiry._id, { status: "Quote sent to customer" });
+        // enquiry.save();
+
+        res.status(201).json({
+            message: "Quote from Vendor successfully converted to Quote to Customer",
+            data: newQuotesToCustomer,
+        });
     }
-  };
-  
-  
+    } catch (error) {
+        next(error);
+    }
+};
+

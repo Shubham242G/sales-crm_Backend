@@ -25,7 +25,7 @@ export const addQuotesToCustomer = async (req: Request, res: Response, next: Nex
     //         req.body.attachment = await storeFileAndReturnNameBase64(req.body.attachment);
     //     }
     // }
-        const quotesToCustomer = await new QuotesToCustomer(req.body).save();
+        const quotesToCustomer = await new QuotesToCustomer({...req.body, status: "Quote sent to customer"}).save();
         res.status(201).json({ message: "Quote From Vendor Created" });
 
 
@@ -92,6 +92,8 @@ export const updateQuotesToCustomerById = async (req: Request, res: Response, ne
         }
 
 
+
+
         
         // if (req?.body && req?.body?.attachment && req?.body?.attachment.length > 0) {
 
@@ -105,7 +107,28 @@ export const updateQuotesToCustomerById = async (req: Request, res: Response, ne
         //     //   req.body.attachment = await storeFileAndReturnNameBase64(req.body.attachment);
         //     //   await deleteFileUsingUrl(`uploads/${existsCheck?.attachment}`);
         //     }
-        let Obj = await QuotesToCustomer.findByIdAndUpdate(req.params.id, req.body).exec();
+        let Obj = await QuotesToCustomer.findByIdAndUpdate(req.params.id, { ...req.body, status: "Under negotiation with client" }).exec();
+        await Obj?.save();
+
+        let quotesFromVendorsObj = await QuotesFromVendors.findOne({ enquiryId: existsCheck.enquiryId }).exec();
+        if (!quotesFromVendorsObj?._id) {
+            throw new Error("RFP does not exist")
+        }    
+        await QuotesFromVendors.findByIdAndUpdate(quotesFromVendorsObj.enquiryId, { status: "Under negotiation with client" }).exec();
+        await quotesFromVendorsObj?.save();
+        
+        
+
+        let rfpObj = await Rfp.findOne({ enquiryId: quotesFromVendorsObj.enquiryId }).exec();
+        if (!rfpObj?._id) {    
+            throw new Error("RFP does not exist");
+        }
+        await Rfp.findByIdAndUpdate(rfpObj.enquiryId, { status: "Under negotiation with client" }).exec();
+        await rfpObj?.save();  
+         
+        let enquiryObj = await Enquiry.findByIdAndUpdate(rfpObj.enquiryId, { status: "Under negotiation with client" }).exec();
+        await enquiryObj?.save();
+
         res.status(201).json({ message: "Quote From Vendor Updated" });
     } catch (error) {
         next(error);

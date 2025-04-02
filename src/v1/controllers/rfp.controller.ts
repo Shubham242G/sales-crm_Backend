@@ -11,6 +11,7 @@ import { Rfp } from "@models/rfp.model"
 import { QuotesFromVendors } from "@models/quotesFromVendors.model";
 
 
+
 // serviceType: '',
 // eventDate: '',
 // eventDetails: '',
@@ -19,44 +20,29 @@ import { QuotesFromVendors } from "@models/quotesFromVendors.model";
 // additionalInstructions: '',
 
 
+
 export const addRfp = async (req: Request, res: Response, next: NextFunction) => {
-
-  
     try {
-        // let existsCheck = await Rfp.findOne({ enquiryId: req.body.enquiryId }).exec();
-        // if (existsCheck) {
-        //     throw new Error("RFP with same Enquiry already exists");
-        // }
-
-        // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
-        //     console.log("first", req.body.imagesArr)
-        //     for (const el of req.body.imagesArr) {
-        //         if (el.image && el.image !== "") {
-        //             el.image = await storeFileAndReturnNameBase64(el.image);
-        //         }
-        //     }
-        // }
         const lastDocument = await Rfp.findOne().sort({ _id: -1 });
-        let rfpId;
+        let rfpId = lastDocument?.rfpId ? `RFP${(parseInt(lastDocument.rfpId.replace(/\D/g, "")) + 1).toString().padStart(6, "0")}` : "RFP000001";
 
-        if (lastDocument && lastDocument.rfpId) {
-            // Extract numeric part from the last ID (removing "RFP")
-            let lastId = Number(lastDocument.rfpId.replace(/\D/g, "")) || 0;
-            lastId += 1; // Increment the ID
-        
-            // Format with leading zeros and prefix "RFP"
-            rfpId = "RFP" + lastId.toString().padStart(6, "0");
-        } else {
-            rfpId = "RFP000001"; // First entry case
+
+        const rfp = new Rfp({ ...req.body, rfpId, status: "RFP raised to vendor" });
+
+
+
+
+
+
+        // Update Enquiry status to "Rfp raised to vendor"
+        if (req.body.enquiryId) {
+            await Enquiry.findByIdAndUpdate(req.body.enquiryId, { status: "Rfp raised to vendor" });
         }
-        
-        const rfp = new Rfp({ ...req.body, rfpId });
+
+
         await rfp.save();
+
         res.status(201).json({ message: "RFP Created", rfpId });
-
-
-
-
     } catch (error) {
         next(error);
     }
@@ -458,72 +444,75 @@ export const BulkUploadRfp: RequestHandler = async (req, res, next) => {
 
 
 export const convertRfp = async (req: Request, res: Response, next: NextFunction) => {
- 
-
     try {
-      
-
         if (!req.params.id) {
             return res.status(400).json({ message: "Missing RFP ID" });
         }
 
         const rfp = await Rfp.findOne({ _id: req.params.id });
-
         if (!rfp) {
             throw new Error("RFP does not exist");
         }
 
-
-        // Fetch the latest RFP ID
-        const lastRfp = await QuotesFromVendors.findOne()
-            .sort({ rfpId: -1 })
-            .select("rfpId");
-
-        let lastRfpId = lastRfp?.rfpId
-            ? parseInt(lastRfp.rfpId.replace("RFP", ""), 10)
-            : 0;
+        const enquiryId = req.params.id;
+        if (!enquiryId) {
+            return res.status(400).json({ message: "Enquiry ID is required" });
+        }
 
 
+        const enquiry = await Enquiry.find({ enquiryId: enquiryId }).exec();
+        if (!enquiry) {
+            return res.status(404).json({ message: "Enquiry not found" });
+        }
 
-            let quoteId 
+        const existingRfp = await Rfp.findOne({ _id: req.params.id });
+        if (!rfp._id) {
+            throw new Error("RFP does not exist");
+        }
 
-            const lastQuoteId = await QuotesFromVendors.findOne().sort({quotesId:-1})
-            .select("quotesId");
+        let quoteId;
+        const lastQuoteId = await QuotesFromVendors.findOne().sort({ quotesId: -1 }).select("quotesId");
+        quoteId = lastQuoteId ? lastQuoteId.quotesId.replace(/\d+$/, (num: any) => String(Number(num) + 1).padStart(num.length, '0')) : "Quotes000001";
 
-            if(!lastQuoteId){
-                quoteId = "Quotes000001"
-            }
-
-            else{
-                const lastQuoteIdString = lastQuoteId.quotesId;
-                quoteId = lastQuoteIdString.replace(/\d+$/, (num:any) => String(Number(num) + 1).padStart(num.length, '0'));
-            }
-
-
-              
-           
-     
-     
-
-        
-        for (let i = 0; i < rfp.vendorList.length; i++) {
-            lastRfpId++;
-
+        for (let vendor of rfp.vendorList) {
             const newQuote = new QuotesFromVendors({
                 quotesId: quoteId,
                 rfpId: rfp.rfpId || "",
                 serviceType: rfp.serviceType || [],
                 eventDetails: "",
                 deadlineOfProposal: "",
-                vendorList: rfp.vendorList[i] ,
+                vendorList: vendor,
                 additionalInstructions: "",
+                status: "Quote received from vendor",
+                enquiryId: rfp.enquiryId || "",
+                amount: "",
+                receivedDate: new Date(),
             });
-
             await newQuote.save();
         }
 
-        return res.status(200).json({ message: "RFP conversion completed successfully" });
 
+        const result = await Enquiry.findByIdAndUpdate(rfp.enquiryId, { status: "Quote received from vendor" });
+
+        const result1 = await Rfp.updateOne(
+            { enquiryId: rfp.enquiryId }, // Find by enquiryId
+            { $set: { status: "Quote received from vendor", updatedAt: new Date() } } // Update status and timestamp
+        );
+
+      
+
+        // Update Enquiry status to "Quote received from vendors"
+        // if (rfp.enquiryId) {
+        //     await Enquiry.findByIdAndUpdate(rfp.enquiryId, { status: "Quote received from vendor" });
+        //     await Rfp.findByIdAndUpdate(rfp._id, { status: "Quote received from vendor" });
+        // }
+        // await rfp.save();
+
+        // console.log("rfp---->",rfp)
+  
+
+
+        return res.status(200).json({ message: "RFP conversion completed successfully" });
     } catch (error) {
         next(error);
     }

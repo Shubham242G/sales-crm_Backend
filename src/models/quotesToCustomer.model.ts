@@ -3,8 +3,10 @@ import { model, Model, Schema, Types } from "mongoose";
 interface IQuotesToCustomer {
   quotesId: string;
   customerName: string;
+  enquiryId: Types.ObjectId;
   serviceType: [];
   amount: string;
+  status: string;
   markupDetails: {
     label: string;
     markupAmount: string;
@@ -16,7 +18,9 @@ const QuotesFromVendorsSchema = new Schema(
   {
     quotesId: String,
     customerName: String,
+    enquiryId: Types.ObjectId,
     serviceType: [],
+    status: String,
     amount: String,
     totalAmount: String,
     markupDetails: [

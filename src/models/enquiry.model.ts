@@ -1,4 +1,3 @@
-
 import { model, Model, Schema, Types } from "mongoose";
 
 
@@ -26,6 +25,7 @@ interface IEnquiry {
     area: string;
     noOfRooms: string;
     categoryOfHotel:  string [];
+    status:string;
     // priority: string;
     occupancy: string [];
     banquet: {
@@ -108,6 +108,7 @@ const EnquirySchema = new Schema({
     categoryOfHotel: [String ],
     priority: String,
     occupancy: [String ],
+    status: String,
     banquet: [{
         date: Date,
         session: String,

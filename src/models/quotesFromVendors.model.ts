@@ -3,7 +3,7 @@ import { model, Model, Schema, Types } from "mongoose";
 interface IQuotesFromVendors {
   quotesId: string;
   rfpId: string;
-  rfpEnquiryId: string;
+  enquiryId: Types.ObjectId;
   vendorList: {
     label: string;
     value: string;
@@ -29,7 +29,7 @@ const QuotesFromVendorsSchema = new Schema(
   {
     quotesId: String,
     rfqId: String,
-    rfpEnquiryId: String,
+    enquiryId: Types.ObjectId,
     vendorList: {
       label: String,
       value: String,

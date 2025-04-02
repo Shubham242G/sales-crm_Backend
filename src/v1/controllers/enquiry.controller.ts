@@ -27,7 +27,7 @@ export const addEnquiry = async (
     //         }
     //     }
     // }
-    const enquiry = await new Enquiry(req.body).save();
+    const enquiry = await new Enquiry({ ...req.body, status: "Enquiry Generated" }).save();
     res.status(201).json({ message: "Enquiry Created", data: enquiry });
 
     // this condition for check if enquiry successful
@@ -519,56 +519,55 @@ export const convertRfp = async (
       return res.status(400).json({ message: "Enquiry ID is required" });
     }
 
-    
-    const enquiry = await Enquiry.findById(enquiryId).exec();
+
+    const enquiry = await Enquiry.findById(enquiryId ).exec();
     if (!enquiry) {
       return res.status(404).json({ message: "Enquiry not found" });
     }
 
-    
+
     const existingRfp = await Rfp.findOne({ enquiryId: enquiry._id }).lean().exec();
     if (existingRfp) {
       return res.status(400).json({ message: "RFP already exists for this enquiry" });
     }
 
-    
+
     const lastRfp = await Rfp.findOne().sort({ _id: -1 }).exec();
     const rfpId = lastRfp && lastRfp.rfpId
       ? `RFP${(parseInt(lastRfp.rfpId.replace("RFP", ""), 10) + 1).toString().padStart(6, "0")}`
       : "RFP000001";
 
-    
+
     const serviceTypeArr = [];
     if (enquiry.cab?.length > 0) serviceTypeArr.push("Transport");
     if (enquiry.banquet?.length > 0) serviceTypeArr.push("Banquet");
     if (enquiry.room?.length > 0) serviceTypeArr.push("Hotel");
     if (enquiry.eventSetup) serviceTypeArr.push("Event");
 
-    
+
     const eventDates = enquiry.eventSetup?.eventDates?.length
       ? enquiry.eventSetup.eventDates.map((date) => ({
-          startDate: date.startDate,
-          endDate: date.endDate, 
-        }))
+        startDate: date.startDate,
+        endDate: date.endDate,
+      }))
       : [
-          {
-            startDate: enquiry.eventSetup?.eventStartDate || "",
-            endDate: enquiry.eventSetup?.eventEndDate || "",
-          },
-        ];
+        {
+          startDate: enquiry.eventSetup?.eventStartDate || "",
+          endDate: enquiry.eventSetup?.eventEndDate || "",
+        },
+      ];
 
 
 
-    
+
     const rfp = new Rfp({
       rfpId,
       serviceType: serviceTypeArr,
-      eventDates, 
-      eventDetails: `${enquiry.eventSetup?.functionType || ""} - ${
-        enquiry.eventSetup?.setupRequired || ""
-      }`.trim(),
+      eventDates,
+      eventDetails: `${enquiry.eventSetup?.functionType || ""} - ${enquiry.eventSetup?.setupRequired || ""
+        }`.trim(),
       enquiryId: enquiry._id,
-      fullName : `${enquiry.firstName} ${enquiry.lastName || ""}`.trim(),
+      fullName: `${enquiry.firstName} ${enquiry.lastName || ""}`.trim(),
       vendorList: [],
       // vendorList: [
       //   {
@@ -577,10 +576,16 @@ export const convertRfp = async (
       //   },
       // ],
       additionalInstructions: "",
+      status: "RFP raised to vendor"
     });
+    rfp.save();
 
-    await rfp.save();
-    
+    if (enquiryId) {
+      await Enquiry.findByIdAndUpdate(enquiryId, { status: "RFP raised to vendor" });
+    }
+
+    await enquiry.save();
+
 
     return res.status(200).json({
       message: "RFP conversion completed successfully",

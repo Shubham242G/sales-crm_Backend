@@ -22,6 +22,7 @@ import dailyActivityReport from "@routesv1/dailyActivityReport.routes";
 import monthlyPlannerRouter from "@routesv1/monthyPlanner.routes";
 import express from "express";
 import dashboardRouter from "@routesv1/dashboard.routes";
+import statusRouter from "@routesv1/status.routes";
 
 const router = express.Router();
 
@@ -48,6 +49,7 @@ router.use('/notification', notificationRouter)
 router.use("/dailyActivityReport", dailyActivityReport);
 router.use("/monthlyPlanner", monthlyPlannerRouter);
 router.use("/dashboard", dashboardRouter);
+router.use("/status", statusRouter);
 // router.use("/adminroutes")
 
 // =======<ryz>====== //
