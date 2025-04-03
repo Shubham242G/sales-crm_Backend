@@ -449,9 +449,19 @@ export const convertRfp = async (req: Request, res: Response, next: NextFunction
             return res.status(400).json({ message: "Missing RFP ID" });
         }
 
+
+
+
+
         const rfp = await Rfp.findOne({ _id: req.params.id });
         if (!rfp) {
             throw new Error("RFP does not exist");
+        }
+
+
+        const existingQuoteToVendor = await QuotesFromVendors.findOne({ enquiryId: rfp.enquiryId }).lean().exec();
+        if (existingQuoteToVendor) {
+            return res.status(400).json({ message: "Quotes To vendor already exists for this enquiry" });
         }
 
         const enquiryId = req.params.id;
@@ -465,10 +475,11 @@ export const convertRfp = async (req: Request, res: Response, next: NextFunction
             return res.status(404).json({ message: "Enquiry not found" });
         }
 
-        const existingRfp = await Rfp.findOne({ _id: req.params.id });
-        if (!rfp._id) {
-            throw new Error("RFP does not exist");
-        }
+        // const existingVendorQuotes = await Rfp.find({ enquiryId: rfp.enquiryId }).exec();
+        // if (existingVendorQuotes) {
+        //     throw new Error("Quotes from this RFP has already been created");
+        // }
+        // console.log("existingVendorQuotes", existingVendorQuotes)
 
         let quoteId;
         const lastQuoteId = await QuotesFromVendors.findOne().sort({ quotesId: -1 }).select("quotesId");
@@ -489,7 +500,9 @@ export const convertRfp = async (req: Request, res: Response, next: NextFunction
                 receivedDate: new Date(),
             });
             await newQuote.save();
+            console.log("updated vendor from rfp--->>", newQuote)
         }
+
 
 
         const result = await Enquiry.findByIdAndUpdate(rfp.enquiryId, { status: "Quote received from vendor" });
@@ -499,7 +512,7 @@ export const convertRfp = async (req: Request, res: Response, next: NextFunction
             { $set: { status: "Quote received from vendor", updatedAt: new Date() } } // Update status and timestamp
         );
 
-      
+
 
         // Update Enquiry status to "Quote received from vendors"
         // if (rfp.enquiryId) {
@@ -509,11 +522,13 @@ export const convertRfp = async (req: Request, res: Response, next: NextFunction
         // await rfp.save();
 
         // console.log("rfp---->",rfp)
-  
+
 
 
         return res.status(200).json({ message: "RFP conversion completed successfully" });
     } catch (error) {
+
+        console.log(error)
         next(error);
     }
 };
