@@ -562,8 +562,9 @@ export const convertRfp = async (
 
     const rfp = new Rfp({
       rfpId,
+      deadlineOfProposal:"",
       serviceType: serviceTypeArr,
-      eventDates,
+      eventDates:enquiry.eventSetup?.eventDates || [],
       eventDetails: `${enquiry.eventSetup?.functionType || ""} - ${enquiry.eventSetup?.setupRequired || ""
         }`.trim(),
       enquiryId: enquiry._id,
