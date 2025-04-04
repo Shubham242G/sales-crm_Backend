@@ -114,7 +114,7 @@ export const updateQuotesToCustomerById = async (req: Request, res: Response, ne
         if (!quotesFromVendorsObj?._id) {
             throw new Error("RFP does not exist")
         }    
-        await QuotesFromVendors.findByIdAndUpdate(quotesFromVendorsObj.enquiryId, { status: "Under negotiation with client" }).exec();
+        await QuotesFromVendors.findByIdAndUpdate(quotesFromVendorsObj._id, { status: "Under negotiation with client" }).exec();
         await quotesFromVendorsObj?.save();
         
         
@@ -123,7 +123,7 @@ export const updateQuotesToCustomerById = async (req: Request, res: Response, ne
         if (!rfpObj?._id) {    
             throw new Error("RFP does not exist");
         }
-        await Rfp.findByIdAndUpdate(rfpObj.enquiryId, { status: "Under negotiation with client" }).exec();
+        await Rfp.findByIdAndUpdate(rfpObj._id, { status: "Under negotiation with client" }).exec();
         await rfpObj?.save();  
          
         let enquiryObj = await Enquiry.findByIdAndUpdate(rfpObj.enquiryId, { status: "Under negotiation with client" }).exec();
