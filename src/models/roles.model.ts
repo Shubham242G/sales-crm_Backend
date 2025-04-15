@@ -1,5 +1,6 @@
-import { model, Model, Schema, Types } from "mongoose";
-import mongoose from "mongoose";
+// models/roleHierarchy.model.ts
+
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 interface Permissions {
   create: boolean;
@@ -8,8 +9,13 @@ interface Permissions {
   delete: boolean;
 }
 
-// Role model
-interface IRoles {
+interface RoutePermission {
+  routeName: string;
+  permissions: Permissions;
+  isEditing?: boolean;
+}
+
+export interface IRole extends Document {
   roleName: string;
   description: string;
   name: string;
@@ -18,24 +24,19 @@ interface IRoles {
   designation: string;
   department: string;
   routePermissions: RoutePermission[];
+  parentRole?: Types.ObjectId | null;
 }
 
-// Permissions for each route
-interface RoutePermission {
-  routeName: string;
-  permissions: Permissions;
-  isEditing?: boolean;
-}
-
-const rolesSchema = new mongoose.Schema({
-  roleName: String,
-  description: String,
-  name: String,
-  email: String,
-  phoneNo: String,
-  designation: String,
-  department: String,
-  routePermissions: [] as RoutePermission[],
+const roleSchema = new Schema<IRole>({
+  roleName: { type: String, required: true },
+  description: { type: String },
+  name: { type: String, required: true },
+  email: { type: String },
+  phoneNo: { type: String },
+  designation: { type: String },
+  department: { type: String },
+  routePermissions: [{ type: Schema.Types.Mixed, required: true }],
+  parentRole: { type: mongoose.Schema.Types.ObjectId, ref: "Role", default: null }, // Refers to the parent role (reportsTo)
 });
 
-export const Roles = model<IRoles>("Roles", rolesSchema);
+export const Roles = mongoose.model<IRole>("Role", roleSchema);

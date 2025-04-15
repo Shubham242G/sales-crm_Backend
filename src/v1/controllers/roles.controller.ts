@@ -3,12 +3,13 @@ import { NextFunction, Request, Response, RequestHandler } from "express";
 import { paginateAggregate } from "@helpers/paginateAggregate";
 import mongoose, { PipelineStage } from "mongoose";
 import { storeFileAndReturnNameBase64 } from "@helpers/fileSystem";
-import { Roles} from "@models/roles.model"
+import {Roles} from "@models/roles.model";
 import { Enquiry } from "@models/enquiry.model";
 import { Rfp } from "@models/rfp.model";
 import { last } from "lodash";
 import { SalesContact } from "@models/salesContact.model";
 import { User } from "@models/user.model";
+import { buildRoleHierarchy } from "../../util/buildRoleHierarchy";
 
 
 
@@ -174,10 +175,26 @@ export const getrolesByRole = async (req: Request, res: Response, next: NextFunc
         }
         existsCheck = existsCheck[0];
         res.status(201).json({
-            message: "found specific Contact",
+            message: "found specific Roles",
             data: existsCheck,
         });
     } catch (error) {
+        next(error);
+    }
+};
+
+
+export const getRolesHierarchy = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // Fetch all roles from the database
+        const roles = await Roles.find().populate('parentRole'); // Populate parentRole to avoid manual population in the hierarchy function
+        const hierarchy = buildRoleHierarchy(roles);
+        res.status(201).json({
+            message: "found specific RoleHierarchy",
+            data: hierarchy,
+        });
+        
+      } catch (error) {
         next(error);
     }
 };
