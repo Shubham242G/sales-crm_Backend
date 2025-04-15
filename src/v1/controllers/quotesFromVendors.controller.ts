@@ -362,7 +362,7 @@ export const convertQuotesFromVendorToQuotesToCustomer = async (
         }) || [];
 
         const totalAmount = updatedMarkupDetails.reduce((acc, item) => acc + parseFloat(item.markupAmount), 0).toFixed(2);
-
+        const  enquiry = await Enquiry.findOne({ _id: vendorQuote.enquiryId }).lean().exec();
         const quotesToCustomerData = {
             quotesId: vendorQuote.quotesId,
             serviceType: vendorQuote.serviceType,
@@ -371,7 +371,7 @@ export const convertQuotesFromVendorToQuotesToCustomer = async (
             totalAmount,
             status: "Quote sent to customer",
             enquiryId: vendorQuote.enquiryId,
-            customerName: "",
+            customerName: `${enquiry?.firstName} ${enquiry?.lastName || ""}`.trim(),
         };
 
         if (vendorQuote?.enquiryId) {
@@ -387,6 +387,8 @@ export const convertQuotesFromVendorToQuotesToCustomer = async (
                 { enquiryId: vendorQuote.enquiryId },
                 { $set: { status: "Quote sent to customer", updatedAt: new Date() } }
             );
+
+           
 
             await QuotesFromVendors.updateOne(
                 { enquiryId: vendorQuote.enquiryId },

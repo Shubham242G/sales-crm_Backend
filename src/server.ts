@@ -10,6 +10,12 @@ import { CONFIG } from "@common/config.common";
 
 // import { setupSocket } from "@controllers/taskManagement.controller";
 import { socketConnection } from "@helpers/socket";
+// import { getInvoices, downloadInvoicePdf, getInvoiceDetails } from "./v1/service/zohoinvoice.service";
+import { get } from "lodash";
+import { env } from "process";
+import { ZohoInvoice } from "@models/invoices.model";
+import { getZohoAccessToken } from "./v1/service/zohoinvoice.service";
+import { getAccessToken } from "./util/zohoTokenManager"
 
 // console.clear();
 console.log("Starting server... \n");
@@ -19,6 +25,7 @@ console.log("Starting server... \n");
  */
 
 const port = normalizePort(CONFIG.PORT || "3000");
+console.log("accessing part ", process.env.ZOHO);
 app.set("port", port);
 
 /**
@@ -27,7 +34,13 @@ app.set("port", port);
 
 export const server = http.createServer(app);
 
-socketConnection(server); 
+socketConnection(server);
+
+const res = getAccessToken()
+
+
+
+console.log("data", res);
 
 // export const io = new Server(server, {
 //   cors: {
@@ -53,6 +66,7 @@ socketConnection(server);
 server.listen(port);
 server.on("error", onError);
 server.on("listening", onListening);
+
 
 /**
  * Normalize a port into a number, string, or false.
@@ -109,3 +123,20 @@ function onListening() {
   const bind = typeof addr === "string" ? "pipe " + addr : "port " + addr?.port;
   console.log("Listening on " + bind);
 }
+
+
+
+
+
+
+// const data = getInvoices( "2025-01-10", "2025-04-10", "unpaid")
+
+// const data2 = getInvoiceDetails("2025-01-10", )
+// console.log("data", data);
+
+// console.log("data2", data2);
+
+// const data3 = downloadInvoicePdf("2025-01-10", "2025-04-10")
+
+// console.log("data3", data3);
+
