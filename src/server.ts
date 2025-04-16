@@ -36,11 +36,11 @@ export const server = http.createServer(app);
 
 socketConnection(server);
 
-const res = getAccessToken()
 
 
 
-console.log("data", res);
+
+
 
 // export const io = new Server(server, {
 //   cors: {
