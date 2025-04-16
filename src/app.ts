@@ -17,9 +17,9 @@ import { adminSeeder } from "@seeder/adminSeeder";
 
 import v1Router from './v1/router.v1';
 import { roleSeeder } from "@seeder/roleSeeder";
-import { getZohoAccessToken } from "./v1/service/zohoinvoice.service";
-import setupZohoAuthRoutes from "./v1/service/zoho.service";
-import { saveTokens } from "@util/zohoTokenManager";
+
+
+
 
 // ==============<>============== //
 
@@ -51,11 +51,8 @@ roleSeeder();
 // Add this before your other route setups
 
 
-// Keep your existing code
-app.use("/v1", v1Router);
-const data = getZohoAccessToken();
 
-console.log("data", data);
+
 
 
 // ==============<>============== //
