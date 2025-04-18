@@ -46,6 +46,7 @@ app.use(express.static(path.join(process.cwd(), "public")));
 adminSeeder();
 roleSeeder();
 
+ //comment this line
 
 
 // Add this before your other route setups
