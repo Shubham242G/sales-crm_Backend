@@ -10,39 +10,9 @@ import { SalesContact } from "@models/salesContact.model";
 import XLSX from "xlsx";
 import path from 'path'
 import ExcelJs from "exceljs";
-import * as ExcelJS from "exceljs";
-import * as fs from "fs";
-import { createArrayCsvWriter } from "csv-writer";
-import PDFDocument from "pdfkit";
 
 
-interface ILead {
 
-
-  salutation: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  company: string;
- createdAt: Date;
- updatedAt: Date;
-}
-
-interface LeadFilter {
-  $or?: Array<Record<string, any>>;
-  $and?: Array<Record<string, any>>;
-  [key: string]: any;
-}
-
-interface DateRange {
-  from?: string;
-  to?: string;
-}
-
-interface AdvancedSearchParams {
-  [key: string]: any;
-}
 
 
 
