@@ -10,6 +10,39 @@ import { SalesContact } from "@models/salesContact.model";
 import XLSX from "xlsx";
 import path from 'path'
 import ExcelJs from "exceljs";
+import * as ExcelJS from "exceljs";
+import * as fs from "fs";
+import { createArrayCsvWriter } from "csv-writer";
+import PDFDocument from "pdfkit";
+
+
+interface ILead {
+
+
+  salutation: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  company: string;
+ createdAt: Date;
+ updatedAt: Date;
+}
+
+interface LeadFilter {
+  $or?: Array<Record<string, any>>;
+  $and?: Array<Record<string, any>>;
+  [key: string]: any;
+}
+
+interface DateRange {
+  from?: string;
+  to?: string;
+}
+
+interface AdvancedSearchParams {
+  [key: string]: any;
+}
 
 
 
@@ -43,31 +76,104 @@ export const addLead = async (req: Request, res: Response, next: NextFunction) =
 
 export const getAllLead = async (req: any, res: any, next: any) => {
     try {
-        let pipeline: PipelineStage[] = [];
-        let matchObj: Record<string, any> = {};
-        if (req.query.query && req.query.query != "") {
-            matchObj.name = new RegExp(req.query.query, "i");
-        }
-        pipeline.push(
-            {
-                $match: matchObj,
+      let pipeline: PipelineStage[] = [];
+      let matchObj: Record<string, any> = {};
+  
+      // Handle basic search - search across multiple fields
+      if (req.query.query && req.query.query !== "") {
+        matchObj.$or = [
+          { firstName: new RegExp(req.query.query, "i") },
+          { lastName: new RegExp(req.query.query, "i") },
+          { email: new RegExp(req.query.query, "i") },
+          { company: new RegExp(req.query.query, "i") },
+          { phone: new RegExp(req.query.query, "i") },
+          { ownerName: new RegExp(req.query.query, "i") }
+          // Add any other fields you want to search by
+        ];
+      }
+  
+      // Handle advanced search (same as before)
+      if (req.query.advancedSearch && req.query.advancedSearch !== "") {
+        const searchParams = req.query.advancedSearch.split(',');
+        
+        const advancedSearchConditions: any[] = [];
+        
+        searchParams.forEach((param: string) => {
+          const [field, condition, value] = param.split(':');
+          
+          if (field && condition && value) {
+            let fieldCondition: Record<string, any> = {};
+            
+            switch (condition) {
+              case 'contains':
+                fieldCondition[field] = { $regex: value, $options: 'i' };
+                break;
+              case 'equals':
+                fieldCondition[field] = value;
+                break;
+              case 'startsWith':
+                fieldCondition[field] = { $regex: `^${value}`, $options: 'i' };
+                break;
+              case 'endsWith':
+                fieldCondition[field] = { $regex: `${value}$`, $options: 'i' };
+                break;
+              case 'greaterThan':
+                fieldCondition[field] = { $gt: isNaN(Number(value)) ? value : Number(value) };
+                break;
+              case 'lessThan':
+                fieldCondition[field] = { $lt: isNaN(Number(value)) ? value : Number(value) };
+                break;
+              default:
+                fieldCondition[field] = { $regex: value, $options: 'i' };
             }
-        );
-        if (req?.query?.isForSelectInput) {
-            pipeline.push({
-                $project: {
-                    label:{ $concat: [ "$firstName", " ", "$lastName" ] } ,
-                    value: "$_id"
-                },
-            })
+            
+            advancedSearchConditions.push(fieldCondition);
+          }
+        });
+        
+        // If we have both basic and advanced search, we need to combine them
+        if (matchObj.$or) {
+          // If there are already $or conditions (from basic search)
+          // We need to use $and to combine with advanced search
+          matchObj = {
+            $and: [
+              { $or: matchObj.$or },
+              { $and: advancedSearchConditions }
+            ]
+          };
+        } else {
+          // If there's only advanced search, use $and directly
+          matchObj.$and = advancedSearchConditions;
         }
-        let LeadArr = await paginateAggregate(Lead, pipeline, req.query);
-
-        res.status(201).json({ message: "found all Device", data: LeadArr.data, total: LeadArr.total });
+      }
+  
+      // Add the match stage to the pipeline
+      pipeline.push({
+        $match: matchObj
+      });
+  
+      // Handle request for select input options
+      if (req?.query?.isForSelectInput) {
+        pipeline.push({
+          $project: {
+            label: { $concat: ["$firstName", " ", "$lastName"] },
+            value: "$_id"
+          },
+        });
+      }
+  
+      // Use your existing pagination function
+      let LeadArr = await paginateAggregate(Lead, pipeline, req.query);
+  
+      res.status(201).json({ 
+        message: "found all leads", 
+        data: LeadArr.data, 
+        total: LeadArr.total 
+      });
     } catch (error) {
-        next(error);
+      next(error);
     }
-};
+  };
 
 export const getLeadById = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -227,163 +333,7 @@ export const BulkUploadLead: RequestHandler = async (req, res, next) => {
 }
 
 
-export const downloadExcelLead = async (req: Request, res: Response, next: NextFunction) => {
-    try {
 
-
-        // Create a new workbook and a new sheet
-        const workbook = new ExcelJs.Workbook();
-        const worksheet = workbook.addWorksheet("Bulk  Lead", {
-            pageSetup: { paperSize: 9, orientation: "landscape" },
-        });
-
-        worksheet.columns = [
-            // Basic Details
-            { header: "ID", key: "_id", width: 20 },
-            { header: "First Name", key: "firstName", width: 20 },
-            { header: "Last Name", key: "lastName", width: 15 },
-            { header: "Mobile Phone", key: "phone", width: 20 },
-            { header: "Company Name", key: "company", width: 20 },
-            { header: "Email", key: "email", width: 20 },
-            // { header: "Check-In", key: "checkIn", width: 20 },
-            // { header: "Check-Out", key: "checkOut", width: 20 },
-            // { header: "Number of Rooms", key: "noOfRooms", width: 20 },
-            // { header: "Display Name", key: "displayName", width: 20 },
-            // { header: "Company Name", key: "companyName", width: 20 },
-            // { header: "Salutation", key: "salutation", width: 15 },
-            // { header: "First Name", key: "firstName", width: 20 },
-            // { header: "Last Name", key: "lastName", width: 20 },
-            // { header: "Phone", key: "phone", width: 15 },
-            // { header: "Currency Code", key: "currencyCode", width: 15 },
-            // { header: "Notes", key: "notes", width: 30 },
-            // { header: "Website", key: "website", width: 25 },
-            // { header: "Status", key: "status", width: 15 },
-            // { header: "Opening Balance", key: "openingBalance", width: 20 },
-            // { header: "Opening Balance Exchange Rate", key: "openingBalanceExchangeRate", width: 25 },
-            // { header: "Branch ID", key: "branchId", width: 20 },
-            // { header: "Branch Name", key: "branchName", width: 20 },
-            // { header: "Bank Account Payment", key: "bankAccountPayment", width: 25 },
-            // { header: "Portal Enabled", key: "portalEnabled", width: 15 },
-            // { header: "Credit Limit", key: "creditLimit", width: 20 },
-            // { header: "Customer SubType", key: "customerSubType", width: 20 },
-            // { header: "Department", key: "department", width: 20 },
-            // { header: "Designation", key: "designation", width: 20 },
-            // { header: "Price List", key: "priceList", width: 20 },
-            // { header: "Payment Terms", key: "paymentTerms", width: 20 },
-            // { header: "Payment Terms Label", key: "paymentTermsLabel", width: 25 },
-
-            // // Contact Information
-            // { header: "Email ID", key: "emailId", width: 25 },
-            // { header: "Mobile Phone", key: "mobilePhone", width: 20 },
-            // { header: "Skype Identity", key: "skypeIdentity", width: 20 },
-            // { header: "Facebook", key: "facebook", width: 25 },
-            // { header: "Twitter", key: "twitter", width: 25 },
-
-            // // GST Details
-            // { header: "GST Treatment", key: "gstTreatment", width: 20 },
-            // { header: "GSTIN", key: "gstin", width: 20 },
-            // { header: "Taxable", key: "taxable", width: 10 },
-            // { header: "Tax ID", key: "taxId", width: 15 },
-            // { header: "Tax Name", key: "taxName", width: 20 },
-            // { header: "Tax Percentage", key: "taxPercentage", width: 20 },
-            // { header: "Exemption Reason", key: "exemptionReason", width: 25 },
-
-            // // Billing Address
-            // { header: "Billing Attention", key: "billingAttention", width: 25 },
-            // { header: "Billing Address", key: "billingAddress", width: 30 },
-            // { header: "Billing Street 2", key: "billingStreet2", width: 25 },
-            // { header: "Billing City", key: "billingCity", width: 20 },
-            // { header: "Billing State", key: "billingState", width: 20 },
-            // { header: "Billing Country", key: "billingCountry", width: 20 },
-            // { header: "Billing County", key: "billingCounty", width: 20 },
-            // { header: "Billing Code", key: "billingCode", width: 20 },
-            // { header: "Billing Phone", key: "billingPhone", width: 20 },
-            // { header: "Billing Fax", key: "billingFax", width: 20 },
-
-            // // Shipping Address
-            // { header: "Shipping Attention", key: "shippingAttention", width: 25 },
-            // { header: "Shipping Address", key: "shippingAddress", width: 30 },
-            // { header: "Shipping Street 2", key: "shippingStreet2", width: 25 },
-            // { header: "Shipping City", key: "shippingCity", width: 20 },s
-            // { header: "Shipping State", key: "shippingState", width: 20 },
-            // { header: "Shipping Country", key: "shippingCountry", width: 20 },
-            // { header: "Shipping County", key: "shippingCounty", width: 20 },
-            // { header: "Shipping Code", key: "shippingCode", width: 20 },
-            // { header: "Shipping Phone", key: "shippingPhone", width: 20 },
-            // { header: "Shipping Fax", key: "shippingFax", width: 20 },
-
-            // // Additional Details
-            // { header: "Place of Contact", key: "placeOfContact", width: 25 },
-            // { header: "Place of Contact with State Code", key: "placeOfContactWithStateCode", width: 30 },
-            // { header: "Contact Address ID", key: "contactAddressId", width: 25 },
-            // { header: "Source", key: "source", width: 20 },
-            // { header: "Owner Name", key: "ownerName", width: 20 },
-            // { header: "Primary Contact ID", key: "primaryContactId", width: 25 },
-            // { header: "Contact ID", key: "contactId", width: 20 },
-            // { header: "Contact Name", key: "contactName", width: 20 },
-            // { header: "Contact Type", key: "contactType", width: 20 },
-            // { header: "Last Sync Time", key: "lastSyncTime", width: 25 },
-        ];
-
-        let Leads = await Lead.find({}).lean().exec();
-
-        Leads.forEach((Lead) => {
-            
-            worksheet.addRow({
-                _id: Lead._id,
-                firstName: Lead.firstName,
-                lastName: Lead.lastName,
-                phone: Lead.phone,
-                email: Lead.email,
-                company: Lead.company,
-                // enquiryType: Lead.enquiryType,
-                // location: Enquiry.city,
-                // levelOfEnquiry: Enquiry.levelOfEnquiry,
-                // checkIn: Enquiry.checkIn,
-                // checkOut: Enquiry.checkOut,
-                // noOfRooms: Enquiry.noOfRooms,
-
-
-
-                // displayName: contact.displayName,
-                // companyName: contact.companyName,
-                // salutation: contact.salutation,
-                // firstName: contact.firstName,
-                // lastName: contact.lastName,
-                // phone: contact.phone,
-                // currencyCode: contact.currencyCode,
-                // notes: contact.notes,
-                // website: contact.website,
-                // status: contact.status,
-                // openingBalance: contact.openingBalance,
-                // openingBalanceExchangeRate: contact.openingBalanceExchangeRate,
-                // branchId: contact.branchId,
-                // branchName: contact.branchName,
-                // bankAccountPayment: contact.bankAccountPayment,
-                // portalEnabled: contact.portalEnabled,
-                // creditLimit: contact.creditLimit,
-                // customerSubType: contact.customerSubType,
-                // department: contact.department,
-                // gstin: contact.gstin,
-                // designation: contact.designation,
-            });
-        });
-
-
-        let filename = `${new Date().getTime()}.xlsx`
-        const filePath = path.join("public", "uploads", filename);
-        await workbook.xlsx.writeFile(`${filePath}`).then(() => {
-            res.send({
-                status: "success",
-                message: "file successfully downloaded",
-                filename: filename,
-            });
-        });
-
-    } catch (error) {
-        next(error);
-    }
-};
 
 export const getAllLeadName = async (req: any, res: any, next: any) => {
     try {
@@ -408,4 +358,165 @@ export const getAllLeadName = async (req: any, res: any, next: any) => {
         next(error);
     }
 
+};
+
+
+
+
+export const downloadExcelLead = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+
+
+      // Create a new workbook and a new sheet
+      const workbook = new ExcelJs.Workbook();
+      const worksheet = workbook.addWorksheet("Bulk  Lead", {
+          pageSetup: { paperSize: 9, orientation: "landscape" },
+      });
+
+      worksheet.columns = [
+          // Basic Details
+          { header: "ID", key: "_id", width: 20 },
+          { header: "First Name", key: "firstName", width: 20 },
+          { header: "Last Name", key: "lastName", width: 15 },
+          { header: "Mobile Phone", key: "phone", width: 20 },
+          { header: "Company Name", key: "company", width: 20 },
+          { header: "Email", key: "email", width: 20 },
+          // { header: "Check-In", key: "checkIn", width: 20 },
+          // { header: "Check-Out", key: "checkOut", width: 20 },
+          // { header: "Number of Rooms", key: "noOfRooms", width: 20 },
+          // { header: "Display Name", key: "displayName", width: 20 },
+          // { header: "Company Name", key: "companyName", width: 20 },
+          // { header: "Salutation", key: "salutation", width: 15 },
+          // { header: "First Name", key: "firstName", width: 20 },
+          // { header: "Last Name", key: "lastName", width: 20 },
+          // { header: "Phone", key: "phone", width: 15 },
+          // { header: "Currency Code", key: "currencyCode", width: 15 },
+          // { header: "Notes", key: "notes", width: 30 },
+          // { header: "Website", key: "website", width: 25 },
+          // { header: "Status", key: "status", width: 15 },
+          // { header: "Opening Balance", key: "openingBalance", width: 20 },
+          // { header: "Opening Balance Exchange Rate", key: "openingBalanceExchangeRate", width: 25 },
+          // { header: "Branch ID", key: "branchId", width: 20 },
+          // { header: "Branch Name", key: "branchName", width: 20 },
+          // { header: "Bank Account Payment", key: "bankAccountPayment", width: 25 },
+          // { header: "Portal Enabled", key: "portalEnabled", width: 15 },
+          // { header: "Credit Limit", key: "creditLimit", width: 20 },
+          // { header: "Customer SubType", key: "customerSubType", width: 20 },
+          // { header: "Department", key: "department", width: 20 },
+          // { header: "Designation", key: "designation", width: 20 },
+          // { header: "Price List", key: "priceList", width: 20 },
+          // { header: "Payment Terms", key: "paymentTerms", width: 20 },
+          // { header: "Payment Terms Label", key: "paymentTermsLabel", width: 25 },
+
+          // // Contact Information
+          // { header: "Email ID", key: "emailId", width: 25 },
+          // { header: "Mobile Phone", key: "mobilePhone", width: 20 },
+          // { header: "Skype Identity", key: "skypeIdentity", width: 20 },
+          // { header: "Facebook", key: "facebook", width: 25 },
+          // { header: "Twitter", key: "twitter", width: 25 },
+
+          // // GST Details
+          // { header: "GST Treatment", key: "gstTreatment", width: 20 },
+          // { header: "GSTIN", key: "gstin", width: 20 },
+          // { header: "Taxable", key: "taxable", width: 10 },
+          // { header: "Tax ID", key: "taxId", width: 15 },
+          // { header: "Tax Name", key: "taxName", width: 20 },
+          // { header: "Tax Percentage", key: "taxPercentage", width: 20 },
+          // { header: "Exemption Reason", key: "exemptionReason", width: 25 },
+
+          // // Billing Address
+          // { header: "Billing Attention", key: "billingAttention", width: 25 },
+          // { header: "Billing Address", key: "billingAddress", width: 30 },
+          // { header: "Billing Street 2", key: "billingStreet2", width: 25 },
+          // { header: "Billing City", key: "billingCity", width: 20 },
+          // { header: "Billing State", key: "billingState", width: 20 },
+          // { header: "Billing Country", key: "billingCountry", width: 20 },
+          // { header: "Billing County", key: "billingCounty", width: 20 },
+          // { header: "Billing Code", key: "billingCode", width: 20 },
+          // { header: "Billing Phone", key: "billingPhone", width: 20 },
+          // { header: "Billing Fax", key: "billingFax", width: 20 },
+
+          // // Shipping Address
+          // { header: "Shipping Attention", key: "shippingAttention", width: 25 },
+          // { header: "Shipping Address", key: "shippingAddress", width: 30 },
+          // { header: "Shipping Street 2", key: "shippingStreet2", width: 25 },
+          // { header: "Shipping City", key: "shippingCity", width: 20 },s
+          // { header: "Shipping State", key: "shippingState", width: 20 },
+          // { header: "Shipping Country", key: "shippingCountry", width: 20 },
+          // { header: "Shipping County", key: "shippingCounty", width: 20 },
+          // { header: "Shipping Code", key: "shippingCode", width: 20 },
+          // { header: "Shipping Phone", key: "shippingPhone", width: 20 },
+          // { header: "Shipping Fax", key: "shippingFax", width: 20 },
+
+          // // Additional Details
+          // { header: "Place of Contact", key: "placeOfContact", width: 25 },
+          // { header: "Place of Contact with State Code", key: "placeOfContactWithStateCode", width: 30 },
+          // { header: "Contact Address ID", key: "contactAddressId", width: 25 },
+          // { header: "Source", key: "source", width: 20 },
+          // { header: "Owner Name", key: "ownerName", width: 20 },
+          // { header: "Primary Contact ID", key: "primaryContactId", width: 25 },
+          // { header: "Contact ID", key: "contactId", width: 20 },
+          // { header: "Contact Name", key: "contactName", width: 20 },
+          // { header: "Contact Type", key: "contactType", width: 20 },
+          // { header: "Last Sync Time", key: "lastSyncTime", width: 25 },
+      ];
+
+      let Leads = await Lead.find({}).lean().exec();
+
+      Leads.forEach((Lead) => {
+          
+          worksheet.addRow({
+              _id: Lead._id,
+              firstName: Lead.firstName,
+              lastName: Lead.lastName,
+              phone: Lead.phone,
+              email: Lead.email,
+              company: Lead.company,
+              // enquiryType: Lead.enquiryType,
+              // location: Enquiry.city,
+              // levelOfEnquiry: Enquiry.levelOfEnquiry,
+              // checkIn: Enquiry.checkIn,
+              // checkOut: Enquiry.checkOut,
+              // noOfRooms: Enquiry.noOfRooms,
+
+
+
+              // displayName: contact.displayName,
+              // companyName: contact.companyName,
+              // salutation: contact.salutation,
+              // firstName: contact.firstName,
+              // lastName: contact.lastName,
+              // phone: contact.phone,
+              // currencyCode: contact.currencyCode,
+              // notes: contact.notes,
+              // website: contact.website,
+              // status: contact.status,
+              // openingBalance: contact.openingBalance,
+              // openingBalanceExchangeRate: contact.openingBalanceExchangeRate,
+              // branchId: contact.branchId,
+              // branchName: contact.branchName,
+              // bankAccountPayment: contact.bankAccountPayment,
+              // portalEnabled: contact.portalEnabled,
+              // creditLimit: contact.creditLimit,
+              // customerSubType: contact.customerSubType,
+              // department: contact.department,
+              // gstin: contact.gstin,
+              // designation: contact.designation,
+          });
+      });
+
+
+      let filename = `${new Date().getTime()}.xlsx`
+      const filePath = path.join("public", "uploads", filename);
+      await workbook.xlsx.writeFile(`${filePath}`).then(() => {
+          res.send({
+              status: "success",
+              message: "file successfully downloaded",
+              filename: filename,
+          });
+      });
+
+  } catch (error) {
+      next(error);
+  }
 };
