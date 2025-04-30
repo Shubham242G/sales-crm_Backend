@@ -61,19 +61,19 @@ export const getAllLead = async (req: Request, res: Response, next: NextFunction
       // Handle basic search - search across multiple fields
       if (req.query.query && req.query.query !== "") {
         matchObj.$or = [
-          { firstName: new RegExp(req.query.query, "i") },
-          { lastName: new RegExp(req.query.query, "i") },
-          { email: new RegExp(req.query.query, "i") },
-          { company: new RegExp(req.query.query, "i") },
-          { phone: new RegExp(req.query.query, "i") },
-          { ownerName: new RegExp(req.query.query, "i") }
+          { firstName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+          { lastName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+          { email: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+          { company: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+          { phone: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+          { ownerName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") }
           // Add any other fields you want to search by
         ];
       }
   
       // Handle advanced search (same as before)
-      if (req.query.advancedSearch && req.query.advancedSearch !== "") {
-        const searchParams = req.query.advancedSearch.split(',');
+      if (req?.query?.advancedSearch && req.query.advancedSearch !== "") {
+        const searchParams = typeof req.query.advancedSearch ===  'string' ? req.query.advancedSearch.split(',') : [];
         
         const advancedSearchConditions: any[] = [];
         
