@@ -280,7 +280,6 @@ export const getConfirmedQuotesByQuoteId
   next: NextFunction
 ) => {
 
-  console.log("check it is working")
   try {
     let pipeline: PipelineStage[] = [];
     let matchObj: Record<string, any> = {};

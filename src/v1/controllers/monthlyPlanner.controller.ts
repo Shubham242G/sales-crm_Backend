@@ -31,9 +31,7 @@ export const addMonthlyPlanner = async (req: Request, res: Response, next: NextF
         //     }
         // }
 
-        console.log(
-            "check 2 ", "for check MonthlyPlanner"
-        )
+        
         const meeting = await new MonthlyPlanner(req.body).save();
         res.status(201).json({ message: "MonthlyPlanner Created" });
 

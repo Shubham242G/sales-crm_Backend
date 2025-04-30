@@ -1,13 +1,35 @@
-import express from 'express';
-import { authorizeJwt } from '@middlewares/auth.middleware';
-import { addCustomer, deleteCustomerById, getCustomerById, updateCustomerById, getAllCustomer, CustomerBulkUpload } from '../controllers/customer.controller';
-import { upload } from '@middlewares/multer.middleware';
+
+import express from "express";
+import { Router } from "express";
+import {
+    getAllCustomers,
+    syncCustomers,
+    getCustomerById,
+    addCustomer, deleteCustomerById, updateCustomerById
+} from "../controllers/customers.controller";
+
+import { update } from "lodash";
+
+
+console.log("working in customer router ")
 const router = express.Router();
-router.post('/', addCustomer);
-router.get('/', getAllCustomer);
-router.get('/getById/:id', getCustomerById);
-router.patch('/updateById/:id', updateCustomerById);
-router.delete('/deleteById/:id', deleteCustomerById);
-router.post("/bulkUpload", upload.single('file'), CustomerBulkUpload);
+
+router.get("/customers", getAllCustomers);
+
+
+router.get("/sync", syncCustomers);
+
+
+router.post("/addCustomer", addCustomer);
+
+
+
+router.post("/updateCustomer/:id", updateCustomerById);
+
+router.delete("/deleteCustomer/:id", deleteCustomerById);
+
+// router.get('/invoices/pdf/:invoiceId', generateInvoicePDF);
+
+router.get('/customersById/:id', getCustomerById);
 
 export default router;

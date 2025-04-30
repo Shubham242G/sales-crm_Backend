@@ -457,6 +457,7 @@ export const convertRfp = async (req: Request, res: Response, next: NextFunction
         if (!rfp) {
             throw new Error("RFP does not exist");
         }
+        
 
 
         const existingQuoteToVendor = await QuotesFromVendors.findOne({ enquiryId: rfp.enquiryId }).lean().exec();
@@ -500,7 +501,6 @@ export const convertRfp = async (req: Request, res: Response, next: NextFunction
                 receivedDate: new Date(),
             });
             await newQuote.save();
-            console.log("updated vendor from rfp--->>", newQuote)
         }
 
 
@@ -528,7 +528,6 @@ export const convertRfp = async (req: Request, res: Response, next: NextFunction
         return res.status(200).json({ message: "RFP conversion completed successfully" });
     } catch (error) {
 
-        console.log(error)
         next(error);
     }
 };

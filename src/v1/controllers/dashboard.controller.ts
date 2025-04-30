@@ -65,11 +65,7 @@ export const getAllDashboard = async (req: any, res: any, next: any) => {
       quotesAggregation[0]?.totalBusinessFromCustomers || 0;
     const revenue = businessFromCustomers - costOfVendors;
 
-    console.log("Quotes Aggregation:", quotesAggregation);
-    console.log("Cost of Vendors:", costOfVendors);
-    console.log("Business from Customers:", businessFromCustomers);
-    console.log("Revenue:", revenue);
-
+    
     // Fetch dashboard data
     let dashboardArr = await paginateAggregate(Dashboard, pipeline, req.query);
 

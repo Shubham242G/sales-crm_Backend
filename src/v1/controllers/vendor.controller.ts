@@ -10,6 +10,7 @@ import multer from "multer";
 import xlsx from "xlsx";
 import fs from "fs";
 import path from "path";
+import { zohoRequest } from "@util/zoho";
 
 const upload = multer({ dest: "uploads/" });
 
@@ -97,6 +98,248 @@ export const addVendor = async (
     next(error);
   }
 };
+
+//  
+//     try {
+//         const response = await zohoRequest('vendors');
+//         const zohoVendor = response.vendor || [];
+
+//         let created = 0;
+//         let updated = 0;
+
+//         for (const cust of zohoVendor) {
+//             const sanitized = sanitizeZohoVendor(cust);
+
+//             const existing = await Vendor.findOne({ "vendor.email": sanitized.vendor.email });
+//             if (!existing) {
+//                 await Vendor.create(sanitized);
+//                 created++;
+//             } else {
+//                 await Vendor.updateOne({ "vendor.email": sanitized.vendor.email }, { $set: sanitized });
+//                 updated++;
+//             }
+//         }
+
+//         res.status(200).json({
+//             success: true,
+//             message: `${created} vendor created, ${updated} updated.`,
+//             created,
+//             updated,
+//         });
+//     } catch (error) {
+//         next(error);
+//     }
+// };
+
+// Helper for saving Zoho vendor
+// const processAndSaveVendor = async (vendor: any[]) => {
+//     for (const cust of vendor) {
+//         const sanitized = sanitizeZohoCustomer(cust);
+//         await Customer.updateOne({ email: sanitized.email }, { $set: sanitized }, { upsert: true });
+//     }
+// };
+
+// Zoho to Mongo field mapping
+// export const sanitizeZohoVendor = (cust: any) => {
+//   const vendorData = {
+//     vendor: {
+//       salutation: cust.salutation || '',
+//       firstName: cust.first_name || '',
+//       lastName: cust.last_name || '',
+//       email: cust.email || '',
+//       companyName: cust.company_name || '',
+//       contactName: cust.display_name || '',
+//       contactOwner: '', // Will need manual mapping
+//       panNumber: cust.pan_no || '',
+//       gst: cust.gst_no || '',
+//       vendorType: [], // Might require classification logic
+//       landLine: cust.phone || '',
+//       phoneNumber: cust.mobile || '',
+//       displayName: cust.display_name || '',
+//     },
+
+//     isBanquetDetailsVisible: false,
+//     isRestaurantDetailsVisible: false,
+
+//     location: {
+//       state: cust.billing_address?.state || '',
+//       city: cust.billing_address?.city || '',
+//       area: '',
+//       address: cust.billing_address?.address || '',
+//     },
+
+//     category: {
+//       categoryType: '',
+//     },
+
+//     rooms: [],
+//     banquets: [],
+//     restaurant: {
+//       restaurantMenuType: [],
+//       restaurantImageUpload: [],
+//       restaurantCovers: '',
+//       restaurantFloor: '',
+//       restaurantSwimmingPool: '',
+//     },
+
+//     bankDetails: {
+//       bankName: '',
+//       bankAccountNumber: '',
+//       ifsc: '',
+//       pointOfContact: '',
+//       email: '',
+//       phoneNumber: '',
+//       billingAddress: '',
+//     },
+
+//     eventServices: [],
+//     eventLocation: {
+//       state: '',
+//       city: '',
+//       area: '',
+//       serviceAreas: [],
+//     },
+
+//     transportLocation: {
+//       state: '',
+//       city: '',
+//       travelLocal: false,
+//       travelOutStation: false,
+//       serviceAreas: [],
+//       carDetails: [],
+//     },
+
+//     otherDetails: {
+//       sourceOfSupply: '',
+//       gstTreatment: cust.gst_treatment || '',
+//       gstin: cust.gst_no || '',
+//       pan: cust.pan_no || '',
+//       msmeRegistered: false,
+//       currency: cust.currency_code || '',
+//       openingBalanceState: cust.opening_balance_type || '',
+//       openingBalance: cust.opening_balance || '0',
+//       creditLimit: cust.credit_limit || '0',
+//       paymentTerms: cust.payment_terms || '',
+//       tds: '',
+//       priceList: cust.price_list_id || '',
+//       enablePortal: cust.portal_status === 'active',
+//       portalLanguage: cust.language_code || 'en',
+//       documents: [],
+//       websiteUrl: cust.website || '',
+//       department: cust.department || '',
+//       designation: cust.designation || '',
+//       twitter: '',
+//       facebook: '',
+//       skype: '',
+//     },
+
+//     billingAddress: {
+//       addressId: new Types.ObjectId(), // or fetch actual related address id
+//       billingCountry: cust.billing_address?.country || '',
+//       billingAddressStreet1: cust.billing_address?.address || '',
+//       billingAddressStreet2: '',
+//       billingCity: cust.billing_address?.city || '',
+//       billingState: cust.billing_address?.state || '',
+//       billingPincode: cust.billing_address?.zip || '',
+//       billingPhone: cust.billing_address?.phone || '',
+//       billingFaxNumber: cust.billing_address?.fax || '',
+//     },
+
+//     shippingAddress: {
+//       shippingCountry: cust.shipping_address?.country || '',
+//       shippingAddressStreet1: cust.shipping_address?.address || '',
+//       shippingAddressStreet2: '',
+//       shippingCity: cust.shipping_address?.city || '',
+//       shippingState: cust.shipping_address?.state || '',
+//       shippingPincode: cust.shipping_address?.zip || '',
+//       shippingPhone: cust.shipping_address?.phone || '',
+//       shippingFaxNumber: cust.shipping_address?.fax || '',
+//     },
+
+//     contactPersons: (cust.contact_persons || []).map((person:any) => ({
+//       salutation: person.salutation || '',
+//       contactPersonId: new Types.ObjectId(),
+//       contactPersonFirstName: person.first_name || '',
+//       contactPersonLastName: person.last_name || '',
+//       contactPersonEmail: person.email || '',
+//       contactPersonWorkPhone: person.phone || '',
+//       contactPersonMobilePhone: person.mobile || '',
+//       contactPersonMobile: person.mobile || '',
+//     })),
+//   };
+
+//   return vendorData;
+// };
+
+
+
+const processAndSaveVendor = async (vendor: any[]) => {
+    const createdCount = 0;
+    const updatedCount = 0;
+
+    for (const cust of vendor) {
+        const sanitizedCustomer: any = {
+            customerType: cust.customer_type || 'Business',
+            salutation: cust.salutation || '',
+            firstName: cust.first_name || '',
+            lastName: cust.last_name || '',
+            companyName: cust.company_name || '',
+            displayName: cust.display_name || '',
+            email: cust.email || '',
+            workPhone: cust.phone || '',
+            mobile: cust.mobile || '',
+            panNumber: cust.pan_no || '',
+            placeOfSupply: cust.place_of_supply || '',
+            prefersEmail: cust.prefered_email || false,
+            prefersSms: cust.prefered_sms || false,
+            gstTreatment: cust.gst_treatment || '',
+            taxPreference: cust.tax_type || 'Taxable',
+            currency: cust.currency_code || '',
+            paymentTerms: cust.payment_terms || '',
+            priceList: cust.price_list_id || '',
+            enablePortal: cust.portal_status === 'active',
+            portalLanguage: cust.language_code || 'en',
+            openingBalanceState: cust.opening_balance_type || '',
+            openingBalance: cust.opening_balance || '0',
+            creditLimit: cust.credit_limit || '0',
+            countryRegion: cust.billing_address?.country || '',
+            addressStreet1: cust.billing_address?.address || '',
+            addressStreet2: '',
+            city: cust.billing_address?.city || '',
+            state: cust.billing_address?.state || '',
+            phoneNumber: cust.phone || '',
+            pinCode: cust.billing_address?.zip || '',
+            faxNumber: cust.billing_address?.fax || '',
+            shippingCountryRegion: cust.shipping_address?.country || '',
+            shippingAddressStreet1: cust.shipping_address?.address || '',
+            shippingAddressStreet2: '',
+            shippingCity: cust.shipping_address?.city || '',
+            shippingState: cust.shipping_address?.state || '',
+            shippingPhoneNumber: cust.shipping_address?.phone || '',
+            shippingPinCode: cust.shipping_address?.zip || '',
+            shippingFaxNumber: cust.shipping_address?.fax || '',
+            contactPersons: cust.contact_persons || [],
+            documentArray: [],
+            websiteUrl: cust.website || '',
+            department: cust.department || '',
+            designation: cust.designation || '',
+            twitter: '',
+            skype: '',
+            facebook: ''
+        };
+
+        // Upsert operation - creates if not exists, updates if exists
+        await Vendor.updateOne(
+            { email: cust.email },
+            { $set: sanitizedCustomer },
+            { upsert: true }
+        );
+
+
+
+    }
+};
+
 
 
 
@@ -253,12 +496,10 @@ export const updateVendorById = async (
 
 
 export const bulkUpload: RequestHandler = async (req, res, next) => {
-  console.log("Working bulk upload");
   try {
     const file = req.file?.path;
     if (!file) throw new Error("File not uploaded");
 
-    console.log("File path:", file); // Debug file path
     const workbook = xlsx.readFile(file);
     const sheetName = workbook.SheetNames[0]; // Use first sheet
     const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
@@ -390,7 +631,6 @@ export const bulkUpload: RequestHandler = async (req, res, next) => {
         vendorsToInsert.push(vendorData);
         success.push({ row: i + 2, message: "Vendor queued for insertion" });
       } catch (err: any) {
-        console.error(`Error processing row ${i + 2}:`, err);
         errors.push({ row: i + 2, error: err.message || "Unknown error" });
       }
     }
@@ -399,9 +639,7 @@ export const bulkUpload: RequestHandler = async (req, res, next) => {
     if (vendorsToInsert.length > 0) {
       try {
         await Vendor.insertMany(vendorsToInsert, { ordered: false });
-        console.log(`Inserted ${vendorsToInsert.length} vendors`);
       } catch (insertErr: any) {
-        console.error("Bulk insert error:", insertErr);
         // If insertMany fails, mark all queued successes as errors
         success.forEach((s, idx) => {
           errors.push({
@@ -423,7 +661,6 @@ export const bulkUpload: RequestHandler = async (req, res, next) => {
       errors,
     });
   } catch (err: any) {
-    console.error("BulkUpload error:", err);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
@@ -483,16 +720,24 @@ export const convertVendorToSalesContact = async (
   }
 };
 
-export const getAllVendorName = async (req: any, res: any, next: any) => {
+export const getAllVendorName = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    let vendors = await Vendor.find(
+    // Fetch only required fields from the database
+    const vendors = await Vendor.find(
       {},
-      "vendor.firstName vendor.lastName"
+      "vendor.displayName"
     ).lean();
 
-    let vendorNames = vendors.map((v: any) => ({
-      fullName: `${v.vendor.firstName} ${v.vendor.lastName}`.trim(),
+
+    // Transforming the vendor list
+    const vendorNames = vendors.map((v: any) => ({
+      Name: `${v.vendor.displayName}`,
     }));
+
 
     res.status(200).json({
       message: "Found all vendor names",

@@ -23,6 +23,8 @@ import monthlyPlannerRouter from "@routesv1/monthyPlanner.routes";
 import express from "express";
 import dashboardRouter from "@routesv1/dashboard.routes";
 import statusRouter from "@routesv1/status.routes";
+import zohoInvoiceRouter from "@routesv1/zoho_invoice.routes";
+import vendorPurchaseBillRouter from "@routesv1/vendorPurchaseBill.routes";
 // import ZohoInvoiceRouter from "@routesv1/zoho_invoice.routes";
 
 const router = express.Router();
@@ -51,6 +53,8 @@ router.use("/dailyActivityReport", dailyActivityReport);
 router.use("/monthlyPlanner", monthlyPlannerRouter);
 router.use("/dashboard", dashboardRouter);
 router.use("/status", statusRouter);
+router.use("/zohoInvoice", zohoInvoiceRouter);
+router.use("/vendorPurchaseBill", vendorPurchaseBillRouter);
 // router.use("/zoho-invoice", ZohoInvoiceRouter)
 // router.use("/adminroutes")
 

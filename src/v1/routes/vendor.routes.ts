@@ -2,7 +2,6 @@ import { upload } from "@middlewares/multer.middleware";
 import { addVendor, deleteVendorById, getAllVendor, getVendorById, updateVendorById, convertVendorToSalesContact, getAllVendorName, bulkUpload } from "../controllers/vendor.controller";
 import express from "express";
 const router = express.Router();
-console.log("hello");
 router.post("/", addVendor);
 router.get("/", getAllVendor);
 router.delete("/deleteById/:id", deleteVendorById);

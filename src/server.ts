@@ -13,9 +13,8 @@ import { socketConnection } from "@helpers/socket";
 // import { getInvoices, downloadInvoicePdf, getInvoiceDetails } from "./v1/service/zohoinvoice.service";
 import { get } from "lodash";
 import { env } from "process";
-import { ZohoInvoice } from "@models/invoices.model";
-import { getZohoAccessToken } from "./v1/service/zohoinvoice.service";
-import { getAccessToken } from "./util/zohoTokenManager"
+
+
 
 // console.clear();
 console.log("Starting server... \n");
@@ -25,7 +24,6 @@ console.log("Starting server... \n");
  */
 
 const port = normalizePort(CONFIG.PORT || "3000");
-console.log("accessing part ", process.env.ZOHO);
 app.set("port", port);
 
 /**
@@ -102,11 +100,9 @@ function onError(error: any) {
   // handle specific listen errors with friendly messages
   switch (error.code) {
     case "EACCES":
-      console.error(bind + " requires elevated privileges");
       process.exit(1);
       break;
     case "EADDRINUSE":
-      console.error(bind + " is already in use");
       process.exit(1);
       break;
     default:
@@ -121,7 +117,6 @@ function onError(error: any) {
 function onListening() {
   const addr = server.address();
   const bind = typeof addr === "string" ? "pipe " + addr : "port " + addr?.port;
-  console.log("Listening on " + bind);
 }
 
 

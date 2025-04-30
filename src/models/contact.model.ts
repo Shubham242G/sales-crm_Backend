@@ -19,7 +19,7 @@ interface IContactPerson {
 }
 
 
-interface ICustomer {
+interface IContact {
     customerType: string;
     salutation: string;
     firstName: string;
@@ -75,7 +75,7 @@ interface ICustomer {
 
 
 
-const CustomerSchema = new Schema(
+const ContactSchema = new Schema(
     {
         customerType: { type: String, default: "Business" },
         salutation: String,
@@ -131,4 +131,4 @@ const CustomerSchema = new Schema(
     { timestamps: true }
 );
 
-export const Customer = model<ICustomer>("Customer", CustomerSchema);
+export const Contact = model<IContact>("Contact", ContactSchema);

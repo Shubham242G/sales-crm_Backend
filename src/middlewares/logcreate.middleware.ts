@@ -11,7 +11,7 @@ export const addLog = ({ eventName } : {eventName:string, }) => async (req: Requ
             event: eventName
        }).save();
 
-        console.log(newLog,'===== <NEW-LOG> =====')
+       
 
         next();
     } catch (error) {

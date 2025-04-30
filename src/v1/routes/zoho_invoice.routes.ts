@@ -1,40 +1,23 @@
-import express from "express";
-// import { listInvoices, downloadInvoice, getInvoice } from "../controllers/zohoInvoice.controller";
 
+import express from "express";
 import { Router } from "express";
-import axios from "axios";
-import { getAccessToken } from "../../util/zohoTokenManager";
+import {
+    getAllInvoices,
+    syncInvoices,
+    generateInvoicePDF,
+    getInvoiceById
+} from "../controllers/zohoInvoice.controller";
 
 const router = express.Router();
 
-// router.get("/invoices", listInvoices);
-
-// router.get("/invoices/:id", getInvoice);
-
-// router.get("/invoices/:id/download", downloadInvoice);
+router.get("/invoices", getAllInvoices);
 
 
+router.get("/sync", syncInvoices);
 
 
+router.get('/invoices/pdf/:invoiceId', generateInvoicePDF);
 
-router.get("/zoho", async (req, res) => {
-    try {
-        const token = await getAccessToken();
-
-        const zohoRes = await axios.get("https://www.zohoapis.in/books/v3/invoices", {
-            headers: {
-                Authorization: `Zoho-oauthtoken ${token}`,
-            },
-        });
-
-        res.json(zohoRes.data);
-    } catch (err) {
-        console.error("❌ Error fetching Zoho invoices", err);
-        res.status(500).send("Error fetching invoices");
-    }
-});
+router.get('/invoicesById/:id', getInvoiceById);
 
 export default router;
-
-
-

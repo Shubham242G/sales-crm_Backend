@@ -92,7 +92,6 @@ export const updateQuotesFromVendorsById = async (req: Request, res: Response, n
 
         let existsCheck = await QuotesFromVendors.findById(req.params.id).lean().exec();
 
-        console.log(existsCheck, "existsCheck for enquiry id ");
         if (!existsCheck) {
             throw new Error("Quote From Vendor does not exists");
         }
@@ -119,7 +118,6 @@ export const updateQuotesFromVendorsById = async (req: Request, res: Response, n
         const rfp = await Rfp.findOne({ enquiryId: existsCheck.enquiryId });
 
 
-        console.log("rfp------------------->", rfp);
 
         if (!rfp?._id) {
             throw new Error("RFP does not exist");
@@ -128,7 +126,6 @@ export const updateQuotesFromVendorsById = async (req: Request, res: Response, n
 
         let rfpObj = await Rfp.findByIdAndUpdate(rfp._id, { status: "Under negotitation with vendor" }).exec();
         await rfpObj?.save();
-        console.log("rfpObj------------------->", rfpObj);
 
         if (!rfpObj?.enquiryId) {
 
@@ -334,7 +331,7 @@ export const convertQuotesFromVendorToQuotesToCustomer = async (
     res: Response,
     next: NextFunction
 ) => {
-    console.log("working ");
+   
     try {
         const vendorQuoteId = req.params.id;
 
@@ -377,11 +374,9 @@ export const convertQuotesFromVendorToQuotesToCustomer = async (
         if (vendorQuote?.enquiryId) {
             var newQuotesToCustomer = await new QuotesToCustomer(quotesToCustomerData).save();
 
-            console.log(newQuotesToCustomer, "<---------check newQuotesToCustomer is working ");
 
             const result = await Enquiry.findByIdAndUpdate(vendorQuote.enquiryId, { status: "Quote sent to customer" }).exec();
 
-            console.log(result, "check result is working ");
 
             await Rfp.updateOne(
                 { enquiryId: vendorQuote.enquiryId },

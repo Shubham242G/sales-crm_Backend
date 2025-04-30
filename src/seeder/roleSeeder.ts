@@ -117,6 +117,24 @@ export const roleSeeder = async () => {
           },
         },
         {
+          routeName: "Invoice View",
+          permissions: {
+            create: true,
+            updatet: true,
+            delete: true,
+            view: true,
+          },
+        },
+        {
+          routeName: "Invoice Pdf View",
+          permissions: {
+            create: true,
+            updatet: true,
+            delete: true,
+            view: true,
+          },
+        },
+        {
           routeName: "Confirmed Quotes",
           permissions: {
             create: true,

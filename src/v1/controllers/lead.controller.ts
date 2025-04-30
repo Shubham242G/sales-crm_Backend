@@ -41,7 +41,7 @@ export const addLead = async (req: Request, res: Response, next: NextFunction) =
         //     }
         // }
 
-        
+
         const lead = await new Lead(req.body).save();
         res.status(201).json({ message: "Lead Created" });
 
@@ -51,7 +51,9 @@ export const addLead = async (req: Request, res: Response, next: NextFunction) =
     }
 };
 
-export const getAllLead = async (req: any, res: any, next: any) => {
+
+
+export const getAllLead = async (req: Request, res: Response, next: NextFunction) => {
     try {
       let pipeline: PipelineStage[] = [];
       let matchObj: Record<string, any> = {};
@@ -284,7 +286,7 @@ export const convertToContact = async (req: Request, res: Response, next: NextFu
 export const BulkUploadLead: RequestHandler = async (req, res, next) => {
 
 
-    
+
     try {
         let xlsxFile: any = req.file?.path;
         if (!xlsxFile) throw new Error("File Not Found");
@@ -295,7 +297,7 @@ export const BulkUploadLead: RequestHandler = async (req, res, next) => {
 
         let xlData: any = [];
         sheet_nameList.forEach((element: any) => {
-          
+
             xlData.push(...XLSX.utils.sheet_to_json(workbook.Sheets[element]));
         });
 
@@ -303,7 +305,7 @@ export const BulkUploadLead: RequestHandler = async (req, res, next) => {
             xlData.map(async (el: any) => await new Lead(el).save())
         }
         res.status(200).json({ message: "File Uploaded Successfully" });
-        
+
     } catch (error) {
         next(error);
     }
@@ -331,7 +333,7 @@ export const getAllLeadName = async (req: any, res: any, next: any) => {
             total: leadNames.length,
         });
     } catch (error) {
-        
+
         next(error);
     }
 
