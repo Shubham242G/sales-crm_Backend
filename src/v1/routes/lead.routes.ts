@@ -11,7 +11,7 @@ router.get('/getById/:id', getLeadById);
 router.patch('/updateById/:id', updateLeadById);
 router.delete('/deleteById/:id', deleteLeadById);
 router.post("/bulkUploadLeads", upload.single('file'), BulkUploadLead);
-router.get('/getExel', downloadExcelLead);
+router.post('/getExel', downloadExcelLead);
 router.get("/getAllLeadName", getAllLeadName);
 
 
