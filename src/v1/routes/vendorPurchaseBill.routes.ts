@@ -4,6 +4,7 @@ import {
     syncBillModels,
     deleteVendorPurchaseBillById,
     getVendorPurchaseBillById,
+    generateVendorPurchaseBillPDF,
     //   getBillModelById,
 } from "../controllers/vendorPurchaseBill.controller" // adjust path if needed
 
@@ -23,6 +24,8 @@ router.get("/bills/:id", getVendorPurchaseBillById);
 // @route   GET /api/vendor-purchase-bills/sync
 // @desc    Sync bills from Zoho Books
 router.get("/sync", syncBillModels);
+
+router.get('/bills/pdf/:billId', generateVendorPurchaseBillPDF);
 
 // @route   GET /api/vendor-purchase-bills/:id
 // @desc    Get bill by MongoDB ID

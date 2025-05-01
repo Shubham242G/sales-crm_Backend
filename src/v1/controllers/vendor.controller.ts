@@ -10,7 +10,10 @@ import multer from "multer";
 import xlsx from "xlsx";
 import fs from "fs";
 import path from "path";
+import PDFDocument from 'pdfkit';
 import { zohoRequest } from "@util/zoho";
+import { IVendor } from "@models/vendor.model";
+
 
 const upload = multer({ dest: "uploads/" });
 
@@ -368,6 +371,26 @@ export const getAllVendor = async (req: any, res: any, next: any) => {
     next(error);
   }
 };
+
+  export const generateVendorPDF = (vendor: IVendor): string => {
+    const fileName = `Vendor_${vendor.vendor.displayName}.pdf`;
+    const filePath = path.join(__dirname, '../../public/upload', fileName);
+  
+    const doc = new PDFDocument();
+    doc.pipe(fs.createWriteStream(filePath));
+  
+    doc.fontSize(20).text('VENDOR PURCHASE BILL', { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(12).text(`Vendor Name: ${vendor.vendor.firstName} ${vendor.vendor.lastName}`);
+    doc.text(`Email: ${vendor.vendor.email}`);
+    doc.text(`Company Name: ${vendor.vendor.companyName}`);
+    doc.text(`Phone Number: ${vendor.vendor.phoneNumber}`);
+    doc.text(`GST IN: ${vendor.vendor.gst} `);
+    doc.text(`Location: ${vendor.location.state} `);
+    doc.end();
+  
+    return `/vendorsById/${fileName}`; // Public URL for frontend use
+  };
 
 export const getVendorById = async (
   req: Request,

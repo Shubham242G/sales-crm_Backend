@@ -1,6 +1,6 @@
 import { model, Model, Schema, Types } from "mongoose";
 
-interface IVendor {
+export interface IVendor {
   vendor: {
     salutation: string;
     firstName: string;

@@ -132,6 +132,26 @@ export const getAllVendorPurchaseBills = async (req: Request, res: Response, nex
     }
   };
 
+  export const generateVendorPurchaseBillPDF = (vendorBill: IBill): string => {
+    const fileName = `Vendor Bill_${vendorBill.bill_number}.pdf`;
+    const filePath = path.join(__dirname, '../../public/upload', fileName);
+  
+    const doc = new PDFDocument();
+    doc.pipe(fs.createWriteStream(filePath));
+  
+    doc.fontSize(20).text('VENDOR PURCHASE BILL', { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(12).text(`Vendor Bill Number: ${vendorBill.bill_number}`);
+    doc.text(`Customer: ${vendorBill.vendor_name}`);
+    doc.text(`Date: ${vendorBill.date}`);
+    doc.text(`Status: ${vendorBill.status}`);
+    doc.text(`Total: ${vendorBill.total} ${vendorBill.currency_code}`);
+    doc.text(`Balance: ${vendorBill.balance} ${vendorBill.currency_code}`);
+    doc.end();
+  
+    return `/billsById/${fileName}`; // Public URL for frontend use
+  };
+
   export const deleteVendorPurchaseBillById = async (
     req: Request,
     res: Response,

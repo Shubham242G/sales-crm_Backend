@@ -43,9 +43,11 @@ export const getAllDashboard = async (req: any, res: any, next: any) => {
   try {
     let pipeline: PipelineStage[] = [];
     let matchObj: Record<string, any> = {};
+
     if (req.query.query && req.query.query !== "") {
       matchObj.name = new RegExp(req.query.query, "i");
     }
+
     pipeline.push({
       $match: matchObj,
     });
@@ -54,32 +56,57 @@ export const getAllDashboard = async (req: any, res: any, next: any) => {
       {
         $group: {
           _id: null,
-          totalCostOfVendors: { $sum: { $toDouble: "$amount" } },
-          totalBusinessFromCustomers: { $sum: { $toDouble: "$totalAmount" } },
+          totalCostOfVendors: {
+            $sum: {
+              $cond: [
+                {
+                  $or: [
+                    { $eq: ["$amount", ""] },
+                    { $eq: ["$amount", null] }
+                  ]
+                },
+                0,
+                { $toDouble: { $ifNull: ["$amount", "0"] } }
+              ]
+            }
+          },
+          totalBusinessFromCustomers: {
+            $sum: {
+              $cond: [
+                {
+                  $or: [
+                    { $eq: ["$totalAmount", ""] },
+                    { $eq: ["$totalAmount", null] }
+                  ]
+                },
+                0,
+                { $toDouble: { $ifNull: ["$totalAmount", "0"] } }
+              ]
+            }
+          },
         },
       },
     ]);
 
+    // Apply default values if no documents or missing values
     const costOfVendors = quotesAggregation[0]?.totalCostOfVendors || 0;
-    const businessFromCustomers =
-      quotesAggregation[0]?.totalBusinessFromCustomers || 0;
+    const businessFromCustomers = quotesAggregation[0]?.totalBusinessFromCustomers || 0;
     const revenue = businessFromCustomers - costOfVendors;
 
-    
-    // Fetch dashboard data
     let dashboardArr = await paginateAggregate(Dashboard, pipeline, req.query);
 
-    // If no dashboard exists, create one with calculated values
     if (dashboardArr.total === 0) {
+      // Create new dashboard record if none exists
       const newDashboard = await new Dashboard({
         costOfVendor: costOfVendors.toString(),
         businessFromCustomer: businessFromCustomers.toString(),
         revenue: revenue.toString(),
       }).save();
+
       dashboardArr.data = [newDashboard];
       dashboardArr.total = 1;
     } else {
-      // Update the first dashboard entry with calculated values
+      // Update existing dashboard record
       await Dashboard.findOneAndUpdate(
         {},
         {
@@ -89,6 +116,7 @@ export const getAllDashboard = async (req: any, res: any, next: any) => {
         },
         { new: true }
       );
+
       dashboardArr.data = await Dashboard.find({}).lean().exec();
     }
 
@@ -98,6 +126,7 @@ export const getAllDashboard = async (req: any, res: any, next: any) => {
       total: dashboardArr.total,
     });
   } catch (error) {
+    console.error("Error in getAllDashboard:", error);
     next(error);
   }
 };

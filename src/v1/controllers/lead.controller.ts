@@ -57,9 +57,11 @@ export const getAllLead = async (req: Request, res: Response, next: NextFunction
     try {
       let pipeline: PipelineStage[] = [];
       let matchObj: Record<string, any> = {};
-  
+      
+      const { query } = req.query;
       // Handle basic search - search across multiple fields
-      if (req.query.query && req.query.query !== "") {
+      if (req.query.query && typeof req.query.query === 'string' && req.query.query !== "") {
+        const queryStr = req.query.query;
         matchObj.$or = [
           { firstName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
           { lastName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
