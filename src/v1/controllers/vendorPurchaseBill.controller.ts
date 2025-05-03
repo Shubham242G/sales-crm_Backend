@@ -8,7 +8,6 @@ import BillModel,{  IBill } from '@models/vendorPurchaseBill.model';
 import { zohoRequest } from '../../util/zoho';
 import { paginateAggregate } from '@helpers/paginateAggregate';
 import mongoose, { PipelineStage } from 'mongoose';
-import asyncHandler from 'express-async-handler';
 import { deleteFileUsingUrl } from '@helpers/fileSystem';
 // ----------- Controller to Sync Vendor Purchase Bills from Zoho -----------
 
