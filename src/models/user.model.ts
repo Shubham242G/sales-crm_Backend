@@ -57,6 +57,7 @@ const usersSchema = new Schema<IUser>(
                 default: false,
             },
         },
+       
         // And `Schema.Types.ObjectId` in the schema definition.
     },
     { timestamps: true }

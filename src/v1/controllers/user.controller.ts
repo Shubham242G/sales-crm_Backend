@@ -442,7 +442,9 @@ export const updateUserById = async (
   next: NextFunction
 ) => {
   try {
-    const user = await User.findById(req?.params?.id).exec();
+
+    console.log(req.params.id, "check id")
+    const user = await User.findById(req?.params.id).exec();
     if (!user) {
       throw new Error("User does not exists");
     }
@@ -495,6 +497,45 @@ export const updateUserById = async (
     }).exec();
     if (!user) throw new Error("User Not Found");
     res.json({ message: "Updated" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const UpdatePasswordByAuthorizeId = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user?.userId;
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+
+    console.log(req.body , "check body")
+
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({ message: "All password fields are required" });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: "New password and confirmation do not match" });
+    }
+
+    const user = await User.findById(userId).exec();
+    if (!user) {
+      return res.status(404).json({ message: "User does not exist" });
+    }
+
+    const isOldPasswordValid = await comparePassword(user.password, oldPassword );
+    if (!isOldPasswordValid) {
+      return res.status(401).json({ message: "Old password is incorrect" });
+    }
+
+    const encryptedPassword = await encryptPassword(newPassword);
+    user.password = encryptedPassword;
+    await user.save();
+
+    res.json({ message: "Password updated successfully" });
   } catch (error) {
     next(error);
   }
