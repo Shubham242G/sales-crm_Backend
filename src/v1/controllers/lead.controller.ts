@@ -117,6 +117,7 @@ export const getAllLead = async (req: Request, res: Response, next: NextFunction
           // If there are already $or conditions (from basic search)
           // We need to use $and to combine with advanced search
           matchObj = {
+            
             $and: [
               { $or: matchObj.$or },
               { $and: advancedSearchConditions }

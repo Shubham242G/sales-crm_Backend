@@ -3,8 +3,9 @@ import { generateAccessJwt, generateRefreshJwt } from "@helpers/jwt";
 import { User } from "@models/user.model";
 import { Request, Response, NextFunction } from "express";
 import { addLogs } from "@helpers/addLog";
-import mongoose from "mongoose";
+import mongoose, { PipelineStage } from "mongoose";
 import { DEPARTMENT, ROLES } from "@common/constant.common";
+import { paginateAggregate } from "@helpers/paginateAggregate";
 
 export const webLogin = async (
   req: Request,
@@ -280,107 +281,128 @@ export const uploadDocuments = async (
   }
 };
 
-export const getAllUsers = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const getAllUsers = async (req: any, res: any, next: any) => {
   try {
-    let queryObj: any = {
-      role: { $ne: ROLES.STOREINCHARGE },
-      _id: { $ne: new mongoose.Types.ObjectId(req.user?.userId) },
-    };
-    if (req.query.role && req.query.role != "undefined") {
-      queryObj.role.$eq = req.query.role;
+    let pipeline: PipelineStage[] = [];
+    let matchObj: Record<string, any> = {};
+    if (req.query.query && req.query.query != "") {
+        matchObj.name = new RegExp(req.query.query, "i");
     }
+    pipeline.push({
+        $match: matchObj,
+    });
+    let userArr = await paginateAggregate(User, pipeline, req.query);
 
-    if (req.query.searchQuery) {
-      queryObj = {
-        ...queryObj,
-        $or: [],
-      };
-
-      queryObj.$or.push({ name: new RegExp(`${req.query.searchQuery}`, "i") });
-      queryObj.$or.push({ email: new RegExp(`${req.query.searchQuery}`, "i") });
-      queryObj.$or.push({ phone: new RegExp(`${req.query.searchQuery}`, "i") });
-      queryObj.$or.push({
-        mobile: new RegExp(`${req.query.searchQuery}`, "i"),
-      });
-      queryObj.$or.push({ role: new RegExp(`${req.query.searchQuery}`, "i") });
-    }
-
-    let pipeline: any = [
-      {
-        $match: queryObj,
-      },
-    ];
-    if (req.query.department == DEPARTMENT.STORES) {
-      pipeline.push(
-        {
-          $match: {
-            department: DEPARTMENT.STORES,
-          },
-        },
-        {
-          $unwind: {
-            path: "$rawMaterialArr",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $lookup: {
-            from: "rawmaterials",
-            localField: "rawMaterialArr.rawMaterialId",
-            foreignField: "_id",
-            as: "rawMaterialObj",
-          },
-        },
-        {
-          $unwind: {
-            path: "$rawMaterialObj",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $addFields: {
-            "rawMaterialArr.label": "$rawMaterialObj.name",
-            "rawMaterialArr.value": "$rawMaterialObj._id",
-          },
-        },
-        {
-          $group: {
-            _id: "$_id",
-            name: {
-              $first: "$name",
-            },
-            email: {
-              $first: "$email",
-            },
-            password: {
-              $first: "$password",
-            },
-            rawMaterialArr: {
-              $addToSet: "$rawMaterialArr",
-            },
-          },
-        }
-      );
-    }
-
-    if (req.query.isForSelectInput) {
-      pipeline.push({
-        $project: {
-          label: "$name",
-          value: "$_id",
-        },
-      });
-    }
-    const users = await User.aggregate(pipeline);
-    res.json({ message: "ALL Users", data: users });
-  } catch (error) {
+    res.status(201).json({ message: "found all Device", data: userArr.data, total: userArr.total });
+} catch (error) {
     next(error);
-  }
-};
+}
+}
+
+   
+
+// export const getAllUsers = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ) => {
+//   try {
+//     let queryObj: any = {
+//       role: { $ne: ROLES.STOREINCHARGE },
+//       _id: { $ne: new mongoose.Types.ObjectId(req.user?.userId) },
+//     };
+//     if (req.query.role && req.query.role != "undefined") {
+//       queryObj.role.$eq = req.query.role;
+//     }
+
+//     console.log(req.query, "check query ")
+//     if (req.query.query) {
+//       queryObj = {
+//         ...queryObj,
+//         $or: [],
+//       };
+
+//       queryObj.$or.push({ name: new RegExp(`${req.query.searchQuery}`, "i") });
+//       queryObj.$or.push({ email: new RegExp(`${req.query.searchQuery}`, "i") });
+//       queryObj.$or.push({ phone: new RegExp(`${req.query.searchQuery}`, "i") });
+//       queryObj.$or.push({
+//         mobile: new RegExp(`${req.query.searchQuery}`, "i"),
+//       });
+//       queryObj.$or.push({ role: new RegExp(`${req.query.searchQuery}`, "i") });
+//     }
+
+//     let pipeline: any = [
+//       {
+//         $match: queryObj,
+//       },
+//     ];
+//     // if (req.query.department == DEPARTMENT.STORES) {
+//     //   pipeline.push(
+//     //     {
+//     //       $match: {
+//     //         department: DEPARTMENT.STORES,
+//     //       },
+//     //     },
+//     //     {
+//     //       $unwind: {
+//     //         path: "$rawMaterialArr",
+//     //         preserveNullAndEmptyArrays: true,
+//     //       },
+//     //     },
+//     //     {
+//     //       $lookup: {
+//     //         from: "rawmaterials",
+//     //         localField: "rawMaterialArr.rawMaterialId",
+//     //         foreignField: "_id",
+//     //         as: "rawMaterialObj",
+//     //       },
+//     //     },
+//     //     {
+//     //       $unwind: {
+//     //         path: "$rawMaterialObj",
+//     //         preserveNullAndEmptyArrays: true,
+//     //       },
+//     //     },
+//     //     {
+//     //       $addFields: {
+//     //         "rawMaterialArr.label": "$rawMaterialObj.name",
+//     //         "rawMaterialArr.value": "$rawMaterialObj._id",
+//     //       },
+//     //     },
+//     //     {
+//     //       $group: {
+//     //         _id: "$_id",
+//     //         name: {
+//     //           $first: "$name",
+//     //         },
+//     //         email: {
+//     //           $first: "$email",
+//     //         },
+//     //         password: {
+//     //           $first: "$password",
+//     //         },
+//     //         rawMaterialArr: {
+//     //           $addToSet: "$rawMaterialArr",
+//     //         },
+//     //       },
+//     //     }
+//     //   );
+//     // }
+
+//     // if (req.query.isForSelectInput) {
+//     //   pipeline.push({
+//     //     $project: {
+//     //       label: "$name",
+//     //       value: "$_id",
+//     //     },
+//     //   });
+//     // }
+//     const users = await User.(pipeline);
+//     res.json({ message: "ALL Users", data: users });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 export const getProfile = async (
   req: Request,
