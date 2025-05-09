@@ -1,6 +1,7 @@
 import { upload } from "@middlewares/multer.middleware";
-import { addVendor, deleteVendorById, getAllVendor, getVendorById, updateVendorById, convertVendorToSalesContact, getAllVendorName, bulkUpload, generateVendorPDF } from "../controllers/vendor.controller";
+import { addVendor, deleteVendorById, getAllVendor, getVendorById, updateVendorById, convertVendorToSalesContact, getAllVendorName, bulkUpload, downloadExcelVendor } from "../controllers/vendor.controller";
 import express from "express";
+import { downloadExcelLead } from "@controllers/lead.controller";
 const router = express.Router();
 router.post("/", addVendor);
 router.get("/", getAllVendor);
@@ -10,6 +11,7 @@ router.get("/getById/:id", getVendorById);
 router.post("/convert-to-sales-contact/:id", convertVendorToSalesContact);
 router.get("/getAllVendorName", getAllVendorName);
 router.post("/bulkUpload", upload.single('file'), bulkUpload);
-router.get('/pdf/:vendorId', generateVendorPDF);
+router.get("/downloadExcelVendor", downloadExcelVendor);
+router.get('/pdf/', downloadExcelVendor);
 
 export default router;

@@ -11,6 +11,7 @@ import { webLogin,
     updateUserById,
     uploadDocuments,
     UpdatePasswordByAuthorizeId
+    getAllUserName,
  } from '@controllersv1/user.controller';
 import { authorizeJwt } from '@middlewares/auth.middleware';
 import { upload } from '@middlewares/multer.middleware';
@@ -48,6 +49,8 @@ router.patch("/updateProfile", authorizeJwt, updateProfile);
 
 // Route for getting a user by ID
 router.get("/getById/:id",  authorizeJwt, getUserById);
+
+router.get("/getAllUserName", getAllUserName);
 
 // Route for updating a user by ID
 router.patch("/updateById/:id", authorizeJwt, updateUserById);

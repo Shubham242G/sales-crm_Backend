@@ -7,6 +7,7 @@ interface IQuotesToCustomer {
   serviceType: [];
   amount: number;
   status: string;
+  displayName: string;
   markupDetails: {
     label: string;
     markupAmount: string;
@@ -20,6 +21,7 @@ const QuotesFromVendorsSchema = new Schema(
     customerName: String,
     enquiryId: Types.ObjectId,
     serviceType: [],
+    displayName: String,
     status: String,
     amount: Number,
     totalAmount: String,

@@ -35,6 +35,7 @@ export const getAllInvoices = async (req: any, res: any, next: any) => {
     // Add status filter if provided
     if (req.query.status && req.query.status !== "") {
       matchObj.status = req.query.status;
+      console.log("Status filter applied:", req.query.status);
     }
 
     // Add date range filter if provided

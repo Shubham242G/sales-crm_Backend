@@ -162,7 +162,10 @@ export const getAllCustomers = async (req: any, res: any, next: any) => {
         let pipeline: PipelineStage[] = [];
         let matchObj: Record<string, any> = {};
         if (req.query.query && req.query.query != "") {
-            matchObj.name = new RegExp(req.query.query, "i");
+            matchObj.$or = [
+                { displayName: new RegExp(req.query.query, "i") },
+
+            ];
         }
         pipeline.push({
             $match: matchObj,

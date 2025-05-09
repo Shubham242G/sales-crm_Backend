@@ -156,6 +156,10 @@ export interface IVendor {
     contactPersonWorkPhone: string;
     contactPersonMobilePhone: string;
     contactPersonMobile: string;
+    contactPersonDateOfBirth: string;
+    contactPersonAnniversary: string;
+    contactPersonDesignation: string;
+    contactPersonDepartment: string;
   }[];
 }
 
@@ -423,6 +427,10 @@ export interface IVendor {
       contactPersonWorkPhone: String,
       contactPersonMobilePhone: String,
       contactPersonMobile: String,
+      contactPersonDateOfBirth: String,
+      contactPersonAnniversary: String,
+      contactPersonDesignation: String,
+      contactPersonDepartment: String,
     }],
   }, { timestamps: true });
 export const Vendor = model<IVendor>("vendor", vendorSchema);

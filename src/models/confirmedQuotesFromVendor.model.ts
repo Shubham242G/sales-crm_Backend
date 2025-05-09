@@ -12,6 +12,7 @@ interface IConfirmedQuotes {
     expectedPax: string;
     quotesId: string;
     rfpId: string;
+    displayName: string,
     vendorList: {
         label: string,
         value: string
@@ -81,6 +82,7 @@ const confirmedQuotesSchema = new Schema<IConfirmedQuotes>(
         expectedPax: String,
         quotesId: String,
         rfpId: String,
+        displayName: String,
         vendorList: {
             label: String,
             value: String

@@ -499,6 +499,7 @@ export const convertRfp = async (req: Request, res: Response, next: NextFunction
                 enquiryId: rfp.enquiryId || "",
                 amount: "",
                 receivedDate: new Date(),
+                displayName: rfp.displayName || "",
             });
             await newQuote.save();
         }

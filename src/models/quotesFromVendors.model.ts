@@ -13,6 +13,7 @@ interface IQuotesFromVendors {
   receivedDate: string;
   status: string;
   attachment: string[];
+  displayName: string;
   eventDates: [
     {
       startDate: Date;
@@ -38,6 +39,7 @@ const QuotesFromVendorsSchema = new Schema(
     rfpId: String,
     amount: String,
     receivedDate: String,
+    displayName: String,
     status: String,
     attachment: [String],
     eventDates: [

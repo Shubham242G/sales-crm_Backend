@@ -628,3 +628,33 @@ export const getUserById = async (
     next(error);
   }
 };
+
+export const getAllUserName = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Fetch only required fields from the database
+    const users = await User.find().select({ name: 1, _id: 1 });
+
+
+
+    console.log(users, "users");
+    // Transforming the vendor list
+    const userNames = users.map((v: any) => ({
+      label: `${v.name}`,
+      value: `${v._id}`,
+
+    }));
+
+
+    res.status(200).json({
+      message: "Found all vendor names",
+      data: userNames,
+      total: userNames.length,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

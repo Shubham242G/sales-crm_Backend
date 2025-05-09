@@ -18,6 +18,7 @@ export interface IBill extends Document {
   due_date: string; // same here
   due_days?: string;
   currency_id: string;
+  displayName:string;
   currency_code: string;
   price_precision: number;
   exchange_rate: number;
@@ -61,6 +62,7 @@ const BillSchema: Schema = new Schema(
     current_sub_status: { type: String, default: '' },
     bill_number: { type: String, required: true },
     reference_number: { type: String, default: '' },
+    displayName: String,
     date: { type: String, required: true },
     due_date: { type: String, required: true },
     due_days: { type: String, default: '' },

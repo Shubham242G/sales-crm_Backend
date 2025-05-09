@@ -8,11 +8,13 @@ import { SalesContact } from "@models/salesContact.model";
 import { parse } from 'csv-parse'
 import multer from "multer";
 import xlsx from "xlsx";
+import ExcelJs from "exceljs";
 import fs from "fs";
 import path from "path";
-import PDFDocument from 'pdfkit';
 import { zohoRequest } from "@util/zoho";
 import { IVendor } from "@models/vendor.model";
+import { createObjectCsvWriter } from "csv-writer";
+import { rgb, StandardFonts, StandardFontValues, PDFDocument } from "pdf-lib";
 
 
 const upload = multer({ dest: "uploads/" });
@@ -372,25 +374,7 @@ export const getAllVendor = async (req: any, res: any, next: any) => {
   }
 };
 
-  export const generateVendorPDF = (vendor: IVendor): string => {
-    const fileName = `Vendor_${vendor.vendor.displayName}.pdf`;
-    const filePath = path.join(__dirname, '../../public/upload', fileName);
-  
-    const doc = new PDFDocument();
-    doc.pipe(fs.createWriteStream(filePath));
-  
-    doc.fontSize(20).text('VENDOR PURCHASE BILL', { align: 'center' });
-    doc.moveDown();
-    doc.fontSize(12).text(`Vendor Name: ${vendor.vendor.firstName} ${vendor.vendor.lastName}`);
-    doc.text(`Email: ${vendor.vendor.email}`);
-    doc.text(`Company Name: ${vendor.vendor.companyName}`);
-    doc.text(`Phone Number: ${vendor.vendor.phoneNumber}`);
-    doc.text(`GST IN: ${vendor.vendor.gst} `);
-    doc.text(`Location: ${vendor.location.state} `);
-    doc.end();
-  
-    return `/vendorsById/${fileName}`; // Public URL for frontend use
-  };
+
 
 export const getVendorById = async (
   req: Request,
@@ -768,6 +752,491 @@ export const getAllVendorName = async (
       total: vendorNames.length,
     });
   } catch (error) {
+    next(error);
+  }
+};
+
+//Export 
+
+const FIELD_MAPPING = {
+  _id: { header: 'ID', width: 22 },
+  name: { header: 'Vendor Name', width: 20 },
+  contactPerson: { header: 'Contact Person', width: 20 },
+  phone: { header: 'Phone', width: 15 },
+  email: { header: 'Email', width: 25 },
+  address: { header: 'Address', width: 30 },
+  category: { header: 'Category', width: 15 },
+  status: { header: 'Status', width: 15 },
+  createdAt: { header: 'Created Date', width: 20 },
+  updatedAt: { header: 'Last Modified Date', width: 20 },
+  // Add additional fields as needed
+};
+
+
+const buildQuery = (req: Request) => {
+  const query: any = {};
+
+  // Basic search query
+  if (req.query.query) {
+    const searchRegex = new RegExp(req.query.query as string, 'i');
+    query.$or = [
+      { name: searchRegex },
+      { contactPerson: searchRegex },
+      { email: searchRegex },
+      { phone: searchRegex },
+      { address: searchRegex },
+    ];
+  }
+
+  // Advanced search
+  if (req.query.advancedSearch) {
+    try {
+      const advancedParams = JSON.parse(req.query.advancedSearch as string);
+
+      Object.keys(advancedParams).forEach(key => {
+        const value = advancedParams[key];
+
+        if (value) {
+          // Handle date fields
+          if (key === 'createdAt' || key === 'updatedAt') {
+            if (value.startDate && value.endDate) {
+              query[key] = {
+                $gte: new Date(value.startDate),
+                $lte: new Date(value.endDate)
+              };
+            } else if (value.startDate) {
+              query[key] = { $gte: new Date(value.startDate) };
+            } else if (value.endDate) {
+              query[key] = { $lte: new Date(value.endDate) };
+            }
+          }
+          // Handle select fields (exact match)
+          else if (key === 'category' || key === 'status') {
+            query[key] = value;
+          }
+          // Handle text fields (partial match)
+          else {
+            query[key] = new RegExp(value, 'i');
+          }
+        }
+      });
+    } catch (error) {
+      console.error("Error parsing advanced search parameters:", error);
+    }
+  }
+
+  return query;
+};
+
+
+const processFields = (fields?: string[]) => {
+  // If no fields specified, use all available fields
+  if (!fields || fields.length === 0) {
+    return Object.keys(FIELD_MAPPING).map(key => ({
+      key,
+      ...FIELD_MAPPING[key as keyof typeof FIELD_MAPPING]
+    }));
+  }
+
+  // Return only selected fields
+  return fields.map(key => ({
+    key,
+    ...FIELD_MAPPING[key as keyof typeof FIELD_MAPPING]
+  }));
+};
+
+
+const formatVendorData = (vendor: any) => {
+  return {
+    ...vendor,
+    // Format dates
+    createdAt: vendor.createdAt ? new Date(vendor.createdAt).toLocaleDateString() : '',
+    updatedAt: vendor.updatedAt ? new Date(vendor.updatedAt).toLocaleDateString() : '',
+    // Format other fields as needed
+  };
+};
+
+
+export const downloadExcelVendor = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Get export parameters
+    const format = (req.body.format as string) || 'xlsx';
+    let fields: string[] = [];
+
+    if (req.body.fields) {
+      try {
+        fields = req.body.fields as string[];
+      } catch (error) {
+        console.error("Error parsing fields:", error);
+      }
+    }
+
+    // Build query based on search parameters
+    const query = buildQuery(req);
+
+    // Get vendors from database
+    const vendors = await Vendor.find(query).lean().exec();
+
+    // Format date fields and process data
+    const formattedVendors = vendors.map(formatVendorData);
+
+    // Process fields for export
+    const exportFields = processFields(fields);
+
+    // Generate unique filename
+    const timestamp = new Date().getTime();
+    const directory = path.join("public", "uploads");
+
+    // Ensure directory exists
+    if (!fs.existsSync(directory)) {
+      fs.mkdirSync(directory, { recursive: true });
+    }
+
+    let filename = '';
+
+    switch (format.toLowerCase()) {
+      case 'csv':
+        filename = await exportToCsv(formattedVendors, exportFields, directory, timestamp);
+        break;
+      case 'pdf':
+        filename = await exportToPdf(formattedVendors, exportFields, directory, timestamp);
+        break;
+      case 'xlsx':
+      default:
+        filename = await exportToExcel(formattedVendors, exportFields, directory, timestamp);
+        break;
+    }
+
+    res.json({
+      status: "success",
+      message: "File successfully generated",
+      filename: filename,
+    });
+
+  } catch (error) {
+    console.error("Export error:", error);
+    next(error);
+  }
+};
+
+
+const exportToExcel = async (
+  vendors: any[], 
+  fields: any[], 
+  directory: string, 
+  timestamp: number
+): Promise<string> => {
+  // Create a new workbook and worksheet
+  const workbook = new ExcelJs.Workbook();
+  const worksheet = workbook.addWorksheet("Vendors", {
+    pageSetup: { paperSize: 9, orientation: "landscape" },
+  });
+  
+  // Define columns
+  worksheet.columns = fields.map(field => ({
+    header: field.header,
+    key: field.key,
+    width: field.width
+  }));
+  
+  // Style the header row
+  const headerRow = worksheet.getRow(1);
+  headerRow.font = { bold: true };
+  headerRow.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FFE0E0E0' }
+  };
+  
+  // Add data rows
+  vendors.forEach(vendors => {
+    const rowData: any = {};
+    fields.forEach(field => {
+      rowData[field.key] = vendors[field.key] !== undefined ? vendors[field.key] : '';
+    });
+    worksheet.addRow(rowData);
+  });
+  
+  // Add borders to all cells
+  worksheet.eachRow({ includeEmpty: true }, (row:any) => {
+    row.eachCell({ includeEmpty: true }, (cell:any) => {
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+    });
+  });
+  
+  // Write the file
+  const filename = `vendors_export_${timestamp}.xlsx`;
+  const filePath = path.join(directory, filename);
+  await workbook.xlsx.writeFile(filePath);
+  
+  return filename;
+};
+
+const exportToPdf = async (
+  vendors: any[], 
+  fields: any[], 
+  directory: string, 
+  timestamp: number
+): Promise<string> => {
+  // Create PDF document
+  const pdfDoc = await PDFDocument.create();
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  
+  // Add a page
+  const page = pdfDoc.addPage([842, 595]); // A4 landscape
+  const { width, height } = page.getSize();
+  
+  // Define margins and spacing
+  const margin = 50;
+  const lineHeight = 20;
+  const columnWidth = (width - margin * 2) / fields.length;
+  
+  // Draw title
+  page.drawText('Vendors Export', {
+    x: margin,
+    y: height - margin,
+    size: 16,
+    font: boldFont
+  });
+  
+  // Draw export date
+  const exportDate = new Date().toLocaleDateString();
+  page.drawText(`Generated on: ${exportDate}`, {
+    x: margin,
+    y: height - margin - lineHeight,
+    size: 10,
+    font
+  });
+  
+  // Draw header row
+  let x = margin;
+  let y = height - margin - lineHeight * 3;
+  
+  // Background for header
+  page.drawRectangle({
+    x: margin - 5,
+    y: y - 5,
+    width: width - margin * 2 + 10,
+    height: lineHeight + 10,
+    color: rgb(0.9, 0.9, 0.9),
+  });
+  
+  // Draw header text
+  fields.forEach((field, index) => {
+    page.drawText(field.header, {
+      x: x + 5,
+      y: y,
+      size: 10,
+      font: boldFont
+    });
+    x += columnWidth;
+  });
+  
+  // Draw data rows
+  y -= lineHeight + 10;
+  
+  // Limit number of rows per page
+  const rowsPerPage = Math.floor((height - margin * 2 - lineHeight * 4) / lineHeight);
+  let currentRow = 0;
+  
+  // Draw each lead row
+  for (const vendor of vendors) {
+    // Check if we need a new page
+    if (currentRow >= rowsPerPage) {
+      // Add new page
+      const newPage = pdfDoc.addPage([842, 595]);
+      page.drawText('Vendors Export (continued)', {
+        x: margin,
+        y: height - margin,
+        size: 16,
+        font: boldFont
+      });
+      
+      // Reset position for new page
+      y = height - margin - lineHeight * 3;
+      currentRow = 0;
+      
+      // Draw header on new page
+      let headerX = margin;
+      fields.forEach(field => {
+        newPage.drawText(field.header, {
+          x: headerX + 5,
+          y: y,
+          size: 10,
+          font: boldFont
+        });
+        headerX += columnWidth;
+      });
+      
+      y -= lineHeight + 10;
+    }
+    
+    // Draw row data
+    x = margin;
+    fields.forEach(field => {
+      const value = vendor[field.key] !== undefined ? String(vendor[field.key]) : '';
+      
+      // Truncate long values
+      const maxLength = Math.floor(columnWidth / 6);
+      const displayValue = value.length > maxLength ? value.substring(0, maxLength) + '...' : value;
+      
+      page.drawText(displayValue, {
+        x: x + 5,
+        y: y,
+        size: 8,
+        font
+      });
+      x += columnWidth;
+    });
+    
+    y -= lineHeight;
+    currentRow++;
+  }
+  
+  // Save the PDF
+  const filename = `vendors_export_${timestamp}.pdf`;
+  const filePath = path.join(directory, filename);
+  const pdfBytes = await pdfDoc.save();
+  
+  fs.writeFileSync(filePath, pdfBytes);
+  
+  return filename;
+};
+
+
+
+const exportToCsv = async (
+  vendors: any[], 
+  fields: any[], 
+  directory: string, 
+  timestamp: number
+): Promise<string> => {
+  // Create CSV writer
+  const filename = `vendors_export_${timestamp}.csv`;
+  const filePath = path.join(directory, filename);
+  
+  const csvWriter = createObjectCsvWriter({
+    path: filePath,
+    header: fields.map(field => ({
+      id: field.key,
+      title: field.header
+    }))
+  });
+  
+  // Write data
+  await csvWriter.writeRecords(vendors);
+  
+  return filename;
+};
+
+
+
+
+
+export const downloadVendorTemplate = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const workbook = new ExcelJs.Workbook();
+
+    // ====== VENDOR TEMPLATE SHEET ======
+    const worksheet = workbook.addWorksheet("Vendor Template", {
+      pageSetup: { paperSize: 9, orientation: "landscape" },
+    });
+
+    worksheet.columns = [
+      { header: "Vendor Name*", key: "name", width: 20 },
+      { header: "Contact Person", key: "contactPerson", width: 20 },
+      { header: "Email*", key: "email", width: 25 },
+      { header: "Phone", key: "phone", width: 15 },
+      { header: "Address", key: "address", width: 30 },
+      { header: "Category", key: "category", width: 15 },
+      { header: "Status", key: "status", width: 15 },
+    ];
+
+    // Style header
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFE0E0E0' },
+    };
+
+    // Example row
+    worksheet.addRow({
+      name: "ABC Supplies",
+      contactPerson: "Jane Doe",
+      email: "jane.doe@abc.com",
+      phone: "1234567890",
+      address: "123 Main St, City",
+      category: "Electronics",
+      status: "Active"
+    });
+
+    // Data validation dropdowns
+    worksheet.getCell("F2").dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: ['"Electronics,Stationery,Furniture,Other"']
+    };
+
+    worksheet.getCell("G2").dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: ['"Active,Inactive"']
+    };
+
+    // ====== INSTRUCTIONS SHEET ======
+    const instructionSheet = workbook.addWorksheet("Instructions");
+
+    instructionSheet.columns = [
+      { header: "Field", key: "field", width: 20 },
+      { header: "Description", key: "description", width: 50 },
+      { header: "Required", key: "required", width: 10 },
+    ];
+
+    const instHeaderRow = instructionSheet.getRow(1);
+    instHeaderRow.font = { bold: true };
+    instHeaderRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFE0E0E0' },
+    };
+
+    const instructions = [
+      { field: "Vendor Name", description: "Name of the vendor", required: "Yes" },
+      { field: "Contact Person", description: "Primary contact person at the vendor", required: "No" },
+      { field: "Email", description: "Vendor's email address", required: "Yes" },
+      { field: "Phone", description: "Vendor's phone number", required: "No" },
+      { field: "Address", description: "Vendor's address", required: "No" },
+      { field: "Category", description: "Category of products/services provided", required: "No" },
+      { field: "Status", description: "Current status of the vendor (Active, Inactive)", required: "No" },
+    ];
+
+    instructions.forEach(row => instructionSheet.addRow(row));
+
+    // ====== STREAM FILE TO CLIENT ======
+    const timestamp = new Date().getTime();
+    const filename = `vendor_import_template_${timestamp}.xlsx`;
+
+    // Set response headers
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader("Content-Disposition", `attachment; filename=${filename}`);
+
+    // Write the workbook to the response
+    await workbook.xlsx.write(res);
+    res.status(200).end();
+
+  } catch (error) {
+    console.error("Error generating Excel template:", error);
     next(error);
   }
 };

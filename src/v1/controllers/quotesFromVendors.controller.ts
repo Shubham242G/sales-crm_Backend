@@ -369,6 +369,7 @@ export const convertQuotesFromVendorToQuotesToCustomer = async (
             status: "Quote sent to customer",
             enquiryId: vendorQuote.enquiryId,
             customerName: `${enquiry?.firstName} ${enquiry?.lastName || ""}`.trim(),
+            displayName: vendorQuote.displayName
         };
 
         if (vendorQuote?.enquiryId) {

@@ -570,6 +570,7 @@ export const convertRfp = async (
       enquiryId: enquiry._id,
       fullName: `${enquiry.firstName} ${enquiry.lastName || ""}`.trim(),
       vendorList: [],
+      displayName: enquiry.displayName,
       // vendorList: [
       //   {
       //     label: `${enquiry.firstName} ${enquiry.lastName || ""}`.trim(),
@@ -579,7 +580,8 @@ export const convertRfp = async (
       additionalInstructions: "",
       status: "RFP raised to vendor"
     });
-    rfp.save();
+
+    const newRfp = await rfp.save();
 
     if (enquiryId) {
       await Enquiry.findByIdAndUpdate(enquiryId, { status: "RFP raised to vendor" });
@@ -587,10 +589,12 @@ export const convertRfp = async (
 
     await enquiry.save();
 
+    const id = newRfp._id;
+
 
     return res.status(200).json({
       message: "RFP conversion completed successfully",
-      data: rfp,
+      data: {rfp, id}
     });
   } catch (error) {
     next(error);
