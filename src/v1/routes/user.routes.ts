@@ -10,7 +10,7 @@ import { webLogin,
     updateProfile,
     updateUserById,
     uploadDocuments,
-    UpdatePasswordByAuthorizeId
+    UpdatePasswordByAuthorizeId,
     getAllUserName,
  } from '@controllersv1/user.controller';
 import { authorizeJwt } from '@middlewares/auth.middleware';
