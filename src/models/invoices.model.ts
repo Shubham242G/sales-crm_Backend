@@ -6,6 +6,7 @@ export interface IZohoInvoice extends Document {
   invoice_id: string;
   invoice_number: string;
   date: string;
+  displayName: string;
   status: string;
   customer_name: string;
   total: number;
@@ -22,6 +23,7 @@ const ZohoInvoiceSchema: Schema = new Schema(
     invoice_id: { type: String, required: true, unique: true },
     invoice_number: { type: String, required: true },
     date: { type: String, required: true },
+    displayName: String,
     status: { type: String, required: true },
     customer_name: { type: String, required: true },
     total: { type: Number, required: true },

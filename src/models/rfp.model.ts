@@ -13,6 +13,7 @@ interface IRfp {
     enquiryId: Types.ObjectId;
     serviceType: [];
     status: string;
+    displayName: string;
     eventDates: [{
             startDate: Date,
             endDate: Date
@@ -37,6 +38,7 @@ const RfpSchema = new Schema({
     enquiryId: Types.ObjectId,
     status: String,
     serviceType: [],
+    displayName: String,
     eventDates: [{
         startDate: Date,
         endDate: Date,

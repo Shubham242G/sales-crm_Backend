@@ -11,8 +11,9 @@ import xlsx from "xlsx";
 import fs from "fs";
 import path from "path";
 import PDFDocument from 'pdfkit';
-import { zohoRequest } from "@util/zoho";
+import { zohoRequest } from "../../util/zoho";
 import { IVendor } from "@models/vendor.model";
+import { create } from "lodash";
 
 
 const upload = multer({ dest: "uploads/" });
@@ -143,213 +144,247 @@ export const addVendor = async (
 // };
 
 // Zoho to Mongo field mapping
-// export const sanitizeZohoVendor = (cust: any) => {
-//   const vendorData = {
-//     vendor: {
-//       salutation: cust.salutation || '',
-//       firstName: cust.first_name || '',
-//       lastName: cust.last_name || '',
-//       email: cust.email || '',
-//       companyName: cust.company_name || '',
-//       contactName: cust.display_name || '',
-//       contactOwner: '', // Will need manual mapping
-//       panNumber: cust.pan_no || '',
-//       gst: cust.gst_no || '',
-//       vendorType: [], // Might require classification logic
-//       landLine: cust.phone || '',
-//       phoneNumber: cust.mobile || '',
-//       displayName: cust.display_name || '',
-//     },
+export const sanitizeZohoVendor = (cust: any) => {
+  const vendorData = {
+    vendor: {
+      salutation: cust.salutation || '',
+      firstName: cust.first_name || '',
+      lastName: cust.last_name || '',
+      email: cust.email || '',
+      companyName: cust.company_name || '',
+      contactName: cust.display_name || '',
+      contactOwner: '', // Will need manual mapping
+      panNumber: cust.pan_no || '',
+      gst: cust.gst_no || '',
+      vendorType: [], // Might require classification logic
+      landLine: cust.phone || '',
+      phoneNumber: cust.mobile || '',
+      displayName: cust.display_name || '',
+    },
 
-//     isBanquetDetailsVisible: false,
-//     isRestaurantDetailsVisible: false,
+    isBanquetDetailsVisible: false,
+    isRestaurantDetailsVisible: false,
 
-//     location: {
-//       state: cust.billing_address?.state || '',
-//       city: cust.billing_address?.city || '',
-//       area: '',
-//       address: cust.billing_address?.address || '',
-//     },
+    location: {
+      state: cust.billing_address?.state || '',
+      city: cust.billing_address?.city || '',
+      area: '',
+      address: cust.billing_address?.address || '',
+    },
 
-//     category: {
-//       categoryType: '',
-//     },
+    category: {
+      categoryType: '',
+    },
 
-//     rooms: [],
-//     banquets: [],
-//     restaurant: {
-//       restaurantMenuType: [],
-//       restaurantImageUpload: [],
-//       restaurantCovers: '',
-//       restaurantFloor: '',
-//       restaurantSwimmingPool: '',
-//     },
+    rooms: [],
+    banquets: [],
+    restaurant: {
+      restaurantMenuType: [],
+      restaurantImageUpload: [],
+      restaurantCovers: '',
+      restaurantFloor: '',
+      restaurantSwimmingPool: '',
+    },
 
-//     bankDetails: {
-//       bankName: '',
-//       bankAccountNumber: '',
-//       ifsc: '',
-//       pointOfContact: '',
-//       email: '',
-//       phoneNumber: '',
-//       billingAddress: '',
-//     },
+    bankDetails: {
+      bankName: '',
+      bankAccountNumber: '',
+      ifsc: '',
+      pointOfContact: '',
+      email: '',
+      phoneNumber: '',
+      billingAddress: '',
+    },
 
-//     eventServices: [],
-//     eventLocation: {
-//       state: '',
-//       city: '',
-//       area: '',
-//       serviceAreas: [],
-//     },
+    eventServices: [],
+    eventLocation: {
+      state: '',
+      city: '',
+      area: '',
+      serviceAreas: [],
+    },
 
-//     transportLocation: {
-//       state: '',
-//       city: '',
-//       travelLocal: false,
-//       travelOutStation: false,
-//       serviceAreas: [],
-//       carDetails: [],
-//     },
+    transportLocation: {
+      state: '',
+      city: '',
+      travelLocal: false,
+      travelOutStation: false,
+      serviceAreas: [],
+      carDetails: [],
+    },
 
-//     otherDetails: {
-//       sourceOfSupply: '',
-//       gstTreatment: cust.gst_treatment || '',
-//       gstin: cust.gst_no || '',
-//       pan: cust.pan_no || '',
-//       msmeRegistered: false,
-//       currency: cust.currency_code || '',
-//       openingBalanceState: cust.opening_balance_type || '',
-//       openingBalance: cust.opening_balance || '0',
-//       creditLimit: cust.credit_limit || '0',
-//       paymentTerms: cust.payment_terms || '',
-//       tds: '',
-//       priceList: cust.price_list_id || '',
-//       enablePortal: cust.portal_status === 'active',
-//       portalLanguage: cust.language_code || 'en',
-//       documents: [],
-//       websiteUrl: cust.website || '',
-//       department: cust.department || '',
-//       designation: cust.designation || '',
-//       twitter: '',
-//       facebook: '',
-//       skype: '',
-//     },
+    otherDetails: {
+      sourceOfSupply: '',
+      gstTreatment: cust.gst_treatment || '',
+      gstin: cust.gst_no || '',
+      pan: cust.pan_no || '',
+      msmeRegistered: false,
+      currency: cust.currency_code || '',
+      openingBalanceState: cust.opening_balance_type || '',
+      openingBalance: cust.opening_balance || '0',
+      creditLimit: cust.credit_limit || '0',
+      paymentTerms: cust.payment_terms || '',
+      tds: '',
+      priceList: cust.price_list_id || '',
+      enablePortal: cust.portal_status === 'active',
+      portalLanguage: cust.language_code || 'en',
+      documents: [],
+      websiteUrl: cust.website || '',
+      department: cust.department || '',
+      designation: cust.designation || '',
+      twitter: '',
+      facebook: '',
+      skype: '',
+    },
 
-//     billingAddress: {
-//       addressId: new Types.ObjectId(), // or fetch actual related address id
-//       billingCountry: cust.billing_address?.country || '',
-//       billingAddressStreet1: cust.billing_address?.address || '',
-//       billingAddressStreet2: '',
-//       billingCity: cust.billing_address?.city || '',
-//       billingState: cust.billing_address?.state || '',
-//       billingPincode: cust.billing_address?.zip || '',
-//       billingPhone: cust.billing_address?.phone || '',
-//       billingFaxNumber: cust.billing_address?.fax || '',
-//     },
+    billingAddress: {
+      addressId: cust.billing_address?.id || '',
+      // addressId: new Types.ObjectId(), // or fetch actual related address id
+      billingCountry: cust.billing_address?.country || '',
+      billingAddressStreet1: cust.billing_address?.address || '',
+      billingAddressStreet2: '',
+      billingCity: cust.billing_address?.city || '',
+      billingState: cust.billing_address?.state || '',
+      billingPincode: cust.billing_address?.zip || '',
+      billingPhone: cust.billing_address?.phone || '',
+      billingFaxNumber: cust.billing_address?.fax || '',
+    },
 
-//     shippingAddress: {
-//       shippingCountry: cust.shipping_address?.country || '',
-//       shippingAddressStreet1: cust.shipping_address?.address || '',
-//       shippingAddressStreet2: '',
-//       shippingCity: cust.shipping_address?.city || '',
-//       shippingState: cust.shipping_address?.state || '',
-//       shippingPincode: cust.shipping_address?.zip || '',
-//       shippingPhone: cust.shipping_address?.phone || '',
-//       shippingFaxNumber: cust.shipping_address?.fax || '',
-//     },
+    shippingAddress: {
+      shippingCountry: cust.shipping_address?.country || '',
+      shippingAddressStreet1: cust.shipping_address?.address || '',
+      shippingAddressStreet2: '',
+      shippingCity: cust.shipping_address?.city || '',
+      shippingState: cust.shipping_address?.state || '',
+      shippingPincode: cust.shipping_address?.zip || '',
+      shippingPhone: cust.shipping_address?.phone || '',
+      shippingFaxNumber: cust.shipping_address?.fax || '',
+    },
 
-//     contactPersons: (cust.contact_persons || []).map((person:any) => ({
-//       salutation: person.salutation || '',
-//       contactPersonId: new Types.ObjectId(),
-//       contactPersonFirstName: person.first_name || '',
-//       contactPersonLastName: person.last_name || '',
-//       contactPersonEmail: person.email || '',
-//       contactPersonWorkPhone: person.phone || '',
-//       contactPersonMobilePhone: person.mobile || '',
-//       contactPersonMobile: person.mobile || '',
-//     })),
-//   };
+    contactPersons: (cust.contact_persons || []).map((person: any) => ({
+      salutation: person.salutation || '',
+      contactPersonId: person.contact_person_id || '',
+      contactPersonFirstName: person.first_name || '',
+      contactPersonLastName: person.last_name || '',
+      contactPersonEmail: person.email || '',
+      contactPersonWorkPhone: person.phone || '',
+      contactPersonMobilePhone: person.mobile || '',
+      contactPersonMobile: person.mobile || '',
+    })),
+  };
 
-//   return vendorData;
-// };
+  return vendorData;
+};
 
 
 
 const processAndSaveVendor = async (vendor: any[]) => {
-    const createdCount = 0;
-    const updatedCount = 0;
+  const createdCount = 0;
+  const updatedCount = 0;
 
-    for (const cust of vendor) {
-        const sanitizedCustomer: any = {
-            customerType: cust.customer_type || 'Business',
-            salutation: cust.salutation || '',
-            firstName: cust.first_name || '',
-            lastName: cust.last_name || '',
-            companyName: cust.company_name || '',
-            displayName: cust.display_name || '',
-            email: cust.email || '',
-            workPhone: cust.phone || '',
-            mobile: cust.mobile || '',
-            panNumber: cust.pan_no || '',
-            placeOfSupply: cust.place_of_supply || '',
-            prefersEmail: cust.prefered_email || false,
-            prefersSms: cust.prefered_sms || false,
-            gstTreatment: cust.gst_treatment || '',
-            taxPreference: cust.tax_type || 'Taxable',
-            currency: cust.currency_code || '',
-            paymentTerms: cust.payment_terms || '',
-            priceList: cust.price_list_id || '',
-            enablePortal: cust.portal_status === 'active',
-            portalLanguage: cust.language_code || 'en',
-            openingBalanceState: cust.opening_balance_type || '',
-            openingBalance: cust.opening_balance || '0',
-            creditLimit: cust.credit_limit || '0',
-            countryRegion: cust.billing_address?.country || '',
-            addressStreet1: cust.billing_address?.address || '',
-            addressStreet2: '',
-            city: cust.billing_address?.city || '',
-            state: cust.billing_address?.state || '',
-            phoneNumber: cust.phone || '',
-            pinCode: cust.billing_address?.zip || '',
-            faxNumber: cust.billing_address?.fax || '',
-            shippingCountryRegion: cust.shipping_address?.country || '',
-            shippingAddressStreet1: cust.shipping_address?.address || '',
-            shippingAddressStreet2: '',
-            shippingCity: cust.shipping_address?.city || '',
-            shippingState: cust.shipping_address?.state || '',
-            shippingPhoneNumber: cust.shipping_address?.phone || '',
-            shippingPinCode: cust.shipping_address?.zip || '',
-            shippingFaxNumber: cust.shipping_address?.fax || '',
-            contactPersons: cust.contact_persons || [],
-            documentArray: [],
-            websiteUrl: cust.website || '',
-            department: cust.department || '',
-            designation: cust.designation || '',
-            twitter: '',
-            skype: '',
-            facebook: ''
-        };
+  for (const cust of vendor) {
+    const sanitizedCustomer: any = {
+      customerType: cust.customer_type || 'Business',
+      salutation: cust.salutation || '',
+      firstName: cust.first_name || '',
+      lastName: cust.last_name || '',
+      companyName: cust.company_name || '',
+      displayName: cust.display_name || '',
+      email: cust.email || '',
+      workPhone: cust.phone || '',
+      mobile: cust.mobile || '',
+      panNumber: cust.pan_no || '',
+      placeOfSupply: cust.place_of_supply || '',
+      prefersEmail: cust.prefered_email || false,
+      prefersSms: cust.prefered_sms || false,
+      gstTreatment: cust.gst_treatment || '',
+      taxPreference: cust.tax_type || 'Taxable',
+      currency: cust.currency_code || '',
+      paymentTerms: cust.payment_terms || '',
+      priceList: cust.price_list_id || '',
+      enablePortal: cust.portal_status === 'active',
+      portalLanguage: cust.language_code || 'en',
+      openingBalanceState: cust.opening_balance_type || '',
+      openingBalance: cust.opening_balance || '0',
+      creditLimit: cust.credit_limit || '0',
+      countryRegion: cust.billing_address?.country || '',
+      addressStreet1: cust.billing_address?.address || '',
+      addressStreet2: '',
+      city: cust.billing_address?.city || '',
+      state: cust.billing_address?.state || '',
+      phoneNumber: cust.phone || '',
+      pinCode: cust.billing_address?.zip || '',
+      faxNumber: cust.billing_address?.fax || '',
+      shippingCountryRegion: cust.shipping_address?.country || '',
+      shippingAddressStreet1: cust.shipping_address?.address || '',
+      shippingAddressStreet2: '',
+      shippingCity: cust.shipping_address?.city || '',
+      shippingState: cust.shipping_address?.state || '',
+      shippingPhoneNumber: cust.shipping_address?.phone || '',
+      shippingPinCode: cust.shipping_address?.zip || '',
+      shippingFaxNumber: cust.shipping_address?.fax || '',
+      contactPersons: cust.contact_persons || [],
+      documentArray: [],
+      websiteUrl: cust.website || '',
+      department: cust.department || '',
+      designation: cust.designation || '',
+      twitter: '',
+      skype: '',
+      facebook: ''
+    };
 
-        // Upsert operation - creates if not exists, updates if exists
-        await Vendor.updateOne(
-            { email: cust.email },
-            { $set: sanitizedCustomer },
-            { upsert: true }
-        );
+    // Upsert operation - creates if not exists, updates if exists
+    await Vendor.updateOne(
+      { email: cust.email },
+      { $set: sanitizedCustomer },
+      { upsert: true }
+    );
 
 
 
-    }
+  }
 };
 
 
 
 
 export const getAllVendor = async (req: any, res: any, next: any) => {
+
+  let pipeline: PipelineStage[] = [];
+  let matchObj: Record<string, any> = {};
+
+
   try {
-    let pipeline: PipelineStage[] = [];
-    let matchObj: Record<string, any> = {};
+    const response = await zohoRequest('vendors');
+    console.log(response, "check the response of vendor")
+    const zohoVendor = response.contacts;
+
+    console.log(zohoVendor, "zohoVendor");
+
+    let created = 0;
+    let updated = 0;
+
+    for (const cust of zohoVendor) {
+      const sanitized = sanitizeZohoVendor(cust);
+
+
+
+      const existing = await Vendor.findOne({ "vendor.email": sanitized.vendor.email });
+      console.log(existing, "existing");
+
+      if (!existing) {
+
+        console.log(sanitized, "sanitized");
+        const vendor = new Vendor(sanitized);
+
+        vendor.save();
+        created++;
+      } else {
+        await Vendor.updateOne({ "vendor.email": sanitized.vendor.email }, { $set: sanitized });
+        updated++;
+      }
+    }
+    console.log(created, updated, "created and updated and existing");
 
 
     if (req.query.query && req.query.query !== "") {
@@ -372,25 +407,25 @@ export const getAllVendor = async (req: any, res: any, next: any) => {
   }
 };
 
-  export const generateVendorPDF = (vendor: IVendor): string => {
-    const fileName = `Vendor_${vendor.vendor.displayName}.pdf`;
-    const filePath = path.join(__dirname, '../../public/upload', fileName);
-  
-    const doc = new PDFDocument();
-    doc.pipe(fs.createWriteStream(filePath));
-  
-    doc.fontSize(20).text('VENDOR PURCHASE BILL', { align: 'center' });
-    doc.moveDown();
-    doc.fontSize(12).text(`Vendor Name: ${vendor.vendor.firstName} ${vendor.vendor.lastName}`);
-    doc.text(`Email: ${vendor.vendor.email}`);
-    doc.text(`Company Name: ${vendor.vendor.companyName}`);
-    doc.text(`Phone Number: ${vendor.vendor.phoneNumber}`);
-    doc.text(`GST IN: ${vendor.vendor.gst} `);
-    doc.text(`Location: ${vendor.location.state} `);
-    doc.end();
-  
-    return `/vendorsById/${fileName}`; // Public URL for frontend use
-  };
+export const generateVendorPDF = (vendor: IVendor): string => {
+  const fileName = `Vendor_${vendor.vendor.displayName}.pdf`;
+  const filePath = path.join(__dirname, '../../public/upload', fileName);
+
+  const doc = new PDFDocument();
+  doc.pipe(fs.createWriteStream(filePath));
+
+  doc.fontSize(20).text('VENDOR PURCHASE BILL', { align: 'center' });
+  doc.moveDown();
+  doc.fontSize(12).text(`Vendor Name: ${vendor.vendor.firstName} ${vendor.vendor.lastName}`);
+  doc.text(`Email: ${vendor.vendor.email}`);
+  doc.text(`Company Name: ${vendor.vendor.companyName}`);
+  doc.text(`Phone Number: ${vendor.vendor.phoneNumber}`);
+  doc.text(`GST IN: ${vendor.vendor.gst} `);
+  doc.text(`Location: ${vendor.location.state} `);
+  doc.end();
+
+  return `/vendorsById/${fileName}`; // Public URL for frontend use
+};
 
 export const getVendorById = async (
   req: Request,

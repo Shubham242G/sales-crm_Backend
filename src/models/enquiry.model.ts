@@ -13,6 +13,9 @@ interface IEnquiry {
     phoneNumber: string;
     email: string;
     companyName: string;
+    leadOwner: string;
+    assignTo: string;
+    displayName: string;
     hotelName: string;
     othersPreference: string;
     approxPassengers: string;
@@ -24,10 +27,10 @@ interface IEnquiry {
     city: string;
     area: string;
     noOfRooms: string;
-    categoryOfHotel:  string [];
-    status:string;
+    categoryOfHotel: string[];
+    status: string;
     // priority: string;
-    occupancy: string [];
+    occupancy: string[];
     banquet: {
         date: Date;
         session: string;
@@ -42,7 +45,7 @@ interface IEnquiry {
         noOfRooms: string;
         roomCategory: string;
         occupancy: string;
-        mealPlan: [];
+        mealPlan: string[];
     }[];
     eventSetup: {
         functionType: string;
@@ -51,7 +54,7 @@ interface IEnquiry {
             endDate: string;
         }[]
         setupRequired: string;
-        eventStartDate:string,
+        eventStartDate: string,
         eventEndDate: string;
     };
     airTickets: {
@@ -61,9 +64,9 @@ interface IEnquiry {
         toCity: string;
         departureDate: Date;
         returnDate: Date;
-        multiFromCity:string;
-        multiToCity:string;
-        multiDepartureDate:Date;
+        multiFromCity: string;
+        multiToCity: string;
+        multiDepartureDate: Date;
     };
     cab: {
         date: Date;
@@ -74,9 +77,8 @@ interface IEnquiry {
         noOfVehicles: string;
         typeOfVehicle: string;
         cabTripType: string;
-        mealPlan: [];
     }[];
-    billingAddress: string;
+    billingInstructions: string;
 
     createdAt: Date;
     updateAt: Date;
@@ -93,6 +95,9 @@ const EnquirySchema = new Schema({
     phoneNumber: String,
     email: String,
     companyName: String,
+    displayName: String,
+    leadOwner: String,
+    assignTo: String,
     typeOfContact: String,
     levelOfEnquiry: String,
     hotelName: String,
@@ -105,9 +110,9 @@ const EnquirySchema = new Schema({
     city: String,
     area: String,
     noOfRooms: String,
-    categoryOfHotel: [String ],
+    categoryOfHotel: [String],
     priority: String,
-    occupancy: [String ],
+    occupancy: [String],
     status: String,
     banquet: [{
         date: Date,
@@ -132,7 +137,7 @@ const EnquirySchema = new Schema({
             endDate: Date,
         }],
         setupRequired: String,
-        eventStartDate:String,
+        eventStartDate: String,
         eventEndDate: String,
     },
     airTickets: {
@@ -155,9 +160,8 @@ const EnquirySchema = new Schema({
         noOfVehicles: String,
         typeOfVehicle: String,
         cabTripType: String,
-        mealPlan: [],
     }],
-    billingAddress: String,
+    billingInstruction: String,
 
 },
     {

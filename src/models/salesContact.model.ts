@@ -11,6 +11,7 @@ interface ISalesContact {
     firstName: string;
     lastName: string;
     phone: string;
+    displayName: string;
     email: string;
     company:string;
     salutation:string;
@@ -30,6 +31,7 @@ const SalesContactSchema = new Schema(
         lastName: String,
         phone: String,
         email: String,
+        displayName: String,
         company:String,
         salutation:String,
         vendorId: {type:Types.ObjectId, ref: "Vendor"},

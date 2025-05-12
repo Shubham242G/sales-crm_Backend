@@ -13,6 +13,7 @@ interface IPurchaseContact {
     phone: string;
     email: string;
     comapny:string;
+    displayName:string,
     salutation:string;
 }
 
@@ -24,6 +25,7 @@ const PurchaseContactSchema = new Schema(
     phone: String,
     email: String,
     comapny:String,
+    displayName:String,
     salutation:String,
 
 

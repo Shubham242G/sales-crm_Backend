@@ -15,6 +15,7 @@ export interface IUser {
     employeeCode: string;
     reportsToId: mongoose.Types.ObjectId;
     storeId: mongoose.Types.ObjectId;
+    displayName: string;
     rawMaterialArr: {
         rawMaterialId: mongoose.Types.ObjectId;
     }[];
@@ -35,6 +36,7 @@ const usersSchema = new Schema<IUser>(
         password: String,
         deviceCode: String,
         employeeCode: String,
+        displayName: String,
         role: {
             type: String,
             default: ROLES.USER,
@@ -57,6 +59,7 @@ const usersSchema = new Schema<IUser>(
                 default: false,
             },
         },
+       
         // And `Schema.Types.ObjectId` in the schema definition.
     },
     { timestamps: true }
