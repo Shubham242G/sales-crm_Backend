@@ -55,12 +55,103 @@ export const getAllEnquiry = async (req: any, res: any, next: any) => {
   try {
     let pipeline: PipelineStage[] = [];
     let matchObj: Record<string, any> = {};
-    if (req.query.query && req.query.query != "") {
-      matchObj.firstName = new RegExp(req.query.query, "i");
+     const { query } = req.query;
+
+
+     console.log("query", query)
+    // Handle basic search - search across multiple fields
+    if (req.query.query && typeof req.query.query === 'string'   && req.query.query !== "") {
+      const queryStr = req.query.query;
+      matchObj.$or = [
+    
+        { Firstname: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+        { lastName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+        { enquiryType: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+         { noOfRooms: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+        { city: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+        { levelOfEnquiry : new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+         { status : new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+          { checkIn: { $eq: new Date(queryStr) } },
+        { checkOut: { $eq: new Date(queryStr) } }
+
+        // Add any other fields you want to search by
+      ];
     }
+
+    // Handle advanced search (same as before)
+
+
+    console.log("req?.query?.advancedSearch", req?.query?.advancedSearch)
+    if (req?.query?.advancedSearch && req.query.advancedSearch !== "") {
+      const searchParams = typeof req.query.advancedSearch === 'string' ? req.query.advancedSearch.split(',') : [];
+
+      const advancedSearchConditions: any[] = [];
+
+      searchParams.forEach((param: string) => {
+        const [field, condition, value] = param.split(':');
+
+        if (field && condition && value) {
+          let fieldCondition: Record<string, any> = {};
+
+          switch (condition) {
+            case 'contains':
+              fieldCondition[field] = { $regex: value, $options: 'i' };
+              break;
+            case 'equals':
+              fieldCondition[field] = value || new Date(value);
+              break;
+            case 'startsWith':
+              fieldCondition[field] = { $regex: `^${value}`, $options: 'i' };
+              break;
+            case 'endsWith':
+              fieldCondition[field] = { $regex: `${value}$`, $options: 'i' };
+              break;
+            case 'greaterThan':
+              fieldCondition[field] = { $gt: isNaN(Number(value)) ? value : Number(value) };
+              break;
+            case 'lessThan':
+              fieldCondition[field] = { $lt: isNaN(Number(value)) ? value : Number(value) };
+              break;
+            default:
+              fieldCondition[field] = { $regex: value, $options: 'i' };
+          }
+
+          advancedSearchConditions.push(fieldCondition);
+        }
+      });
+
+      // If we have both basic and advanced search, we need to combine them
+      if (matchObj.$or) {
+        // If there are already $or conditions (from basic search)
+        // We need to use $and to combine with advanced search
+        matchObj = {
+            
+          $and: [
+            { $or: matchObj.$or },
+            { $and: advancedSearchConditions }
+          ]
+        };
+      } else {
+        // If there's only advanced search, use $and directly
+        matchObj.$and = advancedSearchConditions;
+      }
+    }
+
+    // Add the match stage to the pipeline
     pipeline.push({
-      $match: matchObj,
+      $match: matchObj
     });
+
+    // Handle request for select input options
+    if (req?.query?.isForSelectInput) {
+      pipeline.push({
+        $project: {
+          label: { $concat: ["$firstName", " ", "$lastName"] },
+          value: "$_id"
+        },
+
+      });
+    }
     let EnquiryArr = await paginateAggregate(Enquiry, pipeline, req.query);
 
     res.status(201).json({

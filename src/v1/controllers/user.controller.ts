@@ -291,13 +291,18 @@ export const getAllUsers = async (req: any, res: any, next: any) => {
     pipeline.push({
         $match: matchObj,
     });
-    let userArr = await paginateAggregate(User, pipeline, req.query);
+    let userArr = await paginateAggregate(User, pipeline, req.query); 
+
+    console.log(userArr, "chck arr of user");
 
     res.status(201).json({ message: "found all Device", data: userArr.data, total: userArr.total });
 } catch (error) {
     next(error);
 }
 }
+
+
+
 
    
 
