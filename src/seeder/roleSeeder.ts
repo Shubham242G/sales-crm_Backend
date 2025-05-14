@@ -21,7 +21,7 @@ export const roleSeeder = async () => {
           routeName: "User",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -30,7 +30,7 @@ export const roleSeeder = async () => {
           routeName: "Roles",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -39,7 +39,7 @@ export const roleSeeder = async () => {
           routeName: "Vendors",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -48,7 +48,7 @@ export const roleSeeder = async () => {
           routeName: "RFPS",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -57,7 +57,7 @@ export const roleSeeder = async () => {
           routeName: "Quotes from Vendors",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -66,7 +66,7 @@ export const roleSeeder = async () => {
           routeName: "Confirmed Quotes",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -75,7 +75,7 @@ export const roleSeeder = async () => {
           routeName: "Purchase Contacts",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -84,7 +84,7 @@ export const roleSeeder = async () => {
           routeName: "Leads",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -93,7 +93,7 @@ export const roleSeeder = async () => {
           routeName: "Customers",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -102,7 +102,7 @@ export const roleSeeder = async () => {
           routeName: "Quotes for Customer",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -111,7 +111,7 @@ export const roleSeeder = async () => {
           routeName: "Enquiry",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -120,7 +120,7 @@ export const roleSeeder = async () => {
           routeName: "Invoice View",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -129,7 +129,7 @@ export const roleSeeder = async () => {
           routeName: "Invoice Pdf View",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -138,7 +138,7 @@ export const roleSeeder = async () => {
           routeName: "Confirmed Quotes",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -147,7 +147,7 @@ export const roleSeeder = async () => {
           routeName: "Invoices",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -156,7 +156,7 @@ export const roleSeeder = async () => {
           routeName: "Customer Outstanding",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -165,7 +165,7 @@ export const roleSeeder = async () => {
           routeName: "Sales Contacts",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -174,7 +174,7 @@ export const roleSeeder = async () => {
           routeName: "Task Management",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -183,7 +183,7 @@ export const roleSeeder = async () => {
           routeName: "My Tasks",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -192,7 +192,7 @@ export const roleSeeder = async () => {
           routeName: "Add Department",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -201,7 +201,7 @@ export const roleSeeder = async () => {
           routeName: "Add Category",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -210,7 +210,7 @@ export const roleSeeder = async () => {
           routeName: "Add Hotel",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -219,7 +219,7 @@ export const roleSeeder = async () => {
           routeName: "Add Banquet",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -228,7 +228,7 @@ export const roleSeeder = async () => {
           routeName: "Add Resturant",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           },
@@ -237,7 +237,7 @@ export const roleSeeder = async () => {
           routeName: "Venue Search",
           permissions: {
             create: true,
-            updatet: true,
+            update: true,
             delete: true,
             view: true,
           }
