@@ -52,13 +52,25 @@ export const getAllRfp = async (req: any, res: any, next: any) => {
     try {
         let pipeline: PipelineStage[] = [];
         let matchObj: Record<string, any> = {};
-        if (req.query.query && req.query.query != "") {
-            matchObj.name = new RegExp(req.query.query, "i");
+        const { query } = req.query;
+        if (req.query.query && req.query.query !== "" && typeof req.query.query === "string") {
+            const queryStr = req.query.query;
+            matchObj.$or = [
+                { rfpId: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+                
+];
         }
         pipeline.push({
             $match: matchObj,
         });
         let RfpArr = await paginateAggregate(Rfp, pipeline, req.query);
+
+        if (req.query.query) {
+
+            const $or: Array<Record<string, any>> = [];
+            $or.push({ rfpId: new RegExp(req.query.query, "i") });
+            matchObj.$or = $or;
+          }
 
         res.status(201).json({ message: "found all Device", data: RfpArr.data, total: RfpArr.total });
     } catch (error) {

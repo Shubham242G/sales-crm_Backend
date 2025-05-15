@@ -46,9 +46,20 @@ export const getAllQuotesFromVendors = async (req: any, res: any, next: any) => 
     try {
         let pipeline: PipelineStage[] = [];
         let matchObj: Record<string, any> = {};
-        if (req.query.query && req.query.query != "") {
-            matchObj.name = new RegExp(req.query.query, "i");
-        }
+        const { query } = req.query;
+
+        if (req.query.query && typeof req.query.query === 'string' && req.query.query !== "") {
+      
+            matchObj.$or = [
+              { firstName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+              { lastName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+              { email: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+              { company: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+              { phone: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+              { ownerName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") }
+              // Add any other fields you want to search by
+            ];
+          }
         pipeline.push({
             $match: matchObj,
         });

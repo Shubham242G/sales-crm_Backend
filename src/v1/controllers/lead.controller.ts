@@ -61,7 +61,7 @@ export const getAllLead = async (req: Request, res: Response, next: NextFunction
     const { query } = req.query;
     // Handle basic search - search across multiple fields
     if (req.query.query && typeof req.query.query === 'string' && req.query.query !== "") {
-      const queryStr = req.query.query;
+      
       matchObj.$or = [
         { firstName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
         { lastName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
@@ -169,7 +169,7 @@ export const getLeadById = async (req: Request, res: Response, next: NextFunctio
     });
     let existsCheck = await Lead.aggregate(pipeline);
     if (!existsCheck || existsCheck.length == 0) {
-      throw new Error("Banquet does not exists");
+      throw new Error("Lead does not exists");
     }
     existsCheck = existsCheck[0];
     res.status(201).json({

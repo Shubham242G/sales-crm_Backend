@@ -355,9 +355,22 @@ export const getAllVendor = async (req: any, res: any, next: any) => {
 
 
   try {
+
+
+    if (req.query.query) {
+
+      const $or: Array<Record<string, any>> = [];
+      $or.push({ name: new RegExp(req.query.query, "i") });
+      $or.push({ displayName: new RegExp(req.query.query, "i") });
+      $or.push({ companyName: new RegExp(req.query.query, "i") });
+      matchObj.$or = $or;
+    }
     const response = await zohoRequest('vendors');
     console.log(response, "check the response of vendor")
     const zohoVendor = response.contacts;
+
+
+
 
     console.log(zohoVendor, "zohoVendor");
 
