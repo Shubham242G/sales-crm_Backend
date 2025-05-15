@@ -25,7 +25,7 @@ export const addQuotesFromVendors = async (req: Request, res: Response, next: Ne
             }
         }
 
-        
+
         const quotesFromVendors = await new QuotesFromVendors({ ...req.body, status: "Quote received from vendor" }).save();
         res.status(201).json({ message: "Quote From Vendor Created" });
         await quotesFromVendors.save();
@@ -48,18 +48,18 @@ export const getAllQuotesFromVendors = async (req: any, res: any, next: any) => 
         let matchObj: Record<string, any> = {};
         const { query } = req.query;
 
+        console.log(query, "query");
+
         if (req.query.query && typeof req.query.query === 'string' && req.query.query !== "") {
-      
+
             matchObj.$or = [
-              { firstName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-              { lastName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-              { email: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-              { company: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-              { phone: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-              { ownerName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") }
-              // Add any other fields you want to search by
+                { quotesId: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+                { rfpId: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+                { status: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+                { displayName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+                // Add any other fields you want to search by
             ];
-          }
+        }
         pipeline.push({
             $match: matchObj,
         });
@@ -247,7 +247,7 @@ export const BulkUploadQuotesFromVendors: RequestHandler = async (req, res, next
 //             throw new Error("Quote from Vendor does not exist");
 //         }
 
-       
+
 
 
 //         const updatedMarkupDetails = vendorQuote.markupDetails?.map((item: any) => {
@@ -342,7 +342,7 @@ export const convertQuotesFromVendorToQuotesToCustomer = async (
     res: Response,
     next: NextFunction
 ) => {
-   
+
     try {
         const vendorQuoteId = req.params.id;
 
@@ -370,7 +370,7 @@ export const convertQuotesFromVendorToQuotesToCustomer = async (
         }) || [];
 
         const totalAmount = updatedMarkupDetails.reduce((acc, item) => acc + parseFloat(item.markupAmount), 0).toFixed(2);
-        const  enquiry = await Enquiry.findOne({ _id: vendorQuote.enquiryId }).lean().exec();
+        const enquiry = await Enquiry.findOne({ _id: vendorQuote.enquiryId }).lean().exec();
         const quotesToCustomerData = {
             quotesId: vendorQuote.quotesId,
             serviceType: vendorQuote.serviceType,
@@ -395,7 +395,7 @@ export const convertQuotesFromVendorToQuotesToCustomer = async (
                 { $set: { status: "Quote sent to customer", updatedAt: new Date() } }
             );
 
-           
+
 
             await QuotesFromVendors.updateOne(
                 { enquiryId: vendorQuote.enquiryId },

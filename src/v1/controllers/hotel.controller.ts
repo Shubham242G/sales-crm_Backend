@@ -31,9 +31,14 @@ export const getAllHotel = async (req: any, res: any, next: any) => {
     try {
         let pipeline: PipelineStage[] = [];
         let matchObj: Record<string, any> = {};
-        // if (req.query.query && req.query.query != "") {
-        //     matchObj.name = new RegExp(req.query.query, "i");
-        // }
+        matchObj.$or = [
+        
+            { name: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+            { noOfRooms: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+            { price: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+            { size: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+            // Add any other fields you want to search by
+          ];
         pipeline.push({
             $match: matchObj,
         });

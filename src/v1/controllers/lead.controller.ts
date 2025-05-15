@@ -63,6 +63,7 @@ export const getAllLead = async (req: Request, res: Response, next: NextFunction
     if (req.query.query && typeof req.query.query === 'string' && req.query.query !== "") {
       
       matchObj.$or = [
+        
         { firstName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
         { lastName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
         { email: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },

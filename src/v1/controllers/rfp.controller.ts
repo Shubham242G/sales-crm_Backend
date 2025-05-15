@@ -57,6 +57,7 @@ export const getAllRfp = async (req: any, res: any, next: any) => {
             const queryStr = req.query.query;
             matchObj.$or = [
                 { rfpId: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+                { status: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
                 
 ];
         }
