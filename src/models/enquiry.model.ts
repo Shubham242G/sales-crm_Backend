@@ -22,6 +22,9 @@ interface IEnquiry {
     levelOfEnquiry: string;
     enquiryType: string;
     hotelPreferences: string;
+    banquetDate: { type: Date },    
+    banquetTime: { type: String },
+    
     checkIn: Date;
     checkOut: Date;
     city: string;
@@ -33,7 +36,7 @@ interface IEnquiry {
     occupancy: string[];
     banquet: {
         date: Date;
-        session: string;
+        session: string[];
         seatingStyle: string;
         avSetup: string;
         menuType: string;
@@ -105,8 +108,8 @@ const EnquirySchema = new Schema({
     approxPassengers: String,
     enquiryType: String,
     hotelPreferences: String,
-    checkIn: Date,
-    checkOut: Date,
+    banquetDate: Date,
+    banquetTime: String,
     city: String,
     area: String,
     noOfRooms: String,
@@ -116,7 +119,7 @@ const EnquirySchema = new Schema({
     status: String,
     banquet: [{
         date: Date,
-        session: String,
+        session: [],
         seatingStyle: String,
         avSetup: String,
         menuType: String,
