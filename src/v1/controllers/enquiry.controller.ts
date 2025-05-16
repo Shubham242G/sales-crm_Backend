@@ -64,7 +64,7 @@ export const getAllEnquiry = async (req: any, res: any, next: any) => {
       const queryStr = req.query.query;
       matchObj.$or = [
     
-        { Firstname: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+        { firstName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
         { lastName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
         { enquiryType: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
          { noOfRooms: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
@@ -93,12 +93,21 @@ export const getAllEnquiry = async (req: any, res: any, next: any) => {
         if (field && condition && value) {
           let fieldCondition: Record<string, any> = {};
 
+          console.log(fieldCondition, "fieldCondition")
+          console.log("condition", condition)
+
           switch (condition) {
             case 'contains':
               fieldCondition[field] = { $regex: value, $options: 'i' };
               break;
             case 'equals':
-              fieldCondition[field] = value || new Date(value);
+              if (value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)) {
+                fieldCondition[field] = new Date(value);
+              } else if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                fieldCondition[field] = new Date(`${value}T00:00:00.000Z`);
+              } else {
+                fieldCondition[field] = value;
+              }
               break;
             case 'startsWith':
               fieldCondition[field] = { $regex: `^${value}`, $options: 'i' };
@@ -111,6 +120,9 @@ export const getAllEnquiry = async (req: any, res: any, next: any) => {
               break;
             case 'lessThan':
               fieldCondition[field] = { $lt: isNaN(Number(value)) ? value : Number(value) };
+              break;
+            case 'dateEquals':
+              fieldCondition[field] = { $eq: new Date(value).toISOString() };
               break;
             default:
               fieldCondition[field] = { $regex: value, $options: 'i' };

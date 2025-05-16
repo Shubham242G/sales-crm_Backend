@@ -10,6 +10,7 @@ import { SalesContact } from "@models/salesContact.model";
 import { User } from "@models/user.model";
 import { sendMessageToUser } from "@helpers/socket";
 import { Notification } from "@models/notification.model";
+import { match } from "assert";
 // import { io } from "../../server"; // Import io from server.ts
 
 // export const setupSocket = () => {
@@ -92,9 +93,12 @@ export const addTaskManagement = async (
 export const getAllTaskManagement = async (req: any, res: any, next: any) => {
   try {
     let matchObj: Record<string, any> = {};
-    if (req.query.query && req.query.query != "") {
-      matchObj.name = new RegExp(req.query.query, "i");
-    }
+    // if (req.query.query && req.query.query != "") {
+    //   matchObj.assignedTo = new RegExp(req.query.query, "i");
+    // }
+
+
+    console.log(req.query.query , "assignedTo");
 
     let pipeline: PipelineStage[] = [
       {
@@ -108,22 +112,31 @@ export const getAllTaskManagement = async (req: any, res: any, next: any) => {
       {
         $unwind: {
           path: "$user",
-          preserveNullAndEmptyArrays: false,
+          preserveNullAndEmptyArrays: true,
         },
       },
       {
         $addFields: {
-          assignedToName: "$user.name",
+          assignedToName: { $ifNull: ["$user.name", "$assignedTo"] },
         },
       },
       {
         $unset: "user",
+      },
+      {
+        $match: {
+          assignedToName: new RegExp(req.query.query, "i"),
+        },
       },
     ];
 
     pipeline.push({
       $match: matchObj,
     });
+
+
+
+
     let TaskManagementArr = await paginateAggregate(
       TaskManagement,
       pipeline,

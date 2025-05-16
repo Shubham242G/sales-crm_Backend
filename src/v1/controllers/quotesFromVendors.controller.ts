@@ -48,6 +48,8 @@ export const getAllQuotesFromVendors = async (req: any, res: any, next: any) => 
         let matchObj: Record<string, any> = {};
         const { query } = req.query;
 
+
+
         console.log(query, "query");
 
         if (req.query.query && typeof req.query.query === 'string' && req.query.query !== "") {
@@ -56,7 +58,9 @@ export const getAllQuotesFromVendors = async (req: any, res: any, next: any) => 
                 { quotesId: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
                 { rfpId: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
                 { status: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-                { displayName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+                { displayName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") }, 
+                { receivedDate: { $eq: new Date(req?.query?.query).toISOString().split('T')[0] } },
+                
                 // Add any other fields you want to search by
             ];
         }
