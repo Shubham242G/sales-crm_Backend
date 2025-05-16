@@ -360,50 +360,50 @@ export const getAllVendor = async (req: any, res: any, next: any) => {
     if (req.query.query) {
 
       const $or: Array<Record<string, any>> = [];
-      $or.push({ name: new RegExp(req.query.query, "i") });
-      $or.push({ displayName: new RegExp(req.query.query, "i") });
-      $or.push({ companyName: new RegExp(req.query.query, "i") });
+      $or.push({ "vendor.firstName": new RegExp(req.query.query, "i") });
+      $or.push({ "vendor.displayName": new RegExp(req.query.query, "i") });
+      $or.push({ "vendor.companyName": new RegExp(req.query.query, "i") });
       matchObj.$or = $or;
     }
-    const response = await zohoRequest('vendors');
-    console.log(response, "check the response of vendor")
-    const zohoVendor = response.contacts;
+    // const response = await zohoRequest('vendors');
+    // console.log(response, "check the response of vendor")
+    // const zohoVendor = response.contacts;
 
 
 
 
-    console.log(zohoVendor, "zohoVendor");
+    // console.log(zohoVendor, "zohoVendor");
 
-    let created = 0;
-    let updated = 0;
+    // let created = 0;
+    // let updated = 0;
 
-    for (const cust of zohoVendor) {
-      const sanitized = sanitizeZohoVendor(cust);
-
-
-
-      const existing = await Vendor.findOne({ "vendor.email": sanitized.vendor.email });
-      console.log(existing, "existing");
-
-      if (!existing) {
-
-        console.log(sanitized, "sanitized");
-        const vendor = new Vendor(sanitized);
-
-        vendor.save();
-        created++;
-      } else {
-        await Vendor.updateOne({ "vendor.email": sanitized.vendor.email }, { $set: sanitized });
-        updated++;
-      }
-    }
-    console.log(created, updated, "created and updated and existing");
+    // for (const cust of zohoVendor) {
+    //   const sanitized = sanitizeZohoVendor(cust);
 
 
-    if (req.query.query && req.query.query !== "") {
-      matchObj["location.state"] = new RegExp(req.query.query, "i");
 
-    }
+    //   const existing = await Vendor.findOne({ "vendor.email": sanitized.vendor.email });
+    //   console.log(existing, "existing");
+
+    //   if (!existing) {
+
+    //     console.log(sanitized, "sanitized");
+    //     const vendor = new Vendor(sanitized);
+
+    //     vendor.save();
+    //     created++;
+    //   } else {
+    //     await Vendor.updateOne({ "vendor.email": sanitized.vendor.email }, { $set: sanitized });
+    //     updated++;
+    //   }
+    // }
+    // console.log(created, updated, "created and updated and existing");
+
+
+    // if (req.query.query && req.query.query !== "") {
+    //   matchObj.["vendor.firstName"] = new RegExp(req.query.query, "i");
+
+    // }
 
     pipeline.push({
       $match: matchObj,
