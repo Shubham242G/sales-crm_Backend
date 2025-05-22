@@ -20,6 +20,7 @@ export interface IRole extends Document {
   description: string;
   name: string;
   email: string;
+  
   phoneNo: string;
   designation: string;
   department: string;

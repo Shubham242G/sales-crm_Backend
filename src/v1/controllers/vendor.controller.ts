@@ -800,14 +800,26 @@ export const getAllVendorName = async (
     // Fetch only required fields from the database
     const vendors = await Vendor.find(
       {},
-      "vendor.displayName"
+      {
+        "vendor.firstName": 1,
+        "vendor.lastName": 1,
+        "vendor.email": 1,
+        "vendor.companyName": 1,
+        _id: 1,
+      }
     ).lean();
+
+    console.log(vendors, "check vendor")
 
 
     // Transforming the vendor list
-    const vendorNames = vendors.map((v: any) => ({
-      Name: `${v.vendor.displayName}`,
+    const vendorNames = vendors.map(({ _id, vendor: { firstName, lastName, companyName } }: any) => ({
+      _id,
+      Name: companyName
+
     }));
+
+    console.log(vendorNames, "vendorNames");
 
 
     res.status(200).json({

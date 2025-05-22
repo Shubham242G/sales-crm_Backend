@@ -131,13 +131,14 @@ export const addUser = async (
   next: NextFunction
 ) => {
   try {
-    const UserExistNameCheck = await User.findOne({
-      name: new RegExp(`^${req.body.name}$`, "i"),
-    }).exec();
+    // const UserExistNameCheck = await User.findOne({
+    //   name: new RegExp(`^${req.body.name}$`, "i"),
+    // }).exec();
 
-    if (UserExistNameCheck) {
-      throw new Error(`User with this name Already Exists`);
-    }
+    // if (UserExistNameCheck) {
+    //   throw new Error(`User with this name Already Exists`);
+    // }
+    
     const UserExistEmailCheck = await User.findOne({
       email: new RegExp(`^${req.body.email}$`, "i"),
     }).exec();
@@ -146,6 +147,14 @@ export const addUser = async (
       throw new Error(`User with this email Already Exists`);
     }
 
+    const UserExistPhoneCheck = await User.findOne({
+      phone: new RegExp(`^${req.body.phone}$`, "i"),
+    }).exec();
+
+
+    if (UserExistPhoneCheck) {
+      throw new Error(`User with this Phone Number Already Exists`);
+    }
     // const UserExistPhoneCheck = await User.findOne({
     //   phone: req.body.phone,
     // }).exec();

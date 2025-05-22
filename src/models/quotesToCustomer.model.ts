@@ -2,6 +2,7 @@ import { model, Model, Schema, Types } from "mongoose";
 
 interface IQuotesToCustomer {
   quotesId: string;
+  leadId: Types.ObjectId;
   customerName: string;
   enquiryId: Types.ObjectId;
   serviceType: [];
@@ -18,6 +19,7 @@ interface IQuotesToCustomer {
 const QuotesFromVendorsSchema = new Schema(
   {
     quotesId: String,
+    leadId: Types.ObjectId,
     customerName: String,
     enquiryId: Types.ObjectId,
     serviceType: [],

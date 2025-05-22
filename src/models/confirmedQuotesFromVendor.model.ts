@@ -5,6 +5,7 @@ interface IConfirmedQuotes {
     eventCoordinatorName: string;
     eventDate: Date;
     hotelName: string;
+    leadId: Types.ObjectId;
     eventCoordinatorReportingTime: string;
     clientsCompanyName: string;
     onsiteClientName: string;
@@ -75,6 +76,7 @@ const confirmedQuotesSchema = new Schema<IConfirmedQuotes>(
         eventCoordinatorName: String,
         eventDate: Date,
         hotelName: String,
+        leadId: Types.ObjectId,
         eventCoordinatorReportingTime: String,
         clientsCompanyName: String,
         onsiteClientName: String,

@@ -269,8 +269,8 @@ export const convertToContact = async (req: Request, res: Response, next: NextFu
       });
 
       await contact.save();
-
-      res.status(200).json({ message: "Contact conversion completed successfully", data: contact });
+      const id =  contact._id;
+      res.status(200).json({ message: "Contact conversion completed successfully", data: {contact, id} });
     }
   } catch (error) {
     next(error);

@@ -12,6 +12,7 @@ interface IRfp {
     rfpId: String;
     enquiryId: Types.ObjectId;
     serviceType: [];
+    leadId: Types.ObjectId;
     status: string;
     displayName: string;
     eventDates: [{
@@ -37,6 +38,7 @@ const RfpSchema = new Schema({
     rfpId: String ,
     enquiryId: Types.ObjectId,
     status: String,
+    leadId: Types.ObjectId,
     serviceType: [],
     displayName: String,
     eventDates: [{

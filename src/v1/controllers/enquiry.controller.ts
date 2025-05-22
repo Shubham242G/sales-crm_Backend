@@ -55,23 +55,23 @@ export const getAllEnquiry = async (req: any, res: any, next: any) => {
   try {
     let pipeline: PipelineStage[] = [];
     let matchObj: Record<string, any> = {};
-     const { query } = req.query;
+    const { query } = req.query;
 
 
-     console.log("query", query)
+
     // Handle basic search - search across multiple fields
-    if (req.query.query && typeof req.query.query === 'string'   && req.query.query !== "") {
+    if (req.query.query && typeof req.query.query === 'string' && req.query.query !== "") {
       const queryStr = req.query.query;
       matchObj.$or = [
-    
+
         { firstName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
         { lastName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
         { enquiryType: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-         { noOfRooms: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+        { noOfRooms: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
         { city: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-        { levelOfEnquiry : new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-         { status : new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-          { checkIn: { $eq: new Date(queryStr) } },
+        { levelOfEnquiry: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+        { status: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+        { checkIn: { $eq: new Date(queryStr) } },
         { checkOut: { $eq: new Date(queryStr) } }
 
         // Add any other fields you want to search by
@@ -137,7 +137,7 @@ export const getAllEnquiry = async (req: any, res: any, next: any) => {
         // If there are already $or conditions (from basic search)
         // We need to use $and to combine with advanced search
         matchObj = {
-            
+
           $and: [
             { $or: matchObj.$or },
             { $and: advancedSearchConditions }
@@ -623,7 +623,7 @@ export const convertRfp = async (
     }
 
 
-    const enquiry = await Enquiry.findById(enquiryId ).exec();
+    const enquiry = await Enquiry.findById(enquiryId).exec();
     if (!enquiry) {
       return res.status(404).json({ message: "Enquiry not found" });
     }
@@ -662,18 +662,24 @@ export const convertRfp = async (
 
 
 
+    console.log("eventDates", enquiry.eventSetup?.eventDates)
+
+
+    console.log(enquiry, "check enquiry when convert rfp")
+
 
     const rfp = new Rfp({
       rfpId,
-      deadlineOfProposal:"",
+      deadlineOfProposal: "",
       serviceType: serviceTypeArr,
-      eventDates:enquiry.eventSetup?.eventDates || [],
+      eventDates: enquiry.eventSetup?.eventDates || [],
       eventDetails: `${enquiry.eventSetup?.functionType || ""} - ${enquiry.eventSetup?.setupRequired || ""
         }`.trim(),
       enquiryId: enquiry._id,
       fullName: `${enquiry.firstName} ${enquiry.lastName || ""}`.trim(),
       vendorList: [],
       displayName: enquiry.displayName,
+      leadId: enquiry.leadId,
       // vendorList: [
       //   {
       //     label: `${enquiry.firstName} ${enquiry.lastName || ""}`.trim(),
@@ -690,6 +696,8 @@ export const convertRfp = async (
       await Enquiry.findByIdAndUpdate(enquiryId, { status: "RFP raised to vendor" });
     }
 
+    console.log("newRfp===>>>>", newRfp);
+
     await enquiry.save();
 
     const id = newRfp._id;
@@ -697,7 +705,7 @@ export const convertRfp = async (
 
     return res.status(200).json({
       message: "RFP conversion completed successfully",
-      data: {rfp, id}
+      data: { rfp, id }
     });
   } catch (error) {
     next(error);

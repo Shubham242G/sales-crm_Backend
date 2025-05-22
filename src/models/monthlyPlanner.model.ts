@@ -6,6 +6,7 @@ export interface IMonthlyPlannerSchema{
     company: string;
     agenda: string;
     status: string;
+    leadId: Types.ObjectId
     
 }
 
@@ -17,6 +18,7 @@ const MonthlyPlannerSchema = new Schema(
         company: String,
         agenda: String,
         status: String,
+        leadId: { type: Schema.Types.ObjectId, ref: "Lead" },
      
 
 

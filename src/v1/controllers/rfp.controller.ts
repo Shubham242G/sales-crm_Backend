@@ -58,8 +58,8 @@ export const getAllRfp = async (req: any, res: any, next: any) => {
             matchObj.$or = [
                 { rfpId: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
                 { status: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-                
-];
+
+            ];
         }
         pipeline.push({
             $match: matchObj,
@@ -71,9 +71,10 @@ export const getAllRfp = async (req: any, res: any, next: any) => {
             const $or: Array<Record<string, any>> = [];
             $or.push({ rfpId: new RegExp(req.query.query, "i") });
             matchObj.$or = $or;
-          }
+        }
 
         res.status(201).json({ message: "found all Device", data: RfpArr.data, total: RfpArr.total });
+        console.log("RfpArr", RfpArr)
     } catch (error) {
         next(error);
     }
@@ -470,7 +471,7 @@ export const convertRfp = async (req: Request, res: Response, next: NextFunction
         if (!rfp) {
             throw new Error("RFP does not exist");
         }
-        
+
 
 
         const existingQuoteToVendor = await QuotesFromVendors.findOne({ enquiryId: rfp.enquiryId }).lean().exec();
@@ -503,6 +504,7 @@ export const convertRfp = async (req: Request, res: Response, next: NextFunction
             const newQuote = new QuotesFromVendors({
                 quotesId: quoteId,
                 rfpId: rfp.rfpId || "",
+                leadId: rfp.leadId || "",
                 serviceType: rfp.serviceType || [],
                 eventDetails: "",
                 deadlineOfProposal: "",
@@ -539,7 +541,7 @@ export const convertRfp = async (req: Request, res: Response, next: NextFunction
 
 
 
-        return res.status(200).json({ message: "RFP conversion completed successfully" });
+        return res.status(200).json({ message: "RFP convert to Quote from Vendor  successfully" });
     } catch (error) {
 
         next(error);

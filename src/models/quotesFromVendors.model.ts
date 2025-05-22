@@ -4,6 +4,7 @@ interface IQuotesFromVendors {
   quotesId: string;
   rfpId: string;
   enquiryId: Types.ObjectId;
+  leadId: Types.ObjectId;
   vendorList: {
     label: string;
     value: string;
@@ -31,6 +32,7 @@ const QuotesFromVendorsSchema = new Schema(
     quotesId: String,
     rfqId: String,
     enquiryId: Types.ObjectId,
+    leadId: Types.ObjectId,
     vendorList: {
       label: String,
       value: String,

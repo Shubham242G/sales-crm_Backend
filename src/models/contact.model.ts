@@ -14,8 +14,9 @@ interface IContactPerson {
     lastName: string;
     email: string;
     workPhone: string;
-    mobilePhone: string;
+    phone: string;
     communicationChannels: communicationChannelsProps;
+    leadId:Types.ObjectId
 }
 
 
@@ -28,7 +29,7 @@ interface IContact {
     displayName: string;
     email: string;
     workPhone: string;
-    mobile: string;
+    phone: string;
     panNumber: string;
     placeOfSupply: string;
     prefersEmail: boolean;
@@ -55,6 +56,7 @@ interface IContact {
     // shippingAttention: string;
     shippingCountryRegion: string;
     shippingAddressStreet1: string;
+    leadId:Types.ObjectId;
     shippingAddressStreet2: string;
     shippingCity: string;
     shippingState: string;
@@ -84,8 +86,9 @@ const ContactSchema = new Schema(
         companyName: String,
         displayName: String,
         email: String,
-        workPhone: String,
+        phone: String,
         mobile: String,
+        leadId: { type: Types.ObjectId, ref: "Lead" },  
         panNumber: String,
         placeOfSupply: String,
         prefersEmail: { type: Boolean, default: false },

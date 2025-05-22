@@ -10,6 +10,7 @@ import path from 'path'
 import { QuotesToCustomer } from "@models/quotesToCustomer.model"
 import { Rfp } from "@models/rfp.model";
 import { QuotesFromVendors } from "@models/quotesFromVendors.model";
+import { ConfirmedQuotes } from "@models/confirmedQuotesFromVendor.model";
 
 
 export const addQuotesToCustomer = async (req: Request, res: Response, next: NextFunction) => {
@@ -147,5 +148,141 @@ export const deleteQuotesToCustomerById = async (req: Request, res: Response, ne
         next(error);
     }
 };
+
+
+// export const convertQuoteToConfirmedQuote = async (req: Request, res: Response) => {
+//     const { quoteId } = req.params;
+  
+//     if (!quoteId || !mongoose.Types.ObjectId.isValid(quoteId)) {
+//       return res.status(400).json({ error: "Invalid or missing quoteId" });
+//     }
+  
+//     try {
+      
+//       const customerQuote = await QuotesToCustomer.findById(quoteId);
+//       if (!customerQuote) {
+//         return res.status(404).json({ error: "Customer quote not found" });
+//       }
+
+// //       import { model, Model, Schema, Types } from "mongoose";
+
+
+// // const confirmedQuotesSchema = new Schema<IConfirmedQuotes>(
+// //   {
+// //     banquetEventOrders: {
+// //         eventCoordinatorName: String,
+// //         eventDate: Date,
+// //         hotelName: String,
+// //         eventCoordinatorReportingTime: String,
+// //         clientsCompanyName: String,
+// //         onsiteClientName: String,
+// //         salesPersonName: String,
+// //         expectedPax: String,
+// //         quotesId: String,
+// //         rfpId: String,
+// //         displayName: String,
+// //         vendorList: {
+// //             label: String,
+// //             value: String
+// //         },
+// //         amount: String,
+// //         serviceType: [],
+// //         receivedDate: String,
+// //         status: String,
+// //         attachment: [String],
+// //       },
+    
+// //       banquetEventOrdersSecond: {
+// //         eventStartTime: String,
+// //         eventEndTime: String,
+// //         btr: String,
+// //         venueHandoveTime: String,
+// //         welcomeDrinkStartTime: String,
+// //         venueName: String,
+// //         setup: String,
+// //         avVendorName: String,
+// //         avVendorNo: String,
+// //         expNumberOfSeating: String,
+// //         hotelCoordinationName: String,
+// //         hotelCoordinationNo: String,
+// //         linerColor: String,
+// //         startersPlacement: String,
+// //         startersEventTime: String,
+// //       },
+    
+// //       menuSelection: {
+// //         srNo: [String],
+// //         veg: String,
+// //         nonVeg: String,
+// //         actions: String,
+// //       },
+    
+// //       eventFlow: {
+// //         srNo: [String],
+// //         text1: String,
+// //         text2: String,
+// //         actions: String,
+// //       },
+    
+// //       audioVisual: {
+// //         srNo: [String],
+// //         text1: String,
+// //         text2: String,
+// //         actions: String,
+// //       },
+    
+// //       checklist: [
+// //         {
+// //           srNo: [String],
+// //           checks: [String],
+// //           actions: [String],
+// //         },
+// //       ],
+// //   },
+// //   { timestamps: true }
+// // );
+
+  
+      
+//       const confirmedQuote = new ConfirmedQuotes({
+//         banquetEventOrders: {
+//           eventCoordinatorName: customerQuote.eventCoordinatorName,
+//           eventDate: customerQuote.eventDate,
+//           hotelName: customerQuote.hotelName,
+//           leadId: customerQuote.leadId,
+//           eventCoordinatorReportingTime: customerQuote.eventCoordinatorReportingTime,
+//           clientsCompanyName: customerQuote.clientsCompanyName,
+//           onsiteClientName: customerQuote.onsiteClientName,
+//           salesPersonName: customerQuote.salesPersonName,
+//           expectedPax: customerQuote.expectedPax,
+//           quotesId: customerQuote._id.toString(),
+//           rfpId: customerQuote.rfpId,
+//           displayName: customerQuote.displayName,
+//           vendorList: customerQuote.vendorList,
+//           amount: customerQuote.amount,
+//           serviceType: customerQuote.serviceType,
+//           receivedDate: customerQuote.receivedDate,
+//           status: customerQuote.status,
+//           attachment: customerQuote.attachment,
+//         },
+//         banquetEventOrdersSecond: customerQuote.banquetEventOrdersSecond,
+//         menuSelection: customerQuote.menuSelection,
+//         eventFlow: customerQuote.eventFlow,
+//         audioVisual: customerQuote.audioVisual,
+//         checklist: customerQuote.checklist,
+//       });
+  
+//       await confirmedQuote.save();
+  
+//       res.status(201).json({
+//         message: "Quote successfully converted to confirmed quote",
+//         confirmedQuote,
+//       });
+//     } catch (error) {
+//       console.error("Error converting quote to confirmed quote:", error);
+//       res.status(500).json({ error: "Server error", details: error });
+//     }
+//   };
+  
 
 

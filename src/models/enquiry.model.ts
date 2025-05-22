@@ -13,6 +13,7 @@ interface IEnquiry {
     phoneNumber: string;
     email: string;
     companyName: string;
+    leadId: Types.ObjectId;
     leadOwner: string;
     assignTo: string;
     displayName: string;
@@ -22,9 +23,8 @@ interface IEnquiry {
     levelOfEnquiry: string;
     enquiryType: string;
     hotelPreferences: string;
-    banquetDate: { type: Date },    
-    banquetTime: { type: String },
-    
+
+
     checkIn: Date;
     checkOut: Date;
     city: string;
@@ -36,6 +36,7 @@ interface IEnquiry {
     occupancy: string[];
     banquet: {
         date: Date;
+        time: string;
         session: string[];
         seatingStyle: string;
         avSetup: string;
@@ -100,6 +101,7 @@ const EnquirySchema = new Schema({
     companyName: String,
     displayName: String,
     leadOwner: String,
+    leadId: { type: Schema.Types.ObjectId, ref: "Lead" },
     assignTo: String,
     typeOfContact: String,
     levelOfEnquiry: String,
@@ -108,8 +110,9 @@ const EnquirySchema = new Schema({
     approxPassengers: String,
     enquiryType: String,
     hotelPreferences: String,
-    banquetDate: Date,
-    banquetTime: String,
+    checkIn: Date,
+    checkOut: Date,
+
     city: String,
     area: String,
     noOfRooms: String,
@@ -119,6 +122,7 @@ const EnquirySchema = new Schema({
     status: String,
     banquet: [{
         date: Date,
+        time: String,
         session: [],
         seatingStyle: String,
         avSetup: String,
