@@ -25,6 +25,7 @@ import dashboardRouter from "@routesv1/dashboard.routes";
 import statusRouter from "@routesv1/status.routes";
 import zohoInvoiceRouter from "@routesv1/zoho_invoice.routes";
 import vendorPurchaseBillRouter from "@routesv1/vendorPurchaseBill.routes";
+import leadManagementRouter from "@routesv1/leadManagement.routes";
 // import ZohoInvoiceRouter from "@routesv1/zoho_invoice.routes";
 
 const router = express.Router();
@@ -55,6 +56,7 @@ router.use("/dashboard", dashboardRouter);
 router.use("/status", statusRouter);
 router.use("/zohoInvoice", zohoInvoiceRouter);
 router.use("/vendorPurchaseBill", vendorPurchaseBillRouter);
+router.use("/leadManagement", leadManagementRouter);
 // router.use("/zoho-invoice", ZohoInvoiceRouter)
 // router.use("/adminroutes")
 

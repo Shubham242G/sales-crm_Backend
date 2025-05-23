@@ -218,19 +218,19 @@ export const deleteLeadById = async (req: Request, res: Response, next: NextFunc
 
 
 export const convertToContact = async (req: Request, res: Response, next: NextFunction) => {
-  // try {
-  //     let existsCheck = await SalesContact.findOne({ firstName: req.body.first,  lastName: req.body.last, companyName: req.body.company }).exec();
-  //     if (existsCheck) {
-  //         throw new Error("Contact with same name already exists");
-  //     }
-
-  console.log(req.params.id,
-
-    "check params id lead"
-
-  )
-
   try {
+      let existsCheck = await Contact.findOne({ $and: [{ phone: req.body.phone }, { email: req.body.email }] }).exec();
+      if (existsCheck) {
+          throw new Error("Already Converted to Contact");
+      }
+
+  // console.log(req.params.id,
+
+  //   "check params id lead"
+
+  // )
+
+
     const lead = await Lead.findById(req.params.id).exec();
     if (!lead) {
       throw new Error("Lead not found");
@@ -277,7 +277,7 @@ export const convertToContact = async (req: Request, res: Response, next: NextFu
   }
 }
 
-    export const convertToEnquiry = async (req: Request, res: Response, next: NextFunction) => {
+export const convertToEnquiry = async (req: Request, res: Response, next: NextFunction) => {
       try {
         const lead = await Lead.findById(req.params.id).exec();
         if (!lead) {

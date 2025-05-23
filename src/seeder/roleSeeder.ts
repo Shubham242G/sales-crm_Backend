@@ -24,6 +24,7 @@ export const roleSeeder = async () => {
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
@@ -33,6 +34,7 @@ export const roleSeeder = async () => {
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
@@ -42,6 +44,7 @@ export const roleSeeder = async () => {
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
@@ -51,6 +54,7 @@ export const roleSeeder = async () => {
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
@@ -60,15 +64,17 @@ export const roleSeeder = async () => {
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
-          routeName: "Confirmed Quotes",
+          routeName: "Confirmed Quotes From Vendors",
           permissions: {
             create: true,
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
@@ -78,6 +84,7 @@ export const roleSeeder = async () => {
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
@@ -87,6 +94,7 @@ export const roleSeeder = async () => {
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
@@ -96,6 +104,7 @@ export const roleSeeder = async () => {
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
@@ -105,6 +114,7 @@ export const roleSeeder = async () => {
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
@@ -114,6 +124,7 @@ export const roleSeeder = async () => {
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
@@ -123,6 +134,7 @@ export const roleSeeder = async () => {
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
@@ -132,15 +144,17 @@ export const roleSeeder = async () => {
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
-          routeName: "Confirmed Quotes",
+          routeName: "Confirmed Quotes Customer",
           permissions: {
             create: true,
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
@@ -150,6 +164,7 @@ export const roleSeeder = async () => {
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
@@ -159,6 +174,7 @@ export const roleSeeder = async () => {
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
@@ -168,6 +184,7 @@ export const roleSeeder = async () => {
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
@@ -177,6 +194,7 @@ export const roleSeeder = async () => {
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
@@ -186,6 +204,7 @@ export const roleSeeder = async () => {
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
@@ -195,6 +214,7 @@ export const roleSeeder = async () => {
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
@@ -204,6 +224,7 @@ export const roleSeeder = async () => {
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
@@ -213,6 +234,7 @@ export const roleSeeder = async () => {
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
@@ -222,6 +244,7 @@ export const roleSeeder = async () => {
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
@@ -231,6 +254,7 @@ export const roleSeeder = async () => {
             update: true,
             delete: true,
             view: true,
+            isRouteShow: true,
           },
         },
         {
@@ -240,9 +264,9 @@ export const roleSeeder = async () => {
             update: true,
             delete: true,
             view: true,
-          }
-        }
-      ],
+            isRouteShow: true,
+          },
+        }]
     }).save();
   } catch (error) {
     console.error(error);
