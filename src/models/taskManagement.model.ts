@@ -24,6 +24,8 @@ export interface ITaskManagement {
     completionTime: string;
     options: number[];
     reassignments?: IReassignment[];
+    renark?: string;
+    isRemark?: boolean;
 }
 
 const taskSchema = new mongoose.Schema({
@@ -45,7 +47,8 @@ const taskSchema = new mongoose.Schema({
         previousAssignee: String,
         reAssignmentDate: String,
     }],
-   
+    renark: String,
+    isRemark: Boolean,
 });
 
 

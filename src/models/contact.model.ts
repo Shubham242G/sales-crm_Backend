@@ -17,6 +17,10 @@ interface IContactPerson {
     phone: string;
     communicationChannels: communicationChannelsProps;
     leadId:Types.ObjectId
+    contactPersonDateOfBirth: String,
+    contactPersonAnniversary: String,
+    contactPersonDesignation: String,
+    contactPersonDepartment: String,
 }
 
 
