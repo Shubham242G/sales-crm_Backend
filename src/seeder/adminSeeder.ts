@@ -7,9 +7,9 @@ export const adminSeeder = async () => {
   try {
     const encryptedPassword = await encryptPassword("123456");
     const adminExist = await User.findOne({ role: ROLES.ADMIN }).exec();
-    // if (adminExist) {
-    //   return "Admin already exists";
-    // }
+    if (adminExist) {
+      return "Admin already exists";
+    }
 
     await new User({
       name: "Admin",
