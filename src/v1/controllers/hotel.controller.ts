@@ -22,6 +22,7 @@ export const addHotel = async (req: Request, res: Response, next: NextFunction) 
           }
         await new Hotel(req.body).save();
         res.status(201).json({ message: "Hotel Created" });
+        console.log("Hotel Created Successfully", req.body);
     } catch (error) {
         next(error);
     }
