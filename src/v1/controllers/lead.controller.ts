@@ -27,10 +27,10 @@ import { Contact } from "@models/contact.model";
 
 export const addLead = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // let existsCheck = await Lead.findOne({ name: req.body.phone }).exec();
-    // if (existsCheck) {
-    //     throw new Error("Lead with same email already exists");
-    // }
+    let existsCheck = await Lead.findOne({ $or: [{ phone: req.body.phone }, { email: req.body.email }] }).exec();
+    if (existsCheck) {
+      throw new Error("Lead with same  email  and phone already exists");
+    }
 
     // if (req.body.imagesArr && req.body.imagesArr.length > 0) {
     //     console.log("first", req.body.imagesArr)
