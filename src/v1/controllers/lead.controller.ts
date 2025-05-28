@@ -290,7 +290,7 @@ export const convertToEnquiry = async (req: Request, res: Response, next: NextFu
       const enquiry = new Enquiry({
         firstName: lead.firstName,
         lastName: lead.lastName,
-        phone: lead.phone,
+        phoneNumber: lead.phone,
         email: lead.email,
         companyName: lead.company,
         salutation: lead.salutation,

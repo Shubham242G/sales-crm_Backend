@@ -20,9 +20,10 @@ interface IQuotesFromVendors {
       startDate: Date;
     }
   ];
-
+  totalAmount?: string;
   markupDetails: {
     label: string;
+    orginalAmount: string;
     markupAmount: string;
   }[];
 }
@@ -44,6 +45,7 @@ const QuotesFromVendorsSchema = new Schema(
     displayName: String,
     status: String,
     attachment: [String],
+    totalAmount: String,
     eventDates: [
       {
         startDate: Date,
@@ -51,8 +53,9 @@ const QuotesFromVendorsSchema = new Schema(
     ],
     markupDetails: [
         {
-          label: [String],
-          markupAmount: [String],
+          label: String,
+          orginalAmount: String,
+          markupAmount: String,
         },
       ],
   },
