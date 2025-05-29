@@ -6,7 +6,7 @@ export interface IReassignment {
     remark: string;
     previousAssignee: string;
     reAssignmentDate: string;
-  }
+}
 
 
 export interface ITaskManagement {
@@ -52,4 +52,4 @@ const taskSchema = new mongoose.Schema({
 });
 
 
-export const TaskManagement = model<ITaskManagement>("Task", taskSchema);
+export const TaskManagement = model<ITaskManagement>("TaskMangement", taskSchema);

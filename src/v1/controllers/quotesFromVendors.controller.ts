@@ -14,29 +14,30 @@ import { QuotesToCustomer } from "@models/quotesToCustomer.model";
 
 export const addQuotesFromVendors = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // let existsCheck = await Banquet.findOne({ name: req.body.name }).exec();
-        // if (existsCheck) {
-        //     throw new Error("Banquet with same name already exists");
-        // }
+        // Ensure that the attachment is an array
+        if (!Array.isArray(req.body.attachment)) {
+            throw new Error("Attachment must be an array.");
+        }
+
+        // Allowed file types
+        const allowedFileTypes = ["pdf", "jpeg", "jpg", "xlsx"];
 
         for (let i = 0; i < req.body.attachment.length; i++) {
-            if (req?.body && req?.body?.attachment && req?.body?.attachment.includes("base64")) {
-                req.body.attachment = await storeFileAndReturnNameBase64(req.body.attachment);
+            const attachment = req.body.attachment[i];
+            const fileType = attachment.split(';')[0].split('/')[1];
+
+            // Check if the file type is allowed
+            if (!allowedFileTypes.includes(fileType)) {
+                throw new Error("Unsupported file type. Only PDF, Excel, and JPEG are allowed.");
+            }
+
+            if (attachment.includes("base64")) {
+                req.body.attachment[i] = await storeFileAndReturnNameBase64(attachment);
             }
         }
 
-        
         const quotesFromVendors = await new QuotesFromVendors({ ...req.body, status: "Quote received from vendor" }).save();
         res.status(201).json({ message: "Quote From Vendor Created" });
-        await quotesFromVendors.save();
-
-
-
-
-
-
-
-
     } catch (error) {
         next(error);
     }
@@ -357,7 +358,7 @@ export const convertQuotesFromVendorToQuotesToCustomer = async (
         }
 
         const updatedMarkupDetails = vendorQuote.markupDetails?.map((item: any) => {
-            const baseAmount = parseFloat(vendorQuote.amount || "0");
+            const baseAmount = Number(vendorQuote.amount || 0);
             const markupPercentage = parseFloat(item.markupAmount || "0");
 
             const markupAmount = baseAmount + (baseAmount * (markupPercentage / 100));
@@ -375,7 +376,7 @@ export const convertQuotesFromVendorToQuotesToCustomer = async (
             serviceType: vendorQuote.serviceType,
             amount: vendorQuote.amount,
             markupDetails: updatedMarkupDetails,
-            totalAmount,
+            totalMarkupAmount: vendorQuote.totalMarkupAmount,
             status: "Quote sent to customer",
             enquiryId: vendorQuote.enquiryId,
             customerName: `${enquiry?.firstName} ${enquiry?.lastName || ""}`.trim(),

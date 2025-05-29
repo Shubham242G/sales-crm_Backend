@@ -95,6 +95,7 @@ export const getAllTaskManagement = async (req: any, res: any, next: any) => {
     let matchObj: Record<string, any> = {};
 
 
+
     console.log(req.query.query, "assignedTo");
 
     let pipeline: PipelineStage[] = [
@@ -152,26 +153,56 @@ export const getAllTaskManagement = async (req: any, res: any, next: any) => {
 
 export const getMyTasks = async (req: any, res: any, next: any) => {
   try {
+    let matchObj: Record<string, any> = {
+      assignedTo: new mongoose.Types.ObjectId(req.user.userId)
+    };
 
-    console.log(req.user.userId, "req.user.userId");
-    let matchObj: Record<string, any> = {};
-    console.log("Request User:", req.user);
 
-    if (req.user && req.user.userId) {
-      matchObj["assignedTo"] = req.user.userId;
-    } else {
-      throw new Error("User not authenticated");
-    }
 
-    console.log("Match Object:", matchObj);
+    console.log(req.query.query, "assignedTo");
+
+    let pipeline: PipelineStage[] = [
+      {
+        $lookup: {
+          from: "users",
+          localField: "assignedTo",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: {
+          path: "$user",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $addFields: {
+          assignedToName: { $ifNull: ["$user.name", "$assignedTo"] },
+        },
+      },
+      {
+        $unset: "user",
+      },
+      {
+        $match: {
+          assignedToName: new RegExp(req.query.query, "i"),
+        },
+      },
+    ];
+
+    pipeline.push({
+      $match: matchObj,
+    });
+
+
+
 
     let TaskManagementArr = await paginateAggregate(
       TaskManagement,
-      [{ $match: matchObj }],
+      pipeline,
       req.query
     );
-
-    console.log("Task Management Array:", TaskManagementArr);
 
     res.status(201).json({
       message: "found all Device",
@@ -179,7 +210,6 @@ export const getMyTasks = async (req: any, res: any, next: any) => {
       total: TaskManagementArr.total,
     });
   } catch (error) {
-    console.error("Error:", error);
     next(error);
   }
 };

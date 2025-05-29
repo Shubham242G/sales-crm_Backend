@@ -41,6 +41,7 @@ export const addMonthlyPlanner = async (req: Request, res: Response, next: NextF
     }
 };
 
+/*************  ✨ Windsurf Command 🌟  *************/
 export const getAllMonthlyPlanner = async (req: any, res: any, next: any) => {
     try {
         let pipeline: PipelineStage[] = [];
@@ -48,6 +49,7 @@ export const getAllMonthlyPlanner = async (req: any, res: any, next: any) => {
         if (req.query.query && req.query.query != "") {
             matchObj.name = new RegExp(req.query.query, "i");
         }
+        matchObj.isRemark = false;
         pipeline.push(
             {
                 $match: matchObj,
@@ -68,6 +70,7 @@ export const getAllMonthlyPlanner = async (req: any, res: any, next: any) => {
         next(error);
     }
 };
+
 
 export const getMonthlyPlannerById = async (req: Request, res: Response, next: NextFunction) => {
     try {
