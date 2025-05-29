@@ -16,6 +16,7 @@ import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import * as csv from 'fast-csv';
 import { createObjectCsvWriter } from 'csv-writer';
 import { Contact } from "@models/contact.model";
+import { ExportService } from "../../util/excelfile";
 
 
 
@@ -643,69 +644,15 @@ const formatLeadData = (lead: any) => {
 
 
 export const downloadExcelLead = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    // Get export parameters
-
-
-    const format = (req.body.format as string) || 'xlsx';
-    let fields: string[] = [];
-
-    if (req.body.fields) {
-      try {
-        fields = req.body.fields as string[];
-      } catch (error) {
-        console.error("Error parsing fields:", error);
-      }
-    }
-
-    // Build query based on search parameters
-    const query = buildQuery(req);
-
-    // Get leads from database
-    const leads = await Lead.find(query).lean().exec();
-
-    // Format date fields and process data
-    const formattedLeads = leads.map(formatLeadData);
-
-    // Process fields for export
-    const exportFields = processFields(fields);
-
-    // Generate unique filename
-    const timestamp = new Date().getTime();
-    const directory = path.join("public", "uploads");
-
-    // Ensure directory exists
-    if (!fs.existsSync(directory)) {
-      fs.mkdirSync(directory, { recursive: true });
-    }
-
-    let filename = '';
-
-    console.log("format", format);
-
-    switch (format.toLowerCase()) {
-      case 'csv':
-        filename = await exportToCsv(formattedLeads, exportFields, directory, timestamp);
-        break;
-      case 'pdf':
-        filename = await exportToPdf(formattedLeads, exportFields, directory, timestamp);
-        break;
-      case 'xlsx':
-      default:
-        filename = await exportToExcel(formattedLeads, exportFields, directory, timestamp);
-        break;
-    }
-
-    res.json({
-      status: "success",
-      message: "File successfully generated",
-      filename: filename,
-    });
-
-  } catch (error) {
-    console.error("Export error:", error);
-    next(error);
-  }
+  return ExportService.downloadFile(req, res, next, {
+    model: Lead,
+    buildQuery: buildQuery, // Your existing function
+    formatData: formatLeadData, // Your existing function
+    processFields: processFields, // Your existing function
+    filename: 'leads',
+    worksheetName: 'Leads',
+    title: 'Leads'
+  });
 };
 
 

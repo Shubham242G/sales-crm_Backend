@@ -7,8 +7,8 @@ export interface IMonthlyPlannerSchema{
     agenda: string;
     status: string;
     leadId: Types.ObjectId
-    isRemark: boolean;
     remark: string;
+    isRemark: boolean;
 }
 
 const MonthlyPlannerSchema = new Schema(
