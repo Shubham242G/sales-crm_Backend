@@ -1,16 +1,17 @@
 import express from 'express';
 import { authorizeJwt } from '@middlewares/auth.middleware';
-import { addTaskManagement, deleteTaskManagementById, getTaskManagementById, updateTaskManagementById, getAllTaskManagement,getMyTasks} from '../controllers/taskManagement.controller';
+import { addTaskManagement, deleteTaskManagementById, getTaskManagementById, updateTaskManagementById, getAllTaskManagement, getMyTasks } from '../controllers/taskManagement.controller';
 import { upload } from '@middlewares/multer.middleware';
 const router = express.Router();
 
 
-router.post('/', authorizeJwt,addTaskManagement);
+router.post('/', authorizeJwt, addTaskManagement);
 router.get('/', getAllTaskManagement);
-router.get('/my-task',authorizeJwt, getMyTasks);
+router.get('/my-task', authorizeJwt, getMyTasks);
 router.get('/getById/:id', getTaskManagementById);
 router.patch('/updateById/:id', updateTaskManagementById);
 router.delete('/deleteById/:id', deleteTaskManagementById);
 
 
 export default router;
+

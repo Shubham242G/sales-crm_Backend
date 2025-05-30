@@ -13,7 +13,7 @@ interface IQuotesToCustomer {
     label: string;
     markupAmount: string;
   }[];
-  totalAmount: string;
+  totalMarkupAmount: string;
 }
 
 const QuotesFromVendorsSchema = new Schema(
@@ -26,7 +26,7 @@ const QuotesFromVendorsSchema = new Schema(
     displayName: String,
     status: String,
     amount: Number,
-    totalAmount: String,
+    totalMarkupAmount: String,
     markupDetails: [
       {
         label: [String],

@@ -3,6 +3,7 @@ import { encryptPassword } from "@helpers/bcrypt";
 import { User } from "@models/user.model";
 
 export const adminSeeder = async () => {
+  console.log("Seeding admin data...");
   try {
     const encryptedPassword = await encryptPassword("123456");
     const adminExist = await User.findOne({ role: ROLES.ADMIN }).exec();

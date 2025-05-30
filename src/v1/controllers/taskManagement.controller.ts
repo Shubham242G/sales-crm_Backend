@@ -33,7 +33,7 @@ export const addTaskManagement = async (
   next: NextFunction
 ) => {
   try {
-    // let existsCheck = await TaskManagement.findOne({ name: req.body.phone }).exec();
+    // let existsCheck = await TaskManagement.findOne({: req.body.phone }).exec();
     // if (existsCheck) {
     //     throw new Error("TaskManagement with same email already exists");
     // }
@@ -54,14 +54,14 @@ export const addTaskManagement = async (
       userId: req.body.reassignments.res,
     }).save();
 
-    
-  if(taskManagement.assignedTo){
-    const notification = await new Notification({
-      message: `You have been assigned a new task: ${req.body.taskTitle}`,
-      userId: taskManagement.assignedTo.toString(),
-  }).save();
-  }
-    
+
+    if (taskManagement.assignedTo) {
+      const notification = await new Notification({
+        message: `You have been assigned a new task: ${req.body.taskTitle}`,
+        userId: taskManagement.assignedTo.toString(),
+      }).save();
+    }
+
 
     // const taskManagement1 = await new TaskManagement({
     //   ...req.body,
@@ -93,12 +93,10 @@ export const addTaskManagement = async (
 export const getAllTaskManagement = async (req: any, res: any, next: any) => {
   try {
     let matchObj: Record<string, any> = {};
-    // if (req.query.query && req.query.query != "") {
-    //   matchObj.assignedTo = new RegExp(req.query.query, "i");
-    // }
 
 
-    console.log(req.query.query , "assignedTo");
+
+    console.log(req.query.query, "assignedTo");
 
     let pipeline: PipelineStage[] = [
       {
@@ -155,20 +153,15 @@ export const getAllTaskManagement = async (req: any, res: any, next: any) => {
 
 export const getMyTasks = async (req: any, res: any, next: any) => {
   try {
-    let matchObj: Record<string, any> = {};
-    if (req.query.query && req.query.query != "") {
-      matchObj.name = new RegExp(req.query.query, "i");
-    }
+    let matchObj: Record<string, any> = {
+      assignedTo: new mongoose.Types.ObjectId(req.user.userId)
+    };
+
+
+
+    console.log(req.query.query, "assignedTo");
 
     let pipeline: PipelineStage[] = [
-      {
-        $match: {
-          $or: [
-            { assignedTo: new mongoose.Types.ObjectId(req.user.userId) },
-            { "reassignments.previousAssignee": req.user.userId },
-          ],
-        },
-      },
       {
         $lookup: {
           from: "users",
@@ -180,22 +173,31 @@ export const getMyTasks = async (req: any, res: any, next: any) => {
       {
         $unwind: {
           path: "$user",
-          preserveNullAndEmptyArrays: false,
+          preserveNullAndEmptyArrays: true,
         },
       },
       {
         $addFields: {
-          assignedToName: "$user.name",
+          assignedToName: { $ifNull: ["$user.name", "$assignedTo"] },
         },
       },
       {
         $unset: "user",
+      },
+      {
+        $match: {
+          assignedToName: new RegExp(req.query.query, "i"),
+        },
       },
     ];
 
     pipeline.push({
       $match: matchObj,
     });
+
+
+
+
     let TaskManagementArr = await paginateAggregate(
       TaskManagement,
       pipeline,
@@ -218,13 +220,13 @@ export const getTaskManagementById = async (
   next: NextFunction
 ) => {
   try {
-    if (!req.params.id || !mongoose.Types.ObjectId.isValid(req.params.id)) {
+    if (!req.user?.userId || !mongoose.Types.ObjectId.isValid(req.user.userId)) {
       throw new Error("Invalid TaskManagement ID");
     }
 
     let pipeline: PipelineStage[] = [];
     let matchObj: Record<string, any> = {
-      _id: new mongoose.Types.ObjectId(req.params.id),
+      _id: new mongoose.Types.ObjectId(req.user.userId),
     };
 
     pipeline = [

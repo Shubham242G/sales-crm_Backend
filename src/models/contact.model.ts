@@ -2,11 +2,11 @@ import { model, Model, Schema, Types } from "mongoose";
 
 
 type communicationChannelsProps = {
-    prefersEmail: boolean ,
-    prefersSms : boolean
+    prefersEmail: boolean,
+    prefersSms: boolean
 }
 
-//comment
+
 
 interface IContactPerson {
     salutation: string;
@@ -16,7 +16,7 @@ interface IContactPerson {
     workPhone: string;
     phone: string;
     communicationChannels: communicationChannelsProps;
-    
+    leadId: Types.ObjectId
     contactPersonDateOfBirth: String,
     contactPersonAnniversary: String,
     contactPersonDesignation: String,
@@ -61,7 +61,7 @@ interface IContact {
     // shippingAttention: string;
     shippingCountryRegion: string;
     shippingAddressStreet1: string;
-   
+    leadId: Types.ObjectId;
     shippingAddressStreet2: string;
     shippingCity: string;
     shippingState: string;
@@ -94,7 +94,7 @@ const ContactSchema = new Schema(
         email: String,
         phone: String,
         mobile: String,
-      
+        leadId: { type: Types.ObjectId, ref: "Lead" },
         panNumber: String,
         placeOfSupply: String,
         prefersEmail: { type: Boolean, default: false },
