@@ -1,10 +1,10 @@
-import { Request, Response, NextFunction } from 'express';
-import * as ExcelJs from 'exceljs';
-import { createObjectCsvWriter } from 'csv-writer';
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
-import * as fs from 'fs';
-import * as path from 'path';
-import { Model, Document } from 'mongoose';
+import { Request, Response, NextFunction } from "express";
+import * as ExcelJs from "exceljs";
+import { createObjectCsvWriter } from "csv-writer";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import * as fs from "fs";
+import * as path from "path";
+import { Model, Document } from "mongoose";
 
 export interface ExportField {
   key: string;
@@ -31,7 +31,7 @@ export class ExportService {
   ) {
     try {
       // Get export parameters
-      const format = (req.body.format as string) || 'xlsx';
+      const format = (req.body.format as string) || "xlsx";
       let fields: string[] = [];
 
       if (req.body.fields) {
@@ -42,7 +42,7 @@ export class ExportService {
         }
       }
 
-      // Build query based on search parameters
+      // Build query based on search parameters (now handles tickRows internally)
       const query = options.buildQuery(req);
 
       // Get data from database
@@ -63,12 +63,12 @@ export class ExportService {
         fs.mkdirSync(directory, { recursive: true });
       }
 
-      let filename = '';
+      let filename = "";
 
       console.log("format", format);
 
       switch (format.toLowerCase()) {
-        case 'csv':
+        case "csv":
           filename = await ExportService.exportToCsv(
             formattedData,
             exportFields,
@@ -77,7 +77,7 @@ export class ExportService {
             options.filename
           );
           break;
-        case 'pdf':
+        case "pdf":
           filename = await ExportService.exportToPdf(
             formattedData,
             exportFields,
@@ -87,7 +87,7 @@ export class ExportService {
             options.title || options.filename
           );
           break;
-        case 'xlsx':
+        case "xlsx":
         default:
           filename = await ExportService.exportToExcel(
             formattedData,
@@ -104,8 +104,8 @@ export class ExportService {
         status: "success",
         message: "File successfully generated",
         filename: filename,
+        recordsExported: formattedData.length,
       });
-
     } catch (error) {
       console.error("Export error:", error);
       next(error);
@@ -127,26 +127,27 @@ export class ExportService {
     });
 
     // Define columns
-    worksheet.columns = fields.map(field => ({
+    worksheet.columns = fields.map((field) => ({
       header: field.header,
       key: field.key,
-      width: field.width || 20
+      width: field.width || 20,
     }));
 
     // Style the header row
     const headerRow = worksheet.getRow(1);
     headerRow.font = { bold: true };
     headerRow.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFE0E0E0' }
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFE0E0E0" },
     };
 
     // Add data rows
-    data.forEach(item => {
+    data.forEach((item) => {
       const rowData: any = {};
-      fields.forEach(field => {
-        rowData[field.key] = item[field.key] !== undefined ? item[field.key] : '';
+      fields.forEach((field) => {
+        rowData[field.key] =
+          item[field.key] !== undefined ? item[field.key] : "";
       });
       worksheet.addRow(rowData);
     });
@@ -155,10 +156,10 @@ export class ExportService {
     worksheet.eachRow({ includeEmpty: true }, (row) => {
       row.eachCell({ includeEmpty: true }, (cell) => {
         cell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' }
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
         };
       });
     });
@@ -184,10 +185,10 @@ export class ExportService {
 
     const csvWriter = createObjectCsvWriter({
       path: filePath,
-      header: fields.map(field => ({
+      header: fields.map((field) => ({
         id: field.key,
-        title: field.header
-      }))
+        title: field.header,
+      })),
     });
 
     // Write data
@@ -223,7 +224,7 @@ export class ExportService {
       x: margin,
       y: height - margin,
       size: 16,
-      font: boldFont
+      font: boldFont,
     });
 
     // Draw export date
@@ -232,7 +233,7 @@ export class ExportService {
       x: margin,
       y: height - margin - lineHeight,
       size: 10,
-      font
+      font,
     });
 
     // Draw header row
@@ -254,7 +255,7 @@ export class ExportService {
         x: x + 5,
         y: y,
         size: 10,
-        font: boldFont
+        font: boldFont,
       });
       x += columnWidth;
     });
@@ -263,7 +264,9 @@ export class ExportService {
     y -= lineHeight + 10;
 
     // Limit number of rows per page
-    const rowsPerPage = Math.floor((height - margin * 2 - lineHeight * 4) / lineHeight);
+    const rowsPerPage = Math.floor(
+      (height - margin * 2 - lineHeight * 4) / lineHeight
+    );
     let currentRow = 0;
 
     // Draw each data row
@@ -276,7 +279,7 @@ export class ExportService {
           x: margin,
           y: height - margin,
           size: 16,
-          font: boldFont
+          font: boldFont,
         });
 
         // Reset position for new page
@@ -285,12 +288,12 @@ export class ExportService {
 
         // Draw header on new page
         let headerX = margin;
-        fields.forEach(field => {
+        fields.forEach((field) => {
           page.drawText(field.header, {
             x: headerX + 5,
             y: y,
             size: 10,
-            font: boldFont
+            font: boldFont,
           });
           headerX += columnWidth;
         });
@@ -300,18 +303,22 @@ export class ExportService {
 
       // Draw row data
       x = margin;
-      fields.forEach(field => {
-        const value = item[field.key] !== undefined ? String(item[field.key]) : '';
+      fields.forEach((field) => {
+        const value =
+          item[field.key] !== undefined ? String(item[field.key]) : "";
 
         // Truncate long values
         const maxLength = Math.floor(columnWidth / 6);
-        const displayValue = value.length > maxLength ? value.substring(0, maxLength) + '...' : value;
+        const displayValue =
+          value.length > maxLength
+            ? value.substring(0, maxLength) + "..."
+            : value;
 
         page.drawText(displayValue, {
           x: x + 5,
           y: y,
           size: 8,
-          font
+          font,
         });
         x += columnWidth;
       });

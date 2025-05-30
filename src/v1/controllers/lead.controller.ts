@@ -7,28 +7,25 @@ import { Enquiry } from "@models/enquiry.model";
 import { Rfp } from "@models/rfp.model";
 import { last } from "lodash";
 import XLSX from "xlsx";
-import path from 'path'
+import path from "path";
 import ExcelJs from "exceljs";
 
-
-import fs from 'fs';
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import * as csv from 'fast-csv';
-import { createObjectCsvWriter } from 'csv-writer';
+import fs from "fs";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import * as csv from "fast-csv";
+import { createObjectCsvWriter } from "csv-writer";
 import { Contact } from "@models/contact.model";
 import { ExportService } from "../../util/excelfile";
 
-
-
-
-
-
-
-
-
-export const addLead = async (req: Request, res: Response, next: NextFunction) => {
+export const addLead = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    let existsCheck = await Lead.findOne({ $or: [{ phone: req.body.phone }, { email: req.body.email }] }).exec();
+    let existsCheck = await Lead.findOne({
+      $or: [{ phone: req.body.phone }, { email: req.body.email }],
+    }).exec();
     if (existsCheck) {
       throw new Error("Lead with same  email  and phone already exists");
     }
@@ -42,72 +39,110 @@ export const addLead = async (req: Request, res: Response, next: NextFunction) =
     //     }
     // }
 
-
     const lead = await new Lead(req.body).save();
     res.status(201).json({ message: "Lead Created" });
-
-
   } catch (error) {
     next(error);
   }
 };
 
-
-
-export const getAllLead = async (req: Request, res: Response, next: NextFunction) => {
+export const getAllLead = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     let pipeline: PipelineStage[] = [];
     let matchObj: Record<string, any> = {};
 
     const { query } = req.query;
     // Handle basic search - search across multiple fields
-    if (req.query.query && typeof req.query.query === 'string' && req.query.query !== "") {
-
+    if (
+      req.query.query &&
+      typeof req.query.query === "string" &&
+      req.query.query !== ""
+    ) {
       matchObj.$or = [
-
-        { firstName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-        { lastName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-        { email: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-        { company: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-        { phone: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-        { ownerName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") }
+        {
+          firstName: new RegExp(
+            typeof req?.query?.query === "string" ? req.query.query : "",
+            "i"
+          ),
+        },
+        {
+          lastName: new RegExp(
+            typeof req?.query?.query === "string" ? req.query.query : "",
+            "i"
+          ),
+        },
+        {
+          email: new RegExp(
+            typeof req?.query?.query === "string" ? req.query.query : "",
+            "i"
+          ),
+        },
+        {
+          company: new RegExp(
+            typeof req?.query?.query === "string" ? req.query.query : "",
+            "i"
+          ),
+        },
+        {
+          phone: new RegExp(
+            typeof req?.query?.query === "string" ? req.query.query : "",
+            "i"
+          ),
+        },
+        {
+          ownerName: new RegExp(
+            typeof req?.query?.query === "string" ? req.query.query : "",
+            "i"
+          ),
+        },
         // Add any other fields you want to search by
       ];
     }
 
     // Handle advanced search (same as before)
     if (req?.query?.advancedSearch && req.query.advancedSearch !== "") {
-      const searchParams = typeof req.query.advancedSearch === 'string' ? req.query.advancedSearch.split(',') : [];
+      const searchParams =
+        typeof req.query.advancedSearch === "string"
+          ? req.query.advancedSearch.split(",")
+          : [];
 
       const advancedSearchConditions: any[] = [];
 
       searchParams.forEach((param: string) => {
-        const [field, condition, value] = param.split(':');
+        const [field, condition, value] = param.split(":");
 
         if (field && condition && value) {
           let fieldCondition: Record<string, any> = {};
 
           switch (condition) {
-            case 'contains':
-              fieldCondition[field] = { $regex: value, $options: 'i' };
+            case "contains":
+              fieldCondition[field] = { $regex: value, $options: "i" };
               break;
-            case 'equals':
+            case "equals":
               fieldCondition[field] = value;
               break;
-            case 'startsWith':
-              fieldCondition[field] = { $regex: `^${value}`, $options: 'i' };
+            case "startsWith":
+              fieldCondition[field] = { $regex: `^${value}`, $options: "i" };
               break;
-            case 'endsWith':
-              fieldCondition[field] = { $regex: `${value}$`, $options: 'i' };
+            case "endsWith":
+              fieldCondition[field] = { $regex: `${value}$`, $options: "i" };
               break;
-            case 'greaterThan':
-              fieldCondition[field] = { $gt: isNaN(Number(value)) ? value : Number(value) };
+            case "greaterThan":
+              fieldCondition[field] = {
+                $gt: isNaN(Number(value)) ? value : Number(value),
+              };
               break;
-            case 'lessThan':
-              fieldCondition[field] = { $lt: isNaN(Number(value)) ? value : Number(value) };
+            case "lessThan":
+              fieldCondition[field] = {
+                $lt: isNaN(Number(value)) ? value : Number(value),
+              };
               break;
             default:
-              fieldCondition[field] = { $regex: value, $options: 'i' };
+              fieldCondition[field] = { $regex: value, $options: "i" };
           }
 
           advancedSearchConditions.push(fieldCondition);
@@ -119,11 +154,7 @@ export const getAllLead = async (req: Request, res: Response, next: NextFunction
         // If there are already $or conditions (from basic search)
         // We need to use $and to combine with advanced search
         matchObj = {
-
-          $and: [
-            { $or: matchObj.$or },
-            { $and: advancedSearchConditions }
-          ]
+          $and: [{ $or: matchObj.$or }, { $and: advancedSearchConditions }],
         };
       } else {
         // If there's only advanced search, use $and directly
@@ -133,7 +164,7 @@ export const getAllLead = async (req: Request, res: Response, next: NextFunction
 
     // Add the match stage to the pipeline
     pipeline.push({
-      $match: matchObj
+      $match: matchObj,
     });
 
     // Handle request for select input options
@@ -141,7 +172,7 @@ export const getAllLead = async (req: Request, res: Response, next: NextFunction
       pipeline.push({
         $project: {
           label: { $concat: ["$firstName", " ", "$lastName"] },
-          value: "$_id"
+          value: "$_id",
         },
       });
     }
@@ -152,14 +183,18 @@ export const getAllLead = async (req: Request, res: Response, next: NextFunction
     res.status(201).json({
       message: "found all leads",
       data: LeadArr.data,
-      total: LeadArr.total
+      total: LeadArr.total,
     });
   } catch (error) {
     next(error);
   }
 };
 
-export const getLeadById = async (req: Request, res: Response, next: NextFunction) => {
+export const getLeadById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     let pipeline: PipelineStage[] = [];
     let matchObj: Record<string, any> = {};
@@ -183,7 +218,11 @@ export const getLeadById = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
-export const updateLeadById = async (req: Request, res: Response, next: NextFunction) => {
+export const updateLeadById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     let existsCheck = await Lead.findById(req.params.id).lean().exec();
     if (!existsCheck) {
@@ -204,7 +243,11 @@ export const updateLeadById = async (req: Request, res: Response, next: NextFunc
   }
 };
 
-export const deleteLeadById = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteLeadById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     let existsCheck = await Lead.findById(req.params.id).exec();
     if (!existsCheck) {
@@ -217,10 +260,15 @@ export const deleteLeadById = async (req: Request, res: Response, next: NextFunc
   }
 };
 
-
-export const convertToContact = async (req: Request, res: Response, next: NextFunction) => {
+export const convertToContact = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    const existingContact = await Contact.findOne({ leadId: req.params.id }).exec();
+    const existingContact = await Contact.findOne({
+      leadId: req.params.id,
+    }).exec();
     if (existingContact) {
       throw new Error("A contact already exists for this lead.");
     }
@@ -230,7 +278,6 @@ export const convertToContact = async (req: Request, res: Response, next: NextFu
     //   "check params id lead"
 
     // )
-
 
     const lead = await Lead.findById(req.params.id).exec();
     if (!lead) {
@@ -246,15 +293,7 @@ export const convertToContact = async (req: Request, res: Response, next: NextFu
     //     }
     // }
 
-
-
-
-
-
-
     if (lead) {
-
-
       const contact = new Contact({
         firstName: lead.firstName,
         lastName: lead.lastName,
@@ -268,21 +307,30 @@ export const convertToContact = async (req: Request, res: Response, next: NextFu
 
       await contact.save();
       const id = contact._id;
-      res.status(200).json({ message: "Contact conversion completed successfully", data: { contact, id } });
+      res.status(200).json({
+        message: "Contact conversion completed successfully",
+        data: { contact, id },
+      });
     }
   } catch (error) {
     next(error);
   }
-}
+};
 
-export const convertToEnquiry = async (req: Request, res: Response, next: NextFunction) => {
+export const convertToEnquiry = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const lead = await Lead.findById(req.params.id).exec();
     if (!lead) {
       throw new Error("Lead not found");
     }
 
-    const existingEnquiry = await Enquiry.findOne({ leadId: req.params.id }).exec();
+    const existingEnquiry = await Enquiry.findOne({
+      leadId: req.params.id,
+    }).exec();
     if (existingEnquiry) {
       throw new Error("An enquiry already exists for this lead.");
     }
@@ -302,26 +350,21 @@ export const convertToEnquiry = async (req: Request, res: Response, next: NextFu
 
       const newEnquiry = await enquiry.save();
 
-      console.log("newEnquiry", newEnquiry)
+      console.log("newEnquiry", newEnquiry);
       const id = newEnquiry._id;
-      res.status(200).json({ message: "Contact conversion completed successfully", data: { lead, id } });
+      res.status(200).json({
+        message: "Contact conversion completed successfully",
+        data: { lead, id },
+      });
     }
 
-    res.status(500).json({ message: "Something Went Wrong", });
-
-
-
+    res.status(500).json({ message: "Something Went Wrong" });
   } catch (error) {
     next(error);
-  };
-}
-
-
+  }
+};
 
 export const BulkUploadLead: RequestHandler = async (req, res, next) => {
-
-
-
   try {
     let xlsxFile: any = req.file?.path;
     if (!xlsxFile) throw new Error("File Not Found");
@@ -332,22 +375,17 @@ export const BulkUploadLead: RequestHandler = async (req, res, next) => {
 
     let xlData: any = [];
     sheet_nameList.forEach((element: any) => {
-
       xlData.push(...XLSX.utils.sheet_to_json(workbook.Sheets[element]));
     });
 
     if (xlData && xlData.length > 0) {
-      xlData.map(async (el: any) => await new Lead(el).save())
+      xlData.map(async (el: any) => await new Lead(el).save());
     }
     res.status(200).json({ message: "File Uploaded Successfully" });
-
   } catch (error) {
     next(error);
   }
-}
-
-
-
+};
 
 export const getAllLeadName = async (req: any, res: any, next: any) => {
   try {
@@ -356,11 +394,9 @@ export const getAllLeadName = async (req: any, res: any, next: any) => {
       { firstName: 1, lastName: 1, _id: 0 }
     ).lean();
 
-
     let leadNames = leads.map((v: any) => ({
       fullName: `${v.firstName} ${v.lastName}`.trim(),
     }));
-
 
     res.status(200).json({
       message: "Found all leads names",
@@ -368,18 +404,12 @@ export const getAllLeadName = async (req: any, res: any, next: any) => {
       total: leadNames.length,
     });
   } catch (error) {
-
     next(error);
   }
-
 };
-
-
-
 
 // export const downloadExcelLead = async (req: Request, res: Response, next: NextFunction) => {
 //   try {
-
 
 //       // Create a new workbook and a new sheet
 //       const workbook = new ExcelJs.Workbook();
@@ -493,8 +523,6 @@ export const getAllLeadName = async (req: any, res: any, next: any) => {
 //               // checkOut: Enquiry.checkOut,
 //               // noOfRooms: Enquiry.noOfRooms,
 
-
-
 //               // displayName: contact.displayName,
 //               // companyName: contact.companyName,
 //               // salutation: contact.salutation,
@@ -519,7 +547,6 @@ export const getAllLeadName = async (req: any, res: any, next: any) => {
 //           });
 //       });
 
-
 //       let filename = `${new Date().getTime()}.xlsx`
 //       const filePath = path.join("public", "uploads", filename);
 //       await workbook.xlsx.writeFile(`${filePath}`).then(() => {
@@ -535,344 +562,123 @@ export const getAllLeadName = async (req: any, res: any, next: any) => {
 //   }
 // };
 
+export const downloadExcelLead = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  // Determine export type and adjust filename/title accordingly
+  const isSelectedExport =
+    req.body.tickRows &&
+    Array.isArray(req.body.tickRows) &&
+    req.body.tickRows.length > 0;
 
-
-
-
-
-
-// Define field mapping for export
-const FIELD_MAPPING = {
-  _id: { header: 'ID', width: 22 },
-  firstName: { header: 'First Name', width: 15 },
-  lastName: { header: 'Last Name', width: 15 },
-  phone: { header: 'Mobile Phone', width: 15 },
-  company: { header: 'Company Name', width: 20 },
-  email: { header: 'Email', width: 25 },
-  leadSource: { header: 'Lead Source', width: 15 },
-  leadStatus: { header: 'Lead Status', width: 15 },
-  ownerName: { header: 'Account Manager', width: 20 },
-  createdAt: { header: 'Created Date', width: 20 },
-  updatedAt: { header: 'Last Modified Date', width: 20 },
-  // Add additional fields as needed
+  return ExportService.downloadFile(req, res, next, {
+    model: Lead,
+    buildQuery: buildQuery, // This function now handles both scenarios
+    formatData: formatLeadData,
+    processFields: processFields,
+    filename: isSelectedExport ? "selected_leads" : "leads",
+    worksheetName: isSelectedExport ? "Selected Leads" : "Leads",
+    title: isSelectedExport ? "Selected Leads" : "Leads",
+  });
 };
-
 
 const buildQuery = (req: Request) => {
   const query: any = {};
 
-  // Basic search query
-  if (req.query.query) {
-    const searchRegex = new RegExp(req.query.query as string, 'i');
-    query.$or = [
-      { firstName: searchRegex },
-      { lastName: searchRegex },
-      { email: searchRegex },
-      { company: searchRegex },
-      { phone: searchRegex },
-      { ownerName: searchRegex },
-    ];
+  // Check if specific IDs are selected (tickRows)
+  if (
+    req.body.tickRows &&
+    Array.isArray(req.body.tickRows) &&
+    req.body.tickRows.length > 0
+  ) {
+    // If tickRows is provided, only export selected records
+    console.log("Exporting selected rows:", req.body.tickRows.length);
+    query._id = { $in: req.body.tickRows };
+    return query; // Return early, ignore other filters when exporting selected rows
   }
 
-  // Advanced search
-  if (req.query.advancedSearch) {
-    try {
-      const advancedParams = JSON.parse(req.query.advancedSearch as string);
+  // If no tickRows, apply regular filters
+  console.log("Exporting filtered records");
 
-      Object.keys(advancedParams).forEach(key => {
-        const value = advancedParams[key];
+  if (req.body.status) {
+    query.status = req.body.status;
+  }
 
-        if (value) {
-          // Handle date fields
-          if (key === 'createdAt' || key === 'updatedAt') {
-            if (value.startDate && value.endDate) {
-              query[key] = {
-                $gte: new Date(value.startDate),
-                $lte: new Date(value.endDate)
-              };
-            } else if (value.startDate) {
-              query[key] = { $gte: new Date(value.startDate) };
-            } else if (value.endDate) {
-              query[key] = { $lte: new Date(value.endDate) };
-            }
-          }
-          // Handle select fields (exact match)
-          else if (key === 'leadSource' || key === 'leadStatus') {
-            query[key] = value;
-          }
-          // Handle text fields (partial match)
-          else {
-            query[key] = new RegExp(value, 'i');
-          }
-        }
-      });
-    } catch (error) {
-      console.error("Error parsing advanced search parameters:", error);
-    }
+  if (req.body.dateFrom && req.body.dateTo) {
+    query.createdAt = {
+      $gte: new Date(req.body.dateFrom),
+      $lte: new Date(req.body.dateTo),
+    };
+  }
+
+  // Add other existing filters here
+  if (req.body.source) {
+    query.source = req.body.source;
+  }
+
+  if (req.body.assignedTo) {
+    query.assignedTo = req.body.assignedTo;
+  }
+
+  // Add search functionality if needed
+  if (req.body.search) {
+    query.$or = [
+      { name: { $regex: req.body.search, $options: "i" } },
+      { email: { $regex: req.body.search, $options: "i" } },
+      { phone: { $regex: req.body.search, $options: "i" } },
+    ];
   }
 
   return query;
 };
 
-
-const processFields = (fields?: string[]) => {
-  // If no fields specified, use all available fields
-  if (!fields || fields.length === 0) {
-    return Object.keys(FIELD_MAPPING).map(key => ({
-      key,
-      ...FIELD_MAPPING[key as keyof typeof FIELD_MAPPING]
-    }));
-  }
-
-  // Return only selected fields
-  return fields.map(key => ({
-    key,
-    ...FIELD_MAPPING[key as keyof typeof FIELD_MAPPING]
-  }));
-};
-
-
 const formatLeadData = (lead: any) => {
+  console.log(lead, "check lead vlaue in lead controller");
+
+  console.log(lead.firstName, "check firstName");
   return {
-    ...lead,
-    // Format dates
-    createdAt: lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : '',
-    updatedAt: lead.updatedAt ? new Date(lead.updatedAt).toLocaleDateString() : '',
-    // Format other fields as needed
+    id: lead._id,
+    salutation: lead.salutation,
+    firstName: lead.firstName,
+    lastName: lead.lastName,
+    email: lead.email,
+    phone: lead.phone,
+    createdAt: lead.createdAt,
+    updatedAt: lead.updatedAt
+      ? new Date(lead.createdAt).toLocaleDateString()
+      : "",
+    // Add other fields as needed
   };
 };
 
-
-export const downloadExcelLead = async (req: Request, res: Response, next: NextFunction) => {
-  return ExportService.downloadFile(req, res, next, {
-    model: Lead,
-    buildQuery: buildQuery, // Your existing function
-    formatData: formatLeadData, // Your existing function
-    processFields: processFields, // Your existing function
-    filename: 'leads',
-    worksheetName: 'Leads',
-    title: 'Leads'
-  });
-};
-
-
-const exportToExcel = async (
-  leads: any[],
-  fields: any[],
-  directory: string,
-  timestamp: number
-): Promise<string> => {
-  // Create a new workbook and worksheet
-  const workbook = new ExcelJs.Workbook();
-  const worksheet = workbook.addWorksheet("Leads", {
-    pageSetup: { paperSize: 9, orientation: "landscape" },
-  });
-
-  // Define columns
-  worksheet.columns = fields.map(field => ({
-    header: field.header,
-    key: field.key,
-    width: field.width
-  }));
-
-  // Style the header row
-  const headerRow = worksheet.getRow(1);
-  headerRow.font = { bold: true };
-  headerRow.fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FFE0E0E0' }
+const processFields = (fields: string[]) => {
+  const fieldMapping = {
+    id: { key: "id", header: "ID", width: 15 },
+    firstName: { key: "firstName", header: "First Name", width: 25 },
+    lastName: { key: "lastName", header: "Last Name", width: 25 },
+    email: { key: "email", header: "Email", width: 30 },
+    phone: { key: "phone", header: "Phone", width: 20 },
+    status: { key: "status", header: "Status", width: 15 },
+    createdAt: { key: "createdAt", header: "Created At", width: 20 },
   };
 
-  // Add data rows
-  leads.forEach(lead => {
-    const rowData: any = {};
-    fields.forEach(field => {
-      rowData[field.key] = lead[field.key] !== undefined ? lead[field.key] : '';
-    });
-    worksheet.addRow(rowData);
-  });
-
-  // Add borders to all cells
-  worksheet.eachRow({ includeEmpty: true }, (row) => {
-    row.eachCell({ includeEmpty: true }, (cell) => {
-      cell.border = {
-        top: { style: 'thin' },
-        left: { style: 'thin' },
-        bottom: { style: 'thin' },
-        right: { style: 'thin' }
-      };
-    });
-  });
-
-  // Write the file
-  const filename = `leads_export_${timestamp}.xlsx`;
-  const filePath = path.join(directory, filename);
-  await workbook.xlsx.writeFile(filePath);
-
-  return filename;
-};
-
-
-const exportToCsv = async (
-  leads: any[],
-  fields: any[],
-  directory: string,
-  timestamp: number
-): Promise<string> => {
-  // Create CSV writer
-  const filename = `leads_export_${timestamp}.csv`;
-  const filePath = path.join(directory, filename);
-
-  const csvWriter = createObjectCsvWriter({
-    path: filePath,
-    header: fields.map(field => ({
-      id: field.key,
-      title: field.header
-    }))
-  });
-
-  // Write data
-  await csvWriter.writeRecords(leads);
-
-  return filename;
-};
-
-
-const exportToPdf = async (
-  leads: any[],
-  fields: any[],
-  directory: string,
-  timestamp: number
-): Promise<string> => {
-  // Create PDF document
-  const pdfDoc = await PDFDocument.create();
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
-  // Add a page
-  const page = pdfDoc.addPage([842, 595]); // A4 landscape
-  const { width, height } = page.getSize();
-
-  // Define margins and spacing
-  const margin = 50;
-  const lineHeight = 20;
-  const columnWidth = (width - margin * 2) / fields.length;
-
-  // Draw title
-  page.drawText('Leads Export', {
-    x: margin,
-    y: height - margin,
-    size: 16,
-    font: boldFont
-  });
-
-  // Draw export date
-  const exportDate = new Date().toLocaleDateString();
-  page.drawText(`Generated on: ${exportDate}`, {
-    x: margin,
-    y: height - margin - lineHeight,
-    size: 10,
-    font
-  });
-
-  // Draw header row
-  let x = margin;
-  let y = height - margin - lineHeight * 3;
-
-  // Background for header
-  page.drawRectangle({
-    x: margin - 5,
-    y: y - 5,
-    width: width - margin * 2 + 10,
-    height: lineHeight + 10,
-    color: rgb(0.9, 0.9, 0.9),
-  });
-
-  // Draw header text
-  fields.forEach((field, index) => {
-    page.drawText(field.header, {
-      x: x + 5,
-      y: y,
-      size: 10,
-      font: boldFont
-    });
-    x += columnWidth;
-  });
-
-  // Draw data rows
-  y -= lineHeight + 10;
-
-  // Limit number of rows per page
-  const rowsPerPage = Math.floor((height - margin * 2 - lineHeight * 4) / lineHeight);
-  let currentRow = 0;
-
-  // Draw each lead row
-  for (const lead of leads) {
-    // Check if we need a new page
-    if (currentRow >= rowsPerPage) {
-      // Add new page
-      const newPage = pdfDoc.addPage([842, 595]);
-      page.drawText('Leads Export (continued)', {
-        x: margin,
-        y: height - margin,
-        size: 16,
-        font: boldFont
-      });
-
-      // Reset position for new page
-      y = height - margin - lineHeight * 3;
-      currentRow = 0;
-
-      // Draw header on new page
-      let headerX = margin;
-      fields.forEach(field => {
-        newPage.drawText(field.header, {
-          x: headerX + 5,
-          y: y,
-          size: 10,
-          font: boldFont
-        });
-        headerX += columnWidth;
-      });
-
-      y -= lineHeight + 10;
-    }
-
-    // Draw row data
-    x = margin;
-    fields.forEach(field => {
-      const value = lead[field.key] !== undefined ? String(lead[field.key]) : '';
-
-      // Truncate long values
-      const maxLength = Math.floor(columnWidth / 6);
-      const displayValue = value.length > maxLength ? value.substring(0, maxLength) + '...' : value;
-
-      page.drawText(displayValue, {
-        x: x + 5,
-        y: y,
-        size: 8,
-        font
-      });
-      x += columnWidth;
-    });
-
-    y -= lineHeight;
-    currentRow++;
+  if (fields.length === 0) {
+    // Return all fields if none specified
+    return Object.values(fieldMapping);
   }
 
-  // Save the PDF
-  const filename = `leads_export_${timestamp}.pdf`;
-  const filePath = path.join(directory, filename);
-  const pdfBytes = await pdfDoc.save();
-
-  fs.writeFileSync(filePath, pdfBytes);
-
-  return filename;
+  return fields
+    .map((field: string) => fieldMapping[field as keyof typeof fieldMapping])
+    .filter((item) => Boolean(item));
 };
 
-
-export const downloadTemplate = async (req: Request, res: Response, next: NextFunction) => {
+export const downloadTemplate = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     // Create a new workbook and worksheet
     const workbook = new ExcelJs.Workbook();
@@ -895,9 +701,9 @@ export const downloadTemplate = async (req: Request, res: Response, next: NextFu
     const headerRow = worksheet.getRow(1);
     headerRow.font = { bold: true };
     headerRow.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFE0E0E0' }
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFE0E0E0" },
     };
 
     // Add example data
@@ -908,22 +714,22 @@ export const downloadTemplate = async (req: Request, res: Response, next: NextFu
       phone: "1234567890",
       company: "ABC Corp",
       leadSource: "Website",
-      leadStatus: "New"
+      leadStatus: "New",
     });
 
     // Add dropdown validations
     // Lead Source dropdown
-    worksheet.getCell('F2').dataValidation = {
-      type: 'list',
+    worksheet.getCell("F2").dataValidation = {
+      type: "list",
       allowBlank: true,
-      formulae: ['"website,referral,social,email,other"']
+      formulae: ['"website,referral,social,email,other"'],
     };
 
     // Lead Status dropdown
-    worksheet.getCell('G2').dataValidation = {
-      type: 'list',
+    worksheet.getCell("G2").dataValidation = {
+      type: "list",
       allowBlank: true,
-      formulae: ['"new,contacted,qualified,unqualified,converted"']
+      formulae: ['"new,contacted,qualified,unqualified,converted"'],
     };
 
     // Add instructions
@@ -931,30 +737,44 @@ export const downloadTemplate = async (req: Request, res: Response, next: NextFu
     instructionSheet.columns = [
       { header: "Field", key: "field", width: 20 },
       { header: "Description", key: "description", width: 50 },
-      { header: "Required", key: "required", width: 10 }
+      { header: "Required", key: "required", width: 10 },
     ];
 
     // Style the header row
     const instHeaderRow = instructionSheet.getRow(1);
     instHeaderRow.font = { bold: true };
     instHeaderRow.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFE0E0E0' }
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFE0E0E0" },
     };
 
     // Add instructions
     const instructions = [
-      { field: "First Name", description: "Lead's first name", required: "Yes" },
+      {
+        field: "First Name",
+        description: "Lead's first name",
+        required: "Yes",
+      },
       { field: "Last Name", description: "Lead's last name", required: "Yes" },
       { field: "Email", description: "Lead's email address", required: "Yes" },
       { field: "Phone", description: "Lead's phone number", required: "No" },
       { field: "Company", description: "Lead's company name", required: "No" },
-      { field: "Lead Source", description: "Source of the lead (website, referral, social, email, other)", required: "No" },
-      { field: "Lead Status", description: "Current status of the lead (new, contacted, qualified, unqualified, converted)", required: "No" }
+      {
+        field: "Lead Source",
+        description:
+          "Source of the lead (website, referral, social, email, other)",
+        required: "No",
+      },
+      {
+        field: "Lead Status",
+        description:
+          "Current status of the lead (new, contacted, qualified, unqualified, converted)",
+        required: "No",
+      },
     ];
 
-    instructions.forEach(instruction => {
+    instructions.forEach((instruction) => {
       instructionSheet.addRow(instruction);
     });
 
@@ -974,22 +794,24 @@ export const downloadTemplate = async (req: Request, res: Response, next: NextFu
     res.json({
       status: "success",
       message: "Template downloaded successfully",
-      filename: filename
+      filename: filename,
     });
-
   } catch (error) {
     console.error("Template download error:", error);
     next(error);
   }
 };
 
-
-export const importLeads = async (req: Request, res: Response, next: NextFunction) => {
+export const importLeads = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     if (!req.file) {
       return res.status(400).json({
         status: "error",
-        message: "No file uploaded"
+        message: "No file uploaded",
       });
     }
 
@@ -999,14 +821,14 @@ export const importLeads = async (req: Request, res: Response, next: NextFunctio
     let importedLeads: any[] = [];
 
     // Process file based on extension
-    if (fileExtension === '.xlsx' || fileExtension === '.xls') {
+    if (fileExtension === ".xlsx" || fileExtension === ".xls") {
       importedLeads = await processExcelFile(filePath);
-    } else if (fileExtension === '.csv') {
+    } else if (fileExtension === ".csv") {
       importedLeads = await processCsvFile(filePath);
     } else {
       return res.status(400).json({
         status: "error",
-        message: "Unsupported file format. Please upload an Excel or CSV file."
+        message: "Unsupported file format. Please upload an Excel or CSV file.",
       });
     }
 
@@ -1030,7 +852,7 @@ export const importLeads = async (req: Request, res: Response, next: NextFunctio
       return res.status(400).json({
         status: "error",
         message: "Validation errors in the imported data",
-        errors: validationErrors
+        errors: validationErrors,
       });
     }
 
@@ -1043,15 +865,13 @@ export const importLeads = async (req: Request, res: Response, next: NextFunctio
     res.status(200).json({
       status: "success",
       message: `Successfully imported ${savedLeads.length} leads`,
-      count: savedLeads.length
+      count: savedLeads.length,
     });
-
   } catch (error) {
     console.error("Import error:", error);
     next(error);
   }
 };
-
 
 const processExcelFile = async (filePath: string): Promise<any[]> => {
   const workbook = new ExcelJs.Workbook();
@@ -1064,13 +884,14 @@ const processExcelFile = async (filePath: string): Promise<any[]> => {
   const headers: string[] = [];
   worksheet?.getRow(1).eachCell((cell) => {
     // Remove asterisks from header names (if present for required fields)
-    const headerName = cell.value?.toString().replace(/\*$/, '').trim();
+    const headerName = cell.value?.toString().replace(/\*$/, "").trim();
     headers.push(headerName?.toLocaleLowerCase() || "");
   });
 
   // Process data rows
   worksheet?.eachRow((row, rowNumber) => {
-    if (rowNumber > 1) { // Skip header row
+    if (rowNumber > 1) {
+      // Skip header row
       const lead: any = {};
 
       row.eachCell((cell, colNumber) => {
@@ -1087,7 +908,6 @@ const processExcelFile = async (filePath: string): Promise<any[]> => {
   return leads;
 };
 
-
 const processCsvFile = async (filePath: string): Promise<any[]> => {
   return new Promise((resolve, reject) => {
     const leads: any[] = [];
@@ -1095,22 +915,22 @@ const processCsvFile = async (filePath: string): Promise<any[]> => {
 
     fs.createReadStream(filePath)
       .pipe(csv.parse({ headers: true, trim: true }))
-      .on('headers', (headerList) => {
+      .on("headers", (headerList) => {
         // Clean up header names
         headers = headerList.map((header: string) =>
-          header.replace(/\*$/, '').trim().toLocaleLowerCase()
+          header.replace(/\*$/, "").trim().toLocaleLowerCase()
         );
       })
-      .on('data', (row) => {
+      .on("data", (row) => {
         const lead: any = {};
 
-        headers.forEach(header => {
+        headers.forEach((header) => {
           lead[header] = row[header];
         });
 
         leads.push(lead);
       })
-      .on('error', (error) => reject(error))
-      .on('end', () => resolve(leads));
+      .on("error", (error) => reject(error))
+      .on("end", () => resolve(leads));
   });
-}
+};
