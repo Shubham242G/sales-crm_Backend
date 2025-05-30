@@ -64,17 +64,15 @@ export const getAllLead = async (
     ) {
       matchObj.$or = [
         {
-          firstName: new RegExp(
-            typeof req?.query?.query === "string" ? req.query.query : "",
-            "i"
-          ),
+          fullName: {
+            $regex: new RegExp(
+              `${typeof req?.query?.query === "string" ? req.query.query : ""}`,
+              "i"
+            ),
+          },
         },
-        {
-          lastName: new RegExp(
-            typeof req?.query?.query === "string" ? req.query.query : "",
-            "i"
-          ),
-        },
+
+   
         {
           email: new RegExp(
             typeof req?.query?.query === "string" ? req.query.query : "",
@@ -99,8 +97,15 @@ export const getAllLead = async (
             "i"
           ),
         },
+
+        
         // Add any other fields you want to search by
       ];
+       pipeline.push({
+      $addFields: {
+        fullName: { $concat: ["$firstName", " ", "$lastName"] },
+      },
+    });
     }
 
     // Handle advanced search (same as before)
