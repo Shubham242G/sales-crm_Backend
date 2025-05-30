@@ -16,11 +16,12 @@ interface IContactPerson {
     workPhone: string;
     phone: string;
     communicationChannels: communicationChannelsProps;
-    leadId:Types.ObjectId
+    
     contactPersonDateOfBirth: String,
     contactPersonAnniversary: String,
     contactPersonDesignation: String,
     contactPersonDepartment: String,
+      uinNumber: string;
 }
 
 
@@ -60,7 +61,7 @@ interface IContact {
     // shippingAttention: string;
     shippingCountryRegion: string;
     shippingAddressStreet1: string;
-    leadId:Types.ObjectId;
+   
     shippingAddressStreet2: string;
     shippingCity: string;
     shippingState: string;
@@ -75,6 +76,7 @@ interface IContact {
     twitter: string;
     skype: string;
     facebook: string;
+      uinNumber: string;
     // communicationChannels: communicationChannelsProps;
 }
 
@@ -92,7 +94,7 @@ const ContactSchema = new Schema(
         email: String,
         phone: String,
         mobile: String,
-        leadId: { type: Types.ObjectId, ref: "Lead" },  
+      
         panNumber: String,
         placeOfSupply: String,
         prefersEmail: { type: Boolean, default: false },
@@ -133,6 +135,7 @@ const ContactSchema = new Schema(
         twitter: String,
         skype: String,
         facebook: String,
+          uinNumber: String,
         // communicationChannels: Array
     },
     { timestamps: true }

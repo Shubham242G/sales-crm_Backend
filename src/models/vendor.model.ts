@@ -9,7 +9,7 @@ export interface IVendor {
     companyName: string;
     contactName: string;
     contactOwner: string;
-    leadId: Types.ObjectId;
+  
     panNumber: string;
     gst: string;
     vendorType: string[];
@@ -342,7 +342,7 @@ const vendorSchema = new Schema<IVendor>({
     landLine: String,
     phoneNumber: String,
     displayName: String,
-    leadId  : Types.ObjectId
+
   },
   isBanquetDetailsVisible: Boolean,
   isRestaurantDetailsVisible: Boolean,

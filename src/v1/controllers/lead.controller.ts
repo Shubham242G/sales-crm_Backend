@@ -5,7 +5,7 @@ import { storeFileAndReturnNameBase64 } from "@helpers/fileSystem";
 import { Lead } from "@models/lead.model";
 import { Enquiry } from "@models/enquiry.model";
 import { Rfp } from "@models/rfp.model";
-import { last } from "lodash";
+import { first, last } from "lodash";
 import XLSX from "xlsx";
 import path from 'path'
 import ExcelJs from "exceljs";
@@ -64,8 +64,11 @@ export const getAllLead = async (req: Request, res: Response, next: NextFunction
       
       matchObj.$or = [
         
-        { firstName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-        { lastName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
+        { $or: [
+          { firstName: new RegExp(`^${req?.query?.query}.*`, "i") },
+          { lastName: new RegExp(`^${req?.query?.query}.*`, "i") },
+          { $expr: { $regexMatch: { input: { $concat: ["$firstName", " ", "$lastName"] }, regex: new RegExp(`^${req?.query?.query}.*`, "i") } } },
+        ] },
         { email: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
         { company: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
         { phone: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
