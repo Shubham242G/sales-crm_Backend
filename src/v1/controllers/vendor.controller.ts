@@ -14,6 +14,8 @@ import PDFDocument from 'pdfkit';
 import { zohoRequest } from "../../util/zoho";
 import { IVendor } from "@models/vendor.model";
 import { create } from "lodash";
+import { ExportService } from "../../util/excelfile";
+import ExcelJs from "exceljs";
 
 
 const upload = multer({ dest: "uploads/" });
@@ -349,65 +351,140 @@ const processAndSaveVendor = async (vendor: any[]) => {
 
 
 export const getAllVendor = async (req: any, res: any, next: any) => {
-
-  let pipeline: PipelineStage[] = [];
-  let matchObj: Record<string, any> = {};
-
-
   try {
+    let pipeline: PipelineStage[] = [];
+
+    let matchObj: Record<string, any> = {};
+
+    const { query } = req.query;
+    // Handle basic search - search across multiple fields
+    if (
+      req.query.query &&
+      typeof req.query.query === "string" &&
+      req.query.query !== ""
+    ) {
+      matchObj.$or = [
+        {
+          fullName: {
+            $regex: new RegExp(
+              `${typeof req?.query?.query === "string" ? req.query.query : ""}`,
+              "i"
+            ),
+          },
+        },
 
 
-    if (req.query.query) {
+        {
+          email: new RegExp(
+            typeof req?.query?.query === "string" ? req.query.query : "",
+            "i"
+          ),
+        },
+        {
+          company: new RegExp(
+            typeof req?.query?.query === "string" ? req.query.query : "",
+            "i"
+          ),
+        },
+        {
+          phone: new RegExp(
+            typeof req?.query?.query === "string" ? req.query.query : "",
+            "i"
+          ),
+        },
+        {
+          ownerName: new RegExp(
+            typeof req?.query?.query === "string" ? req.query.query : "",
+            "i"
+          ),
+        },
 
-      const $or: Array<Record<string, any>> = [];
-      $or.push({ "vendor.firstName": new RegExp(req.query.query, "i") });
-      $or.push({ "vendor.displayName": new RegExp(req.query.query, "i") });
-      $or.push({ "vendor.companyName": new RegExp(req.query.query, "i") });
-      matchObj.$or = $or;
+
+        //check for fullName
+      ];
+
+      pipeline.push({
+        $addFields: {
+          fullName: { $concat: ["$firstName", " ", "$lastName"] },
+        },
+      });
     }
-    // const response = await zohoRequest('vendors');
-    // console.log(response, "check the response of vendor")
-    // const zohoVendor = response.contacts;
 
 
+    // Handle advanced search (same as before)
+    if (req?.query?.advancedSearch && req.query.advancedSearch !== "") {
+      const searchParams =
+        typeof req.query.advancedSearch === "string"
+          ? req.query.advancedSearch.split(",")
+          : [];
 
+      const advancedSearchConditions: any[] = [];
 
-    // console.log(zohoVendor, "zohoVendor");
+      searchParams.forEach((param: string) => {
+        const [field, condition, value] = param.split(":");
 
-    // let created = 0;
-    // let updated = 0;
+        if (field && condition && value) {
+          let fieldCondition: Record<string, any> = {};
 
-    // for (const cust of zohoVendor) {
-    //   const sanitized = sanitizeZohoVendor(cust);
+          switch (condition) {
+            case "contains":
+              fieldCondition[field] = { $regex: value, $options: "i" };
+              break;
+            case "equals":
+              fieldCondition[field] = value;
+              break;
+            case "startsWith":
+              fieldCondition[field] = { $regex: `^${value}`, $options: "i" };
+              break;
+            case "endsWith":
+              fieldCondition[field] = { $regex: `${value}$`, $options: "i" };
+              break;
+            case "greaterThan":
+              fieldCondition[field] = {
+                $gt: isNaN(Number(value)) ? value : Number(value),
+              };
+              break;
+            case "lessThan":
+              fieldCondition[field] = {
+                $lt: isNaN(Number(value)) ? value : Number(value),
+              };
+              break;
+            default:
+              fieldCondition[field] = { $regex: value, $options: "i" };
+          }
 
+          advancedSearchConditions.push(fieldCondition);
+        }
+      });
 
+      // If we have both basic and advanced search, we need to combine them
+      if (matchObj.$or) {
+        // If there are already $or conditions (from basic search)
+        // We need to use $and to combine with advanced search
+        matchObj = {
+          $and: [{ $or: matchObj.$or }, { $and: advancedSearchConditions }],
+        };
+      } else {
+        // If there's only advanced search, use $and directly
+        matchObj.$and = advancedSearchConditions;
+      }
+    }
 
-    //   const existing = await Vendor.findOne({ "vendor.email": sanitized.vendor.email });
-    //   console.log(existing, "existing");
-
-    //   if (!existing) {
-
-    //     console.log(sanitized, "sanitized");
-    //     const vendor = new Vendor(sanitized);
-
-    //     vendor.save();
-    //     created++;
-    //   } else {
-    //     await Vendor.updateOne({ "vendor.email": sanitized.vendor.email }, { $set: sanitized });
-    //     updated++;
-    //   }
-    // }
-    // console.log(created, updated, "created and updated and existing");
-
-
-    // if (req.query.query && req.query.query !== "") {
-    //   matchObj.["vendor.firstName"] = new RegExp(req.query.query, "i");
-
-    // }
-
+    // Add the match stage to the pipeline
     pipeline.push({
       $match: matchObj,
     });
+
+    // Handle request for select input options
+    if (req?.query?.isForSelectInput) {
+      pipeline.push({
+        $project: {
+          label: { $concat: ["$firstName", " ", "$lastName"] },
+          value: "$_id",
+        },
+      });
+    }
+
     let vendorArr = await paginateAggregate(Vendor, pipeline, req.query);
 
     res.status(201).json({
@@ -415,30 +492,12 @@ export const getAllVendor = async (req: any, res: any, next: any) => {
       data: vendorArr.data,
       total: vendorArr.total,
     });
-  } catch (error) {
+  }
+  catch (error) {
     next(error);
   }
-};
+}
 
-export const generateVendorPDF = (vendor: IVendor): string => {
-  const fileName = `Vendor_${vendor.vendor.displayName}.pdf`;
-  const filePath = path.join(__dirname, '../../public/upload', fileName);
-
-  const doc = new PDFDocument();
-  doc.pipe(fs.createWriteStream(filePath));
-
-  doc.fontSize(20).text('VENDOR PURCHASE BILL', { align: 'center' });
-  doc.moveDown();
-  doc.fontSize(12).text(`Vendor Name: ${vendor.vendor.firstName} ${vendor.vendor.lastName}`);
-  doc.text(`Email: ${vendor.vendor.email}`);
-  doc.text(`Company Name: ${vendor.vendor.companyName}`);
-  doc.text(`Phone Number: ${vendor.vendor.phoneNumber}`);
-  doc.text(`GST IN: ${vendor.vendor.gst} `);
-  doc.text(`Location: ${vendor.location.state} `);
-  doc.end();
-
-  return `/vendorsById/${fileName}`; // Public URL for frontend use
-};
 
 export const getVendorById = async (
   req: Request,
@@ -828,6 +887,277 @@ export const getAllVendorName = async (
       total: vendorNames.length,
     });
   } catch (error) {
+    next(error);
+  }
+};
+
+export const downloadExcelVendors = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const isSelectedExport =
+    req.body.tickRows &&
+    Array.isArray(req.body.tickRows) &&
+    req.body.tickRows.length > 0;
+
+  return ExportService.downloadFile(req, res, next, {
+    model: Vendor,
+    buildQuery: buildVendorQuery,
+    formatData: formatVendorData,
+    processFields: processVendorFields,
+    filename: isSelectedExport ? "selected_vendors" : "vendors",
+    worksheetName: isSelectedExport ? "Selected Vendors" : "All Vendors",
+    title: isSelectedExport ? "Selected Vendors" : "Vendor Directory",
+  });
+};
+
+const buildVendorQuery = (req: Request) => {
+  const query: any = {};
+
+  // Handle selected rows export
+  if (req.body.tickRows?.length > 0) {
+    query._id = { $in: req.body.tickRows };
+    return query;
+  }
+
+  // Apply regular filters
+  if (req.body.vendorType) {
+    query['vendor.vendorType'] = { $in: [req.body.vendorType] };
+  }
+
+  if (req.body.state) {
+    query['location.state'] = req.body.state;
+  }
+
+  if (req.body.categoryType) {
+    query['category.categoryType'] = req.body.categoryType;
+  }
+
+  if (req.body.dateFrom && req.body.dateTo) {
+    query.createdAt = {
+      $gte: new Date(req.body.dateFrom),
+      $lte: new Date(req.body.dateTo),
+    };
+  }
+
+  if (req.body.search) {
+    query.$or = [
+      { 'vendor.companyName': { $regex: req.body.search, $options: "i" } },
+      { 'vendor.displayName': { $regex: req.body.search, $options: "i" } },
+      { 'vendor.email': { $regex: req.body.search, $options: "i" } },
+      { 'location.city': { $regex: req.body.search, $options: "i" } },
+    ];
+  }
+
+  return query;
+};
+
+const formatVendorData = (vendor: IVendor) => {
+  // Helper function to format arrays
+  const formatArray = (arr: any[], prop: string) =>
+    arr?.map(item => item[prop]).join(', ') || '';
+
+  return {
+    // Basic Vendor Info
+
+    companyName: vendor.vendor?.companyName,
+    displayName: vendor.vendor?.displayName,
+    contactName: vendor.vendor?.contactName,
+    email: vendor.vendor?.email,
+    phone: vendor.vendor?.phoneNumber,
+
+    // Location
+    location: `${vendor.location?.address}, ${vendor.location?.city}, ${vendor.location?.state}`,
+
+    // Category
+    category: vendor.category?.categoryType,
+
+    // Financial
+    gst: vendor.vendor?.gst,
+    pan: vendor.vendor?.panNumber,
+
+    // Room Details (Summarized)
+    roomCategories: formatArray(vendor.rooms || [], 'roomCategory'),
+    totalRooms: vendor.rooms?.reduce((sum, room) => sum + (room.numberOfRooms || 0), 0),
+
+    // Banquet Details (Summarized)
+    banquetCategories: formatArray(vendor.banquets || [], 'banquetCategory'),
+    totalBanquets: vendor.banquets?.length,
+
+    // Restaurant Details
+    restaurantMenuTypes: formatArray(vendor.restaurant?.restaurantMenuType || [], ''),
+    restaurantCovers: vendor.restaurant?.restaurantCovers,
+
+    // Bank Details
+    bankName: vendor.bankDetails?.bankName,
+    accountNumber: vendor.bankDetails?.bankAccountNumber,
+
+    // Contact Persons
+    contactPersons: vendor.contactPersons?.map(p =>
+      `${p.contactPersonFirstName} ${p.contactPersonLastName}`).join(', '),
+
+
+  };
+};
+
+const processVendorFields = (fields: string[]) => {
+  const fieldMapping = {
+    // Basic Info
+    id: { key: "id", header: "ID", width: 20 },
+    companyName: { key: "companyName", header: "Company", width: 30 },
+    displayName: { key: "displayName", header: "Display Name", width: 25 },
+    contactName: { key: "contactName", header: "Contact", width: 25 },
+    email: { key: "email", header: "Email", width: 30 },
+    phone: { key: "phone", header: "Phone", width: 20 },
+
+    // Location
+    location: { key: "location", header: "Address", width: 40 },
+
+    // Category
+    category: { key: "category", header: "Category", width: 20 },
+
+    // Financial
+    gst: { key: "gst", header: "GST", width: 20 },
+    pan: { key: "pan", header: "PAN", width: 20 },
+
+    // Rooms
+    roomCategories: { key: "roomCategories", header: "Room Types", width: 30 },
+    totalRooms: { key: "totalRooms", header: "Total Rooms", width: 15 },
+
+    // Banquets
+    banquetCategories: { key: "banquetCategories", header: "Banquet Types", width: 30 },
+    totalBanquets: { key: "totalBanquets", header: "Total Banquets", width: 15 },
+
+    // Restaurant
+    restaurantMenuTypes: { key: "restaurantMenuTypes", header: "Menu Types", width: 30 },
+    restaurantCovers: { key: "restaurantCovers", header: "Covers", width: 15 },
+
+    // Bank
+    bankName: { key: "bankName", header: "Bank", width: 25 },
+    accountNumber: { key: "accountNumber", header: "Account No.", width: 25 },
+
+    // Contacts
+    contactPersons: { key: "contactPersons", header: "Contact Persons", width: 40 },
+
+    // Dates
+    createdAt: { key: "createdAt", header: "Created", width: 15 },
+    updatedAt: { key: "updatedAt", header: "Updated", width: 15 },
+  };
+
+  return fields.length === 0
+    ? Object.values(fieldMapping)
+    : fields
+      .map((field) => fieldMapping[field as keyof typeof fieldMapping])
+      .filter(Boolean);
+};
+
+export const downloadVendorTemplate = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const workbook = new ExcelJs.Workbook();
+    const worksheet = workbook.addWorksheet("Vendor Template", {
+      pageSetup: { paperSize: 9, orientation: "landscape" },
+    });
+
+    // Define basic vendor columns
+    worksheet.columns = [
+      { header: "Company Name*", key: "companyName", width: 30 },
+      { header: "Display Name", key: "displayName", width: 25 },
+      { header: "Contact Person", key: "contactName", width: 25 },
+      { header: "Email*", key: "email", width: 30 },
+      { header: "Phone*", key: "phone", width: 20 },
+      { header: "GST Number", key: "gst", width: 20 },
+      { header: "PAN Number", key: "pan", width: 20 },
+      { header: "Vendor Type*", key: "vendorType", width: 20 },
+      { header: "Category*", key: "category", width: 20 },
+      { header: "Address", key: "address", width: 40 },
+      { header: "City", key: "city", width: 20 },
+      { header: "State", key: "state", width: 20 },
+    ];
+
+    // Style header
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true };
+    headerRow.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFE0E0E0" },
+    };
+
+    // Add data validation
+    ['H2', 'I2'].forEach(cell => {
+      worksheet.getCell(cell).dataValidation = {
+        type: "list",
+        allowBlank: false,
+        formulae: [
+          cell === 'H2'
+            ? '"Hotel,Restaurant,Transport,Event,Other"'
+            : '"Accommodation,Food,Catering,Logistics,Entertainment"'
+        ],
+      };
+    });
+
+    // Add sample data
+    worksheet.addRow({
+      companyName: "Grand Hotels Ltd",
+      email: "contact@grandhotels.com",
+      phone: "9876543210",
+      vendorType: "Hotel",
+      category: "Accommodation",
+      city: "Mumbai",
+      state: "Maharashtra"
+    });
+
+    // Add instructions sheet
+    const instructionSheet = workbook.addWorksheet("Instructions");
+    instructionSheet.columns = [
+      { header: "Field", key: "field", width: 20 },
+      { header: "Description", key: "description", width: 50 },
+      { header: "Required", key: "required", width: 10 },
+    ];
+
+    instructionSheet.getRow(1).font = { bold: true };
+    instructionSheet.getRow(1).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFE0E0E0" },
+    };
+
+    const instructions = [
+      { field: "Company Name", description: "Legal name of vendor company", required: "Yes" },
+      { field: "Display Name", description: "Name to show in system", required: "No" },
+      { field: "Contact Person", description: "Primary contact name", required: "No" },
+      { field: "Email", description: "Primary contact email", required: "Yes" },
+      { field: "Phone", description: "Primary contact phone", required: "Yes" },
+      { field: "GST Number", description: "15-character GSTIN", required: "No" },
+      { field: "PAN Number", description: "10-character PAN", required: "No" },
+      { field: "Vendor Type", description: "Type of vendor business", required: "Yes" },
+      { field: "Category", description: "Service category", required: "Yes" },
+      { field: "Address", description: "Street address", required: "No" },
+      { field: "City", description: "City location", required: "No" },
+      { field: "State", description: "State location", required: "No" },
+    ];
+
+    instructions.forEach(inst => instructionSheet.addRow(inst));
+
+    // Generate file
+    const filename = `vendor_import_template_${Date.now()}.xlsx`;
+    const filePath = path.join("public", "uploads", filename);
+
+    await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
+    await workbook.xlsx.writeFile(filePath);
+
+    res.json({
+      status: "success",
+      message: "Vendor template downloaded",
+      filename,
+    });
+  } catch (error) {
+    console.error("Vendor template generation failed:", error);
     next(error);
   }
 };

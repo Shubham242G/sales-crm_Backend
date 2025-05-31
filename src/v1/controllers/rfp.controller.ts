@@ -6,6 +6,10 @@ import { Enquiry } from "@models/enquiry.model";
 import ExcelJs from "exceljs";
 import XLSX from "xlsx";
 import path from 'path'
+import fs from "fs";
+import { ExportService } from "../../util/excelfile";
+
+
 
 import { Rfp } from "@models/rfp.model"
 import { QuotesFromVendors } from "@models/quotesFromVendors.model";
@@ -52,17 +56,114 @@ export const getAllRfp = async (req: any, res: any, next: any) => {
     try {
         let pipeline: PipelineStage[] = [];
         let matchObj: Record<string, any> = {};
-        const { query } = req.query;
-        if (req.query.query && req.query.query !== "" && typeof req.query.query === "string") {
-            const queryStr = req.query.query;
-            matchObj.$or = [
-                { rfpId: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-                { status: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
 
-            ];
+        const { query } = req.query;
+        // Handle basic search - search across multiple fields
+        if (
+          req.query.query &&
+          typeof req.query.query === "string" &&
+          req.query.query !== ""
+        ) {
+          matchObj.$or = [
+            {
+              status: {
+                $regex: new RegExp(
+                  `${typeof req?.query?.query === "string" ? req.query.query : ""}`,
+                  "i"
+                ),
+              },
+            },
+    
+       
+            {
+              displayName: new RegExp(
+                typeof req?.query?.query === "string" ? req.query.query : "",
+                "i"
+              ),
+            },
+            {
+              fullName: new RegExp(
+                typeof req?.query?.query === "string" ? req.query.query : "",
+                "i"
+              ),
+            },
+            {
+              deadlineOfProposal: new RegExp(
+                typeof req?.query?.query === "string" ? req.query.query : "",
+                "i"
+              ),
+            },
+           
+    
+            
+            //check for fullName
+          ];
+          
+          
         }
+    
+        // Handle advanced search (same as before)
+        if (req?.query?.advancedSearch && req.query.advancedSearch !== "") {
+          const searchParams =
+            typeof req.query.advancedSearch === "string"
+              ? req.query.advancedSearch.split(",")
+              : [];
+    
+          const advancedSearchConditions: any[] = [];
+    
+          searchParams.forEach((param: string) => {
+            const [field, condition, value] = param.split(":");
+    
+            if (field && condition && value) {
+              let fieldCondition: Record<string, any> = {};
+    
+              switch (condition) {
+                case "contains":
+                  fieldCondition[field] = { $regex: value, $options: "i" };
+                  break;
+                case "equals":
+                  fieldCondition[field] = value;
+                  break;
+                case "startsWith":
+                  fieldCondition[field] = { $regex: `^${value}`, $options: "i" };
+                  break;
+                case "endsWith":
+                  fieldCondition[field] = { $regex: `${value}$`, $options: "i" };
+                  break;
+                case "greaterThan":
+                  fieldCondition[field] = {
+                    $gt: isNaN(Number(value)) ? value : Number(value),
+                  };
+                  break;
+                case "lessThan":
+                  fieldCondition[field] = {
+                    $lt: isNaN(Number(value)) ? value : Number(value),
+                  };
+                  break;
+                default:
+                  fieldCondition[field] = { $regex: value, $options: "i" };
+              }
+    
+              advancedSearchConditions.push(fieldCondition);
+            }
+          });
+    
+          // If we have both basic and advanced search, we need to combine them
+          if (matchObj.$or) {
+            // If there are already $or conditions (from basic search)
+            // We need to use $and to combine with advanced search
+            matchObj = {
+              $and: [{ $or: matchObj.$or }, { $and: advancedSearchConditions }],
+            };
+          } else {
+            // If there's only advanced search, use $and directly
+            matchObj.$and = advancedSearchConditions;
+          }
+        }
+    
+        // Add the match stage to the pipeline
         pipeline.push({
-            $match: matchObj,
+          $match: matchObj,
         });
         let RfpArr = await paginateAggregate(Rfp, pipeline, req.query);
 
@@ -547,3 +648,220 @@ export const convertRfp = async (req: Request, res: Response, next: NextFunction
         next(error);
     }
 };
+
+export const downloadExcelRfps = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const isSelectedExport =
+      req.body.tickRows &&
+      Array.isArray(req.body.tickRows) &&
+      req.body.tickRows.length > 0;
+  
+    return ExportService.downloadFile(req, res, next, {
+      model: Rfp,
+      buildQuery: buildRfpQuery,
+      formatData: formatRfpData,
+      processFields: processRfpFields,
+      filename: isSelectedExport ? "selected_rfps" : "rfps",
+      worksheetName: isSelectedExport ? "Selected RFPs" : "All RFPs",
+      title: isSelectedExport ? "Selected RFPs" : "RFP List",
+    });
+  };
+
+  const buildRfpQuery = (req: Request) => {
+    const query: any = {};
+  
+    // Handle selected rows export
+    if (req.body.tickRows?.length > 0) {
+      query._id = { $in: req.body.tickRows };
+      return query;
+    }
+  
+    // Apply regular filters
+    if (req.body.status) {
+      query.status = req.body.status;
+    }
+  
+    if (req.body.serviceType?.length > 0) {
+      query.serviceType = { $in: req.body.serviceType };
+    }
+  
+    if (req.body.leadId) {
+      query.leadId = req.body.leadId;
+    }
+  
+    if (req.body.dateFrom && req.body.dateTo) {
+      query.createdAt = {
+        $gte: new Date(req.body.dateFrom),
+        $lte: new Date(req.body.dateTo),
+      };
+    }
+  
+    if (req.body.search) {
+      query.$or = [
+        { rfpId: { $regex: req.body.search, $options: "i" } },
+        { displayName: { $regex: req.body.search, $options: "i" } },
+        { fullName: { $regex: req.body.search, $options: "i" } },
+      ];
+    }
+  
+    return query;
+  };
+
+  const formatRfpData = (rfp: any) => {
+    // Format event dates range
+    const eventDates = rfp.eventDates?.map((event:any) => 
+      `${event.startDate.toLocaleDateString()} - ${event.endDate.toLocaleDateString()}`
+    ).join('\n') || '';
+  
+    // Format vendor list
+    const vendors = rfp.vendorList?.map((v:any) => v.label).join(', ') || '';
+  
+    return {
+      id: rfp._id,
+      rfpId: rfp.rfpId,
+      status: rfp.status,
+      displayName: rfp.displayName,
+      fullName: rfp.fullName,
+      serviceTypes: rfp.serviceType?.join(', ') || '',
+      eventDates,
+      eventDetails: rfp.eventDetails,
+      deadline: rfp.deadlineOfProposal ? new Date(rfp.deadlineOfProposal).toLocaleDateString() : '',
+      vendors,
+      additionalInstructions: rfp.additionalInstructions,
+      createdAt: rfp.createdAt?.toLocaleDateString() || '',
+      updatedAt: rfp.updatedAt?.toLocaleDateString() || '',
+    };
+  };
+
+  const processRfpFields = (fields: string[]) => {
+    const fieldMapping = {
+      id: { key: "id", header: "ID", width: 20 },
+      rfpId: { key: "rfpId", header: "RFP ID", width: 20 },
+      status: { key: "status", header: "Status", width: 15 },
+      displayName: { key: "displayName", header: "Display Name", width: 25 },
+      fullName: { key: "fullName", header: "Full Name", width: 25 },
+      serviceTypes: { key: "serviceTypes", header: "Service Types", width: 30 },
+      eventDates: { key: "eventDates", header: "Event Dates", width: 25 },
+      eventDetails: { key: "eventDetails", header: "Event Details", width: 40 },
+      deadline: { key: "deadline", header: "Proposal Deadline", width: 20 },
+      vendors: { key: "vendors", header: "Vendors", width: 40 },
+      additionalInstructions: { key: "additionalInstructions", header: "Instructions", width: 50 },
+      createdAt: { key: "createdAt", header: "Created At", width: 15 },
+      updatedAt: { key: "updatedAt", header: "Updated At", width: 15 },
+    };
+  
+    return fields.length === 0
+      ? Object.values(fieldMapping)
+      : fields
+          .map((field) => fieldMapping[field as keyof typeof fieldMapping])
+          .filter(Boolean);
+  };
+
+  export const downloadRfpTemplate = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const workbook = new ExcelJs.Workbook();
+      const worksheet = workbook.addWorksheet("RFP Template", {
+        pageSetup: { paperSize: 9, orientation: "landscape" },
+      });
+  
+      // Define columns
+      worksheet.columns = [
+        { header: "RFP ID*", key: "rfpId", width: 20 },
+        { header: "Display Name*", key: "displayName", width: 25 },
+        { header: "Full Name*", key: "fullName", width: 25 },
+        { header: "Service Types*", key: "serviceTypes", width: 30 },
+        { header: "Start Date*", key: "startDate", width: 15 },
+        { header: "End Date*", key: "endDate", width: 15 },
+        { header: "Event Details", key: "eventDetails", width: 40 },
+        { header: "Proposal Deadline*", key: "deadline", width: 20 },
+        { header: "Status", key: "status", width: 15 },
+      ];
+  
+      // Style header
+      const headerRow = worksheet.getRow(1);
+      headerRow.font = { bold: true };
+      headerRow.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFE0E0E0" },
+      };
+  
+      // Add data validation
+      ['D2', 'I2'].forEach(cell => {
+        worksheet.getCell(cell).dataValidation = {
+          type: "list",
+          allowBlank: cell === 'I2',
+          formulae: [
+            cell === 'D2' 
+              ? '"Venue,Catering,Entertainment,Logistics,AV Equipment"'
+              : '"Draft,Sent,In Review,Awarded,Closed"'
+          ],
+        };
+      });
+  
+      // Add sample data
+      const sampleDate = new Date();
+      worksheet.addRow({
+        rfpId: "RFP-" + Math.floor(1000 + Math.random() * 9000),
+        displayName: "Annual Conference",
+        fullName: "2023 Annual Corporate Conference",
+        serviceTypes: "Venue, Catering",
+        startDate: sampleDate.toISOString().split('T')[0],
+        endDate: new Date(sampleDate.setDate(sampleDate.getDate() + 2)).toISOString().split('T')[0],
+        deadline: new Date(sampleDate.setDate(sampleDate.getDate() + 7)).toISOString().split('T')[0],
+        status: "Draft"
+      });
+  
+      // Add instructions sheet
+      const instructionSheet = workbook.addWorksheet("Instructions");
+      instructionSheet.columns = [
+        { header: "Field", key: "field", width: 20 },
+        { header: "Description", key: "description", width: 50 },
+        { header: "Required", key: "required", width: 10 },
+      ];
+  
+      instructionSheet.getRow(1).font = { bold: true };
+      instructionSheet.getRow(1).fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFE0E0E0" },
+      };
+  
+      const instructions = [
+        { field: "RFP ID", description: "Unique RFP identifier", required: "Yes" },
+        { field: "Display Name", description: "Short name for reference", required: "Yes" },
+        { field: "Full Name", description: "Complete event name", required: "Yes" },
+        { field: "Service Types", description: "Comma-separated list of required services", required: "Yes" },
+        { field: "Start Date", description: "Event start date (YYYY-MM-DD)", required: "Yes" },
+        { field: "End Date", description: "Event end date (YYYY-MM-DD)", required: "Yes" },
+        { field: "Event Details", description: "Description of the event", required: "No" },
+        { field: "Proposal Deadline", description: "Deadline for vendor responses (YYYY-MM-DD)", required: "Yes" },
+        { field: "Status", description: "Current RFP status", required: "No" },
+      ];
+  
+      instructions.forEach(inst => instructionSheet.addRow(inst));
+  
+      // Generate file
+      const filename = `rfp_import_template_${Date.now()}.xlsx`;
+      const filePath = path.join("public", "uploads", filename);
+      
+      await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
+      await workbook.xlsx.writeFile(filePath);
+  
+      res.json({
+        status: "success",
+        message: "RFP template downloaded",
+        filename,
+      });
+    } catch (error) {
+      console.error("RFP template generation failed:", error);
+      next(error);
+    }
+  };

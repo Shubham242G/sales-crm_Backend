@@ -6,6 +6,10 @@ import { addLogs } from "@helpers/addLog";
 import mongoose, { PipelineStage } from "mongoose";
 import { DEPARTMENT, ROLES } from "@common/constant.common";
 import { paginateAggregate } from "@helpers/paginateAggregate";
+import { ExportService } from "../../util/excelfile";
+import ExcelJs from "exceljs";
+import path from "path";
+import fs from "fs";
 
 export const webLogin = async (
   req: Request,
@@ -138,7 +142,7 @@ export const addUser = async (
     // if (UserExistNameCheck) {
     //   throw new Error(`User with this name Already Exists`);
     // }
-    
+
     const UserExistEmailCheck = await User.findOne({
       email: new RegExp(`^${req.body.email}$`, "i"),
     }).exec();
@@ -294,11 +298,122 @@ export const getAllUsers = async (req: any, res: any, next: any) => {
   try {
     let pipeline: PipelineStage[] = [];
     let matchObj: Record<string, any> = {};
-    if (req.query.query && req.query.query != "") {
-        matchObj.name = new RegExp(req.query.query, "i");
+    const { query } = req.query;
+    // Handle basic search - search across multiple fields
+    if (
+      req.query.query &&
+      typeof req.query.query === "string" &&
+      req.query.query !== ""
+    ) {
+      matchObj.$or = [
+        {
+          name: {
+            $regex: new RegExp(
+              `${typeof req?.query?.query === "string" ? req.query.query : ""}`,
+              "i"
+            ),
+          },
+        },
+
+   
+        {
+          email: new RegExp(
+            typeof req?.query?.query === "string" ? req.query.query : "",
+            "i"
+          ),
+        },
+        {
+          phone: new RegExp(
+            typeof req?.query?.query === "string" ? req.query.query : "",
+            "i"
+          ),
+        },
+        {
+          role: new RegExp(
+            typeof req?.query?.query === "string" ? req.query.query : "",
+            "i"
+          ),
+        },
+        {
+          employeeCode: new RegExp(
+            typeof req?.query?.query === "string" ? req.query.query : "",
+            "i"
+          ),
+        },
+        {
+          displayName: new RegExp(
+            typeof req?.query?.query === "string" ? req.query.query : "",
+            "i"
+          ),
+        },
+
+        
+        //check for fullName
+      ];
     }
+
+    // Handle advanced search (same as before)
+    if (req?.query?.advancedSearch && req.query.advancedSearch !== "") {
+      const searchParams =
+        typeof req.query.advancedSearch === "string"
+          ? req.query.advancedSearch.split(",")
+          : [];
+
+      const advancedSearchConditions: any[] = [];
+
+      searchParams.forEach((param: string) => {
+        const [field, condition, value] = param.split(":");
+
+        if (field && condition && value) {
+          let fieldCondition: Record<string, any> = {};
+
+          switch (condition) {
+            case "contains":
+              fieldCondition[field] = { $regex: value, $options: "i" };
+              break;
+            case "equals":
+              fieldCondition[field] = value;
+              break;
+            case "startsWith":
+              fieldCondition[field] = { $regex: `^${value}`, $options: "i" };
+              break;
+            case "endsWith":
+              fieldCondition[field] = { $regex: `${value}$`, $options: "i" };
+              break;
+            case "greaterThan":
+              fieldCondition[field] = {
+                $gt: isNaN(Number(value)) ? value : Number(value),
+              };
+              break;
+            case "lessThan":
+              fieldCondition[field] = {
+                $lt: isNaN(Number(value)) ? value : Number(value),
+              };
+              break;
+            default:
+              fieldCondition[field] = { $regex: value, $options: "i" };
+          }
+
+          advancedSearchConditions.push(fieldCondition);
+        }
+      });
+
+      // If we have both basic and advanced search, we need to combine them
+      if (matchObj.$or) {
+        // If there are already $or conditions (from basic search)
+        // We need to use $and to combine with advanced search
+        matchObj = {
+          $and: [{ $or: matchObj.$or }, { $and: advancedSearchConditions }],
+        };
+      } else {
+        // If there's only advanced search, use $and directly
+        matchObj.$and = advancedSearchConditions;
+      }
+    }
+
+    // Add the match stage to the pipeline
     pipeline.push({
-        $match: matchObj,
+      $match: matchObj,
     });
     let userArr = await paginateAggregate(User, pipeline, req.query); 
 
@@ -691,6 +806,226 @@ export const getAllUserName = async (
       total: userNames.length,
     });
   } catch (error) {
+    next(error);
+  }
+};
+export const downloadExcelUsers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const isSelectedExport =
+    req.body.tickRows &&
+    Array.isArray(req.body.tickRows) &&
+    req.body.tickRows.length > 0;
+
+  return ExportService.downloadFile(req, res, next, {
+    model: User,
+    buildQuery: buildUserQuery,
+    formatData: formatUserData,
+    processFields: processUserFields,
+    filename: isSelectedExport ? "selected_users" : "users",
+    worksheetName: isSelectedExport ? "Selected Users" : "All Users",
+    title: isSelectedExport ? "Selected Users" : "User List",
+  });
+};
+
+const buildUserQuery = (req: Request) => {
+  const query: any = {};
+
+  // Handle selected rows export
+  if (req.body.tickRows?.length > 0) {
+    query._id = { $in: req.body.tickRows };
+    return query;
+  }
+
+  // Apply regular filters
+  if (req.body.role) {
+    query.role = req.body.role;
+  }
+
+  if (req.body.department) {
+    query.department = req.body.department;
+  }
+
+  if (req.body.approved !== undefined) {
+    query.approved = req.body.approved;
+  }
+
+  if (req.body.storeId) {
+    query.storeId = req.body.storeId;
+  }
+
+  if (req.body.dateFrom && req.body.dateTo) {
+    query.createdAt = {
+      $gte: new Date(req.body.dateFrom),
+      $lte: new Date(req.body.dateTo),
+    };
+  }
+
+  if (req.body.search) {
+    query.$or = [
+      { name: { $regex: req.body.search, $options: "i" } },
+      { email: { $regex: req.body.search, $options: "i" } },
+      { employeeCode: { $regex: req.body.search, $options: "i" } },
+      { displayName: { $regex: req.body.search, $options: "i" } },
+    ];
+  }
+
+  return query;
+};
+
+const formatUserData = (user: any) => {
+  return {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    role: user.role,
+    department: user.department,
+    approved: user.approved ? 'Yes' : 'No',
+    employeeCode: user.employeeCode,
+    displayName: user.displayName,
+    reportsTo: user.reportsToId?.toString() || '',
+    store: user.storeId?.toString() || '',
+    canManageUsers: user.accessObj?.manageUsers ? 'Yes' : 'No',
+    canManageCategory: user.accessObj?.manageCategory ? 'Yes' : 'No',
+    rawMaterialsCount: user.rawMaterialArr?.length || 0,
+    createdAt: user.createdAt.toLocaleDateString(),
+    updatedAt: user.updatedAt?.toLocaleDateString() || '',
+  };
+};
+
+const processUserFields = (fields: string[]) => {
+  const fieldMapping = {
+    id: { key: "id", header: "ID", width: 20 },
+    name: { key: "name", header: "Full Name", width: 25 },
+    email: { key: "email", header: "Email", width: 30 },
+    phone: { key: "phone", header: "Phone", width: 20 },
+    role: { key: "role", header: "Role", width: 15 },
+    department: { key: "department", header: "Department", width: 20 },
+    approved: { key: "approved", header: "Approved", width: 10 },
+    employeeCode: { key: "employeeCode", header: "Employee Code", width: 15 },
+    displayName: { key: "displayName", header: "Display Name", width: 20 },
+    reportsTo: { key: "reportsTo", header: "Reports To", width: 20 },
+    store: { key: "store", header: "Store ID", width: 20 },
+    canManageUsers: { key: "canManageUsers", header: "Can Manage Users", width: 15 },
+    canManageCategory: { key: "canManageCategory", header: "Can Manage Categories", width: 20 },
+    rawMaterialsCount: { key: "rawMaterialsCount", header: "Raw Materials Count", width: 15 },
+    createdAt: { key: "createdAt", header: "Created At", width: 15 },
+    updatedAt: { key: "updatedAt", header: "Updated At", width: 15 },
+  };
+
+  return fields.length === 0
+    ? Object.values(fieldMapping)
+    : fields
+        .map((field) => fieldMapping[field as keyof typeof fieldMapping])
+        .filter(Boolean);
+};
+
+export const downloadUserTemplate = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const workbook = new ExcelJs.Workbook();
+    const worksheet = workbook.addWorksheet("User Template", {
+      pageSetup: { paperSize: 9, orientation: "landscape" },
+    });
+
+    // Define columns
+    worksheet.columns = [
+      { header: "Name*", key: "name", width: 25 },
+      { header: "Email*", key: "email", width: 30 },
+      { header: "Phone", key: "phone", width: 20 },
+      { header: "Role*", key: "role", width: 15 },
+      { header: "Department*", key: "department", width: 20 },
+      { header: "Employee Code*", key: "employeeCode", width: 15 },
+      { header: "Display Name", key: "displayName", width: 20 },
+      { header: "Reports To ID", key: "reportsToId", width: 20 },
+      { header: "Store ID", key: "storeId", width: 20 },
+      { header: "Approved", key: "approved", width: 10 },
+    ];
+
+    // Style header
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true };
+    headerRow.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFE0E0E0" },
+    };
+
+    // Add data validation
+    ['D2', 'E2', 'J2'].forEach(cell => {
+      worksheet.getCell(cell).dataValidation = {
+        type: "list",
+        allowBlank: cell === 'J2',
+        formulae: [
+          cell === 'D2' 
+            ? '"admin,manager,supervisor,employee"'
+            : cell === 'E2'
+              ? '"operations,sales,warehouse,hr,finance"'
+              : '"true,false"'
+        ],
+      };
+    });
+
+    // Add sample data
+    worksheet.addRow({
+      name: "John Doe",
+      email: "john.doe@example.com",
+      role: "manager",
+      department: "operations",
+      employeeCode: "EMP1001",
+      approved: "true"
+    });
+
+    // Add instructions sheet
+    const instructionSheet = workbook.addWorksheet("Instructions");
+    instructionSheet.columns = [
+      { header: "Field", key: "field", width: 20 },
+      { header: "Description", key: "description", width: 50 },
+      { header: "Required", key: "required", width: 10 },
+    ];
+
+    instructionSheet.getRow(1).font = { bold: true };
+    instructionSheet.getRow(1).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFE0E0E0" },
+    };
+
+    const instructions = [
+      { field: "Name", description: "User's full name", required: "Yes" },
+      { field: "Email", description: "User's email address", required: "Yes" },
+      { field: "Phone", description: "User's phone number", required: "No" },
+      { field: "Role", description: "User's role in system", required: "Yes" },
+      { field: "Department", description: "User's department", required: "Yes" },
+      { field: "Employee Code", description: "Unique employee identifier", required: "Yes" },
+      { field: "Display Name", description: "Name to show in system", required: "No" },
+      { field: "Reports To ID", description: "Manager's user ID", required: "No" },
+      { field: "Store ID", description: "Assigned store ID", required: "No" },
+      { field: "Approved", description: "Whether user is approved", required: "No" },
+    ];
+
+    instructions.forEach(inst => instructionSheet.addRow(inst));
+
+    // Generate file
+    const filename = `user_import_template_${Date.now()}.xlsx`;
+    const filePath = path.join("public", "uploads", filename);
+    
+    await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
+    await workbook.xlsx.writeFile(filePath);
+
+    res.json({
+      status: "success",
+      message: "Template downloaded",
+      filename,
+    });
+  } catch (error) {
+    console.error("User template generation failed:", error);
     next(error);
   }
 };

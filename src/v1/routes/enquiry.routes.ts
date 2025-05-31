@@ -12,7 +12,9 @@ router.get('/getById/:id', getEnquiryById);
 router.patch('/updateById/:id', updateEnquiryById);
 router.delete('/deleteById/:id', deleteEnquiryById);
 router.post("/bulkUploadEnquiries", upload.single('file'), BulkUploadEnquiry);
-router.get('/getExel', downloadExcelEnquiry);
+router.post('/getExcel', downloadExcelEnquiry);
+
+
 // router.post('/convert/:id', convertRpf);
 router.post('/convert/:id', convertRfp);
 
