@@ -687,7 +687,7 @@ export const downloadTemplate = async (
   try {
     // Create a new workbook and worksheet
     const workbook = new ExcelJs.Workbook();
-    const worksheet = workbook.addWorksheet("Lead Template", {
+    const worksheet = workbook.addWorksheet("Contact Template", {
       pageSetup: { paperSize: 9, orientation: "landscape" },
     });
 

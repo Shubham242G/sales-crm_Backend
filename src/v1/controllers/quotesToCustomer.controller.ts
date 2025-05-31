@@ -3,8 +3,10 @@ import { paginateAggregate } from "@helpers/paginateAggregate";
 import mongoose, { PipelineStage } from "mongoose";
 import { deleteFileUsingUrl, storeFileAndReturnNameBase64 } from "@helpers/fileSystem";
 import { Enquiry } from "@models/enquiry.model";
+import {ExportService} from '../../util/excelfile';
 import ExcelJs from "exceljs";
 import XLSX from "xlsx";
+import fs from 'fs';
 import path from 'path'
 
 import { QuotesToCustomer } from "@models/quotesToCustomer.model"
@@ -148,6 +150,260 @@ export const deleteQuotesToCustomerById = async (req: Request, res: Response, ne
         next(error);
     }
 };
+
+export const downloadExcelQuotes = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    // Determine export type and adjust filename/title accordingly
+    const isSelectedExport =
+      req.body.tickRows &&
+      Array.isArray(req.body.tickRows) &&
+      req.body.tickRows.length > 0;
+  
+    return ExportService.downloadFile(req, res, next, {
+      model: QuotesToCustomer,
+      buildQuery: buildQuotesQuery,
+      formatData: formatQuotesData,
+      processFields: processQuotesFields,
+      filename: isSelectedExport ? "selected_quotes" : "quotes",
+      worksheetName: isSelectedExport ? "Selected Quotes" : "Quotes",
+      title: isSelectedExport ? "Selected Quotes" : "Quotes",
+    });
+  };
+  
+  const buildQuotesQuery = (req: Request) => {
+    const query: any = {};
+  
+    // Check if specific IDs are selected (tickRows)
+    if (
+      req.body.tickRows &&
+      Array.isArray(req.body.tickRows) &&
+      req.body.tickRows.length > 0
+    ) {
+      // If tickRows is provided, only export selected records
+      console.log("Exporting selected quotes:", req.body.tickRows.length);
+      query._id = { $in: req.body.tickRows };
+      return query; // Return early, ignore other filters when exporting selected rows
+    }
+  
+    // If no tickRows, apply regular filters
+    console.log("Exporting filtered quotes");
+  
+    if (req.body.status) {
+      query.status = req.body.status;
+    }
+  
+    if (req.body.dateFrom && req.body.dateTo) {
+      query.createdAt = {
+        $gte: new Date(req.body.dateFrom),
+        $lte: new Date(req.body.dateTo),
+      };
+    }
+  
+    // Add other existing filters here
+    if (req.body.customerName) {
+      query.customerName = { $regex: req.body.customerName, $options: "i" };
+    }
+  
+    if (req.body.serviceType && req.body.serviceType.length > 0) {
+      query.serviceType = { $in: req.body.serviceType };
+    }
+  
+    // Add amount range filter if needed
+    if (req.body.amountFrom || req.body.amountTo) {
+      query.amount = {};
+      if (req.body.amountFrom) query.amount.$gte = Number(req.body.amountFrom);
+      if (req.body.amountTo) query.amount.$lte = Number(req.body.amountTo);
+    }
+  
+    return query;
+  };
+  
+  const formatQuotesData = (quote: any) => {
+    return {
+      id: quote._id,
+      quotesId: quote.quotesId,
+      leadId: quote.leadId,
+      customerName: quote.customerName,
+      enquiryId: quote.enquiryId,
+      serviceType: quote.serviceType.join(', '), // Convert array to comma-separated string
+      amount: quote.amount,
+      status: quote.status,
+      displayName: quote.displayName,
+      markupDetails: quote.markupDetails.map((md:any) => `${md.label}: ${md.markupAmount}`).join('; '),
+      totalMarkupAmount: quote.totalMarkupAmount,
+      createdAt: quote.createdAt ? new Date(quote.createdAt).toLocaleDateString() : '',
+      updatedAt: quote.updatedAt ? new Date(quote.updatedAt).toLocaleDateString() : ''
+    };
+  };
+  
+  const processQuotesFields = (fields: string[]) => {
+    const fieldMapping = {
+      id: { key: "id", header: "ID", width: 15 },
+      quotesId: { key: "quotesId", header: "Quote ID", width: 20 },
+      customerName: { key: "customerName", header: "Customer Name", width: 30 },
+      serviceType: { key: "serviceType", header: "Service Type", width: 30 },
+      amount: { key: "amount", header: "Amount", width: 15 },
+      status: { key: "status", header: "Status", width: 15 },
+      displayName: { key: "displayName", header: "Display Name", width: 20 },
+      markupDetails: { key: "markupDetails", header: "Markup Details", width: 40 },
+      totalMarkupAmount: { key: "totalMarkupAmount", header: "Total Markup", width: 15 },
+      createdAt: { key: "createdAt", header: "Created At", width: 20 },
+      updatedAt: { key: "updatedAt", header: "Updated At", width: 20 }
+    };
+  
+    if (fields.length === 0) {
+      // Return all fields if none specified
+      return Object.values(fieldMapping);
+    }
+  
+    return fields
+      .map((field: string) => fieldMapping[field as keyof typeof fieldMapping])
+      .filter((item) => Boolean(item));
+  };
+  
+  export const downloadQuotesTemplate = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      // Create a new workbook and worksheet
+      const workbook = new ExcelJs.Workbook();
+      const worksheet = workbook.addWorksheet("Quotes Template", {
+        pageSetup: { paperSize: 9, orientation: "landscape" },
+      });
+  
+      // Define template columns
+      worksheet.columns = [
+        { header: "Quote ID*", key: "quotesId", width: 20 },
+        { header: "Customer Name*", key: "customerName", width: 30 },
+        { header: "Service Type*", key: "serviceType", width: 30 },
+        { header: "Amount*", key: "amount", width: 15 },
+        { header: "Status", key: "status", width: 15 },
+        { header: "Display Name", key: "displayName", width: 20 },
+        { header: "Markup Details (Label:Amount;)", key: "markupDetails", width: 40 },
+        { header: "Total Markup Amount", key: "totalMarkupAmount", width: 15 }
+      ];
+  
+      // Style the header row
+      const headerRow = worksheet.getRow(1);
+      headerRow.font = { bold: true };
+      headerRow.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFE0E0E0" },
+      };
+  
+      // Add example data
+      worksheet.addRow({
+        quotesId: "QT-12345",
+        customerName: "John Doe",
+        serviceType: "Service A, Service B",
+        amount: 1000,
+        status: "Draft",
+        displayName: "Quote for John",
+        markupDetails: "Setup:100; Maintenance:50",
+        totalMarkupAmount: "150"
+      });
+  
+      // Add dropdown validations for status
+      worksheet.getCell("E2").dataValidation = {
+        type: "list",
+        allowBlank: true,
+        formulae: ['"Draft,Sent,Accepted,Rejected,Expired"'],
+      };
+  
+      // Add instructions
+      const instructionSheet = workbook.addWorksheet("Instructions");
+      instructionSheet.columns = [
+        { header: "Field", key: "field", width: 20 },
+        { header: "Description", key: "description", width: 50 },
+        { header: "Required", key: "required", width: 10 },
+      ];
+  
+      // Style the header row
+      const instHeaderRow = instructionSheet.getRow(1);
+      instHeaderRow.font = { bold: true };
+      instHeaderRow.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFE0E0E0" },
+      };
+  
+      // Add instructions
+      const instructions = [
+        {
+          field: "Quote ID",
+          description: "Unique identifier for the quote",
+          required: "Yes",
+        },
+        {
+          field: "Customer Name",
+          description: "Name of the customer receiving the quote",
+          required: "Yes",
+        },
+        {
+          field: "Service Type",
+          description: "Comma-separated list of services included in the quote",
+          required: "Yes",
+        },
+        {
+          field: "Amount",
+          description: "Total amount for the quote (before markup)",
+          required: "Yes",
+        },
+        {
+          field: "Status",
+          description: "Current status of the quote (Draft, Sent, Accepted, Rejected, Expired)",
+          required: "No",
+        },
+        {
+          field: "Display Name",
+          description: "Display name for the quote",
+          required: "No",
+        },
+        {
+          field: "Markup Details",
+          description: "Semicolon-separated list of markup items (Label:Amount)",
+          required: "No",
+        },
+        {
+          field: "Total Markup Amount",
+          description: "Sum of all markup amounts",
+          required: "No",
+        }
+      ];
+  
+      instructions.forEach((instruction) => {
+        instructionSheet.addRow(instruction);
+      });
+  
+      // Generate file
+      const timestamp = new Date().getTime();
+      const filename = `quotes_import_template_${timestamp}.xlsx`;
+      const directory = path.join("public", "uploads");
+  
+      // Ensure directory exists
+      if (!fs.existsSync(directory)) {
+        fs.mkdirSync(directory, { recursive: true });
+      }
+  
+      const filePath = path.join(directory, filename);
+      await workbook.xlsx.writeFile(filePath);
+  
+      res.json({
+        status: "success",
+        message: "Quotes template downloaded successfully",
+        filename: filename,
+      });
+    } catch (error) {
+      console.error("Quotes template download error:", error);
+      next(error);
+    }
+  };
 
 
 // export const convertQuoteToConfirmedQuote = async (req: Request, res: Response) => {
