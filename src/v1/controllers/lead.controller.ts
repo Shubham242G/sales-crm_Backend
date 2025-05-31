@@ -98,6 +98,8 @@ export const getAllLead = async (
           ),
         },
 
+
+        console.log("check i t is wokring insklf ashifas ufio ashf in lead ---------------------------->")
         
         //check for fullName
       ];
