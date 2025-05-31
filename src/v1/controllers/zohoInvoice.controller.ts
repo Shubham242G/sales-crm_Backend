@@ -20,7 +20,53 @@ export const getAllInvoices = async (req: any, res: any, next: any) => {
     let matchObj: Record<string, any> = {};
 
     const { query } = req.query;
+    // Handle basic search - search across multiple fields
+    if (
+      req.query.query &&
+      typeof req.query.query === "string" &&
+      req.query.query !== ""
+    ) {
+      matchObj.$or = [
+        {
+          invoice_number: {
+            $regex: new RegExp(
+              `${typeof req?.query?.query === "string" ? req.query.query : ""}`,
+              "i"
+            ),
+          },
+        },
 
+   
+        {
+          status: new RegExp(
+            typeof req?.query?.query === "string" ? req.query.query : "",
+            "i"
+          ),
+        },
+        {
+          displayName: new RegExp(
+            typeof req?.query?.query === "string" ? req.query.query : "",
+            "i"
+          ),
+        },
+        {
+          customer_name: new RegExp(
+            typeof req?.query?.query === "string" ? req.query.query : "",
+            "i"
+          ),
+        },
+        
+        //check for fullName
+      ];
+      
+       pipeline.push({
+      $addFields: {
+        fullName: { $concat: ["$firstName", " ", "$lastName"] },
+      },
+    });
+    }
+
+    // Handle advanced search (same as before)
     if (req?.query?.advancedSearch && req.query.advancedSearch !== "") {
       const searchParams =
         typeof req.query.advancedSearch === "string"
@@ -78,6 +124,11 @@ export const getAllInvoices = async (req: any, res: any, next: any) => {
         matchObj.$and = advancedSearchConditions;
       }
     }
+
+    // Add the match stage to the pipeline
+    pipeline.push({
+      $match: matchObj,
+    });
 
     res.status(200).json({
       success: true,
