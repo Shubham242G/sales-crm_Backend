@@ -99,7 +99,7 @@ export const getAllLead = async (
         },
 
         
-        // Add any other fields you want to search by fullname 
+        //check for fullName
       ];
        pipeline.push({
       $addFields: {
