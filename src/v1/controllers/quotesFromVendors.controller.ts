@@ -382,6 +382,7 @@ export const convertQuotesFromVendorToQuotesToCustomer = async (
             serviceType: vendorQuote.serviceType,
             amount: vendorQuote.amount,
             markupDetails: updatedMarkupDetails,
+            leadId: vendorQuote.leadId,
             totalMarkupAmount: vendorQuote.totalMarkupAmount,
             status: "Quote sent to customer",
             enquiryId: vendorQuote.enquiryId,
