@@ -5,7 +5,8 @@ import {
     getAllCustomers,
     syncCustomers,
     getCustomerById,
-    addCustomer, deleteCustomerById, updateCustomerById
+    addCustomer, deleteCustomerById, updateCustomerById,
+    downloadExcelContact
 } from "../controllers/customers.controller";
 
 import { update } from "lodash";
@@ -22,7 +23,7 @@ router.get("/sync", syncCustomers);
 
 router.post("/addCustomer", addCustomer);
 
-
+router.post('/getExcel', downloadExcelContact);
 
 router.post("/updateCustomer/:id", updateCustomerById);
 

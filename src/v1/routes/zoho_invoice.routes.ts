@@ -3,19 +3,20 @@ import { Router } from "express";
 import {
     getAllInvoices,
     syncInvoices,
-    generateInvoicePDF,
+    downloadInvoiceTemplate,
     getInvoiceById
 } from "../controllers/zohoInvoice.controller";
+import { downloadExcelLead } from "../controllers/lead.controller";
 
 const router = express.Router();
 
 router.get("/invoices", getAllInvoices);
 
 
-router.get("/sync", syncInvoices);
+router.post("/sync", syncInvoices);
 
+router.post('/getExcel', downloadInvoiceTemplate);
 
-router.get('/invoices/pdf/:invoiceId', generateInvoicePDF);
 
 router.get('/invoicesById/:id', getInvoiceById);
 
