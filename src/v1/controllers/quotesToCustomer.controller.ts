@@ -12,7 +12,7 @@ import path from 'path'
 import { QuotesToCustomer } from "@models/quotesToCustomer.model"
 import { Rfp } from "@models/rfp.model";
 import { QuotesFromVendors } from "@models/quotesFromVendors.model";
-import { ConfirmedQuotes } from "@models/confirmedQuotesFromVendor.model";
+import { ConfirmedQuotesFromVendor } from "@models/confirmedQuotesFromVendor.model";
 
 
 export const addQuotesToCustomer = async (req: Request, res: Response, next: NextFunction) => {

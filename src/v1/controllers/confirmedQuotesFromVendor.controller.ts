@@ -1,13 +1,16 @@
 import { NextFunction, Request, Response } from "express";
 import { paginateAggregate } from "@helpers/paginateAggregate";
 import mongoose, { PipelineStage } from "mongoose";
-import { ConfirmedQuotes } from "@models/confirmedQuotesFromVendor.model";
+import { ConfirmedQuotesFromVendor } from "@models/confirmedQuotesFromVendor.model";
 import { storeFileAndReturnNameBase64 } from "@helpers/fileSystem";
 import { deleteFileUsingUrl } from "@helpers/fileSystem";
 import { SalesContact } from "@models/salesContact.model";
 import { QuotesFromVendors } from "@models/quotesFromVendors.model";
 
 import axios from "axios";
+import { QuotesToCustomer } from "@models/quotesToCustomer.model";
+import { Enquiry } from "@models/enquiry.model";
+import { Rfp } from "@models/rfp.model";
 axios
 
 export const addConfirmedQuotes = async (
@@ -90,7 +93,7 @@ export const addConfirmedQuotes = async (
         }
       }
     }
-    await new ConfirmedQuotes(req.body).save();
+    await new ConfirmedQuotesFromVendor(req.body).save();
     res.status(201).json({ message: "ConfirmedQuotes Created" });
   } catch (error) {
     next(error);
@@ -114,7 +117,7 @@ export const getAllConfirmedQuotes = async (req: any, res: any, next: any) => {
     pipeline.push({
       $match: matchObj,
     });
-    let confirmedQuotesArr = await paginateAggregate(ConfirmedQuotes, pipeline, req.query);
+    let confirmedQuotesArr = await paginateAggregate(ConfirmedQuotesFromVendor, pipeline, req.query);
 
     res.status(201).json({
       message: "found all Device",
@@ -140,7 +143,7 @@ export const getConfirmedQuotesById = async (
     pipeline.push({
       $match: matchObj,
     });
-    let existsCheck = await ConfirmedQuotes.aggregate(pipeline);
+    let existsCheck = await ConfirmedQuotesFromVendor.aggregate(pipeline);
     if (!existsCheck || existsCheck.length == 0) {
       throw new Error("ConfirmedQuotes does not exists");
     }
@@ -161,13 +164,13 @@ export const updateConfirmedQuotesById = async (
 ) => {
 
   try {
-    let existsCheck = await ConfirmedQuotes.findById(req.params.id).lean().exec();
+    let existsCheck = await ConfirmedQuotesFromVendor.findById(req.params.id).lean().exec();
     if (!existsCheck) {
       throw new Error("ConfirmedQuotes does not exists");
     }
 
 
-    let Obj = await ConfirmedQuotes.findByIdAndUpdate(req.params.id, req.body).exec();
+    let Obj = await ConfirmedQuotesFromVendor.findByIdAndUpdate(req.params.id, req.body).exec();
     res.status(201).json({ message: "ConfirmedQuotes Updated" });
   } catch (error) {
     next(error);
@@ -180,12 +183,12 @@ export const deleteConfirmedQuotesById = async (
   next: NextFunction
 ) => {
   try {
-    let existsCheck = await ConfirmedQuotes.findById(req.params.id).exec();
+    let existsCheck = await ConfirmedQuotesFromVendor.findById(req.params.id).exec();
     if (!existsCheck) {
       throw new Error("ConfirmedQuotes does not exists or already deleted");
     }
     // await deleteFileUsingUrl(`uploads/${existsCheck.otherDetails.documents}`);
-    await ConfirmedQuotes.findByIdAndDelete(req.params.id).exec();
+    await ConfirmedQuotesFromVendor.findByIdAndDelete(req.params.id).exec();
     res.status(201).json({ message: "ConfirmedQuotes Deleted" });
   } catch (error) {
     next(error);
@@ -303,4 +306,58 @@ export const getConfirmedQuotesByQuoteId
   } catch (error) {
     next(error);
   }
+};
+
+
+
+export const convertConfirmedQuotesFromVendorToQuotesToCustomer = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const confirmedQuotesId = req.params.id;
+
+        const confirmedQuotesFromVendor = await ConfirmedQuotesFromVendor.findById(confirmedQuotesId).lean().exec();
+        if (!confirmedQuotesFromVendor) {
+            throw new Error("Quote from Vendor does not exist");
+        }
+
+        // Check if a quote already exists for this RFP
+        const existingQuote = await QuotesToCustomer.findOne({ leadId: confirmedQuotesFromVendor.leadId }).lean().exec();
+        if (existingQuote) {
+            throw new Error("Quote from Vendors for this RFP already exists.");
+        }
+
+        const quotesToCustomerData = {
+            ...confirmedQuotesFromVendor,
+            status: "Quote sent to customer",
+        };
+
+        const newQuotesToCustomer = await new QuotesToCustomer(quotesToCustomerData).save();
+
+        const result = await Enquiry.findOneAndUpdate(
+            { leadId: confirmedQuotesFromVendor.leadId },
+            { $set: { status: "Quote sent to customer" } }
+        ).exec();
+
+       
+
+        await Rfp.updateOne(
+            { leadId: confirmedQuotesFromVendor.leadId },
+            { $set: { status: "Quote sent to customer", updatedAt: new Date() } }
+        );
+
+        await QuotesFromVendors.updateOne(
+            { leadId: confirmedQuotesFromVendor.leadId },
+            { $set: { status: "Quote sent to customer", updatedAt: new Date() } }
+        );
+
+        res.status(201).json({
+            message: "Quote from Vendor successfully converted to Quote to Customer",
+            data: newQuotesToCustomer,
+        });
+    } catch (error) {
+        next(error);
+    }
 };

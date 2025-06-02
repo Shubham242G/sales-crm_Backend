@@ -1,11 +1,11 @@
 import { model, Model, Schema, Types } from "mongoose";
 
-interface IConfirmedQuotes {
+interface IConfirmedQuotesFromVendor {
   banquetEventOrders: {
     eventCoordinatorName: string;
     eventDate: Date;
     hotelName: string;
-    leadId: Types.ObjectId;
+
     eventCoordinatorReportingTime: string;
     clientsCompanyName: string;
     onsiteClientName: string;
@@ -69,14 +69,15 @@ interface IConfirmedQuotes {
     checks: string;
     actions: string;
   }[];
+    leadId: Types.ObjectId,
 }
-const confirmedQuotesSchema = new Schema<IConfirmedQuotes>(
+const confirmedQuotesFromVendorSchema = new Schema<IConfirmedQuotesFromVendor>(
   {
     banquetEventOrders: {
         eventCoordinatorName: String,
         eventDate: Date,
         hotelName: String,
-        leadId: Types.ObjectId,
+      
         eventCoordinatorReportingTime: String,
         clientsCompanyName: String,
         onsiteClientName: String,
@@ -134,6 +135,7 @@ const confirmedQuotesSchema = new Schema<IConfirmedQuotes>(
         text2: String,
         actions: String,
       },
+        leadId: Types.ObjectId,
     
       checklist: [
         {
@@ -145,4 +147,4 @@ const confirmedQuotesSchema = new Schema<IConfirmedQuotes>(
   },
   { timestamps: true }
 );
-export const ConfirmedQuotes = model<IConfirmedQuotes>("confirmedQuotes", confirmedQuotesSchema);
+export const ConfirmedQuotesFromVendor = model<IConfirmedQuotesFromVendor>("confirmedQuotesFromVendor", confirmedQuotesFromVendorSchema);

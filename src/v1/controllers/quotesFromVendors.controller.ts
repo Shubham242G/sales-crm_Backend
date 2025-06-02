@@ -16,6 +16,7 @@ import {ExportService} from '../../util/excelfile';
 import { QuotesFromVendors } from "@models/quotesFromVendors.model"
 import { Rfp } from "@models/rfp.model";
 import { QuotesToCustomer } from "@models/quotesToCustomer.model";
+import { ConfirmedQuotesFromVendor } from "@models/confirmedQuotesFromVendor.model";
 
 
 export const addQuotesFromVendors = async (req: Request, res: Response, next: NextFunction) => {
@@ -377,21 +378,67 @@ export const convertQuotesFromVendorToQuotesToCustomer = async (
 
         const totalAmount = updatedMarkupDetails.reduce((acc, item) => acc + parseFloat(item.markupAmount), 0).toFixed(2);
         const  enquiry = await Enquiry.findOne({ _id: vendorQuote.enquiryId }).lean().exec();
-        const quotesToCustomerData = {
-            quotesId: vendorQuote.quotesId,
-            serviceType: vendorQuote.serviceType,
-            amount: vendorQuote.amount,
-            markupDetails: updatedMarkupDetails,
-            leadId: vendorQuote.leadId,
-            totalMarkupAmount: vendorQuote.totalMarkupAmount,
-            status: "Quote sent to customer",
-            enquiryId: vendorQuote.enquiryId,
-            customerName: `${enquiry?.firstName} ${enquiry?.lastName || ""}`.trim(),
-            displayName: vendorQuote.displayName
+        const quotesFromVendorData= {
+            banquetEventOrders: {
+                eventCoordinatorName: "",
+                eventDate: new Date(),
+                hotelName: "",
+                leadId: vendorQuote.leadId,
+                eventCoordinatorReportingTime: "",
+                clientsCompanyName: "",
+                onsiteClientName: "",
+                salesPersonName: "",
+                expectedPax: "",
+                quotesId: vendorQuote.quotesId,
+                rfpId: vendorQuote.rfpId,
+                displayName: vendorQuote.displayName,
+                vendorList: vendorQuote.vendorList,
+                serviceType: vendorQuote.serviceType,
+                amount: vendorQuote.amount.toString(),
+                receivedDate: vendorQuote.receivedDate,
+                status: "Quote sent to customer",
+                attachment: vendorQuote.attachment
+            },
+            banquetEventOrdersSecond: {
+                eventStartTime: "",
+                eventEndTime: "",
+                btr: "",
+                venueHandoveTime: "",
+                welcomeDrinkStartTime: "",
+                venueName: "",
+                setup: "",
+                avVendorName: "",
+                avVendorNo: "",
+                expNumberOfSeating: "",
+                hotelCoordinationName: "",
+                hotelCoordinationNo: "",
+                linerColor: "",
+                startersPlacement: "",
+                startersEventTime: ""
+            },
+            menuSelection: {
+                srNo: "",
+                veg: "",
+                nonVeg: "",
+                actions: ""
+            },
+            eventFlow: {
+                srNo: "",
+                text1: "",
+                text2: "",
+                actions: ""
+            },
+            audioVisual: {
+                srNo: "",
+                text1: "",
+                text2: "",
+                actions: ""
+            },
+            checklist: []
         };
 
         if (vendorQuote?.enquiryId) {
-            var newQuotesToCustomer = await new QuotesToCustomer(quotesToCustomerData).save();
+            var newQuotesToCustomer = await new ConfirmedQuotesFromVendor(quotesFromVendorData).save();
 
 
             const result = await Enquiry.findByIdAndUpdate(vendorQuote.enquiryId, { status: "Quote sent to customer" }).exec();
