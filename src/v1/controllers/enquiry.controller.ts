@@ -7,6 +7,8 @@ import XLSX from "xlsx";
 import path from "path";
 import { Enquiry } from "@models/enquiry.model";
 import { Rfp } from "@models/rfp.model";
+import { ExportService } from "../../util/excelfile";
+import fs from "fs";
 
 export const addEnquiry = async (
   req: Request,
@@ -708,6 +710,310 @@ export const convertRfp = async (
       data: { rfp, id }
     });
   } catch (error) {
+    next(error);
+  }
+};
+
+export const downloadExcelEnquiries = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const isSelectedExport =
+    req.body.tickRows &&
+    Array.isArray(req.body.tickRows) &&
+    req.body.tickRows.length > 0;
+
+  return ExportService.downloadFile(req, res, next, {
+    model: Enquiry,
+    buildQuery: buildEnquiryQuery,
+    formatData: formatEnquiryData,
+    processFields: processEnquiryFields,
+    filename: isSelectedExport ? "selected_enquiries" : "enquiries",
+    worksheetName: isSelectedExport ? "Selected Enquiries" : "All Enquiries",
+    title: isSelectedExport ? "Selected Enquiries" : "Enquiry List",
+  });
+};
+
+const buildEnquiryQuery = (req: Request) => {
+  const query: any = {};
+
+  // Handle selected rows export
+  if (req.body.tickRows?.length > 0) {
+    query._id = { $in: req.body.tickRows };
+    return query;
+  }
+
+  // Apply regular filters
+  if (req.body.status) {
+    query.status = req.body.status;
+  }
+
+  if (req.body.enquiryType) {
+    query.enquiryType = req.body.enquiryType;
+  }
+
+  if (req.body.city) {
+    query.city = req.body.city;
+  }
+
+  if (req.body.leadOwner) {
+    query.leadOwner = req.body.leadOwner;
+  }
+
+  if (req.body.dateFrom && req.body.dateTo) {
+    query.createdAt = {
+      $gte: new Date(req.body.dateFrom),
+      $lte: new Date(req.body.dateTo),
+    };
+  }
+
+  if (req.body.search) {
+    query.$or = [
+      { displayName: { $regex: req.body.search, $options: "i" } },
+      { companyName: { $regex: req.body.search, $options: "i" } },
+      { email: { $regex: req.body.search, $options: "i" } },
+      { phoneNumber: { $regex: req.body.search, $options: "i" } },
+    ];
+  }
+
+  return query;
+};
+
+const formatEnquiryData = (enquiry: any) => {
+  // Helper functions
+  const formatDate = (date: Date | string) => 
+    date ? new Date(date).toLocaleDateString() : '';
+    
+  const formatArray = (arr: any[]) => arr?.join(', ') || '';
+
+  // Format complex fields
+  const banquetDates = enquiry.banquet?.map((b:any) => 
+    `${formatDate(b.date)} (${b.time})`).join('\n') || '';
+    
+  const roomDetails = enquiry.room?.map((r:any) => 
+    `${r.date}: ${r.noOfRooms} ${r.roomCategory} rooms`).join('\n') || '';
+    
+  const eventDates = enquiry.eventSetup?.eventDates?.map((e:any) => 
+    `${formatDate(e.startDate)} to ${formatDate(e.endDate)}`).join('\n') || '';
+    
+  const cabDetails = enquiry.cab?.map((c:any) => 
+    `${formatDate(c.date)}: ${c.fromCity} → ${c.toCity}`).join('\n') || '';
+
+  return {
+    // Basic Info
+    id: enquiry._id,
+    displayName: enquiry.displayName,
+    contact: `${enquiry.firstName} ${enquiry.lastName}`,
+    company: enquiry.companyName,
+    email: enquiry.email,
+    phone: enquiry.phoneNumber,
+    leadOwner: enquiry.leadOwner,
+    
+    // Enquiry Details
+    enquiryType: enquiry.enquiryType,
+    status: enquiry.status,
+    level: enquiry.levelOfEnquiry,
+    hotelPref: enquiry.hotelPreferences || enquiry.othersPreference,
+    
+    // Dates
+    checkIn: formatDate(enquiry.checkIn),
+    checkOut: formatDate(enquiry.checkOut),
+    createdAt: formatDate(enquiry.createdAt),
+    
+    // Hotel Details
+    city: enquiry.city,
+    area: enquiry.area,
+    rooms: enquiry.noOfRooms,
+    categories: formatArray(enquiry.categoryOfHotel),
+    occupancy: formatArray(enquiry.occupancy),
+    
+    // Banquet
+    banquetDates,
+    banquetCount: enquiry.banquet?.length || 0,
+    
+    // Rooms
+    roomDetails,
+    
+    // Event
+    eventType: enquiry.eventSetup?.functionType,
+    eventDates,
+    
+    // Air Tickets
+    airTrip: enquiry.airTickets?.tripType,
+    airPassengers: enquiry.airTickets?.numberOfPassengers,
+    airRoute: enquiry.airTickets?.fromCity 
+      ? `${enquiry.airTickets.fromCity} → ${enquiry.airTickets.toCity}`
+      : '',
+      
+    // Cab
+    cabDetails,
+    cabCount: enquiry.cab?.length || 0,
+  };
+};
+
+const processEnquiryFields = (fields: string[]) => {
+  const fieldMapping = {
+    // Basic Info
+    id: { key: "id", header: "ID", width: 20 },
+    displayName: { key: "displayName", header: "Enquiry Name", width: 25 },
+    contact: { key: "contact", header: "Contact Person", width: 25 },
+    company: { key: "company", header: "Company", width: 25 },
+    email: { key: "email", header: "Email", width: 30 },
+    phone: { key: "phone", header: "Phone", width: 20 },
+    leadOwner: { key: "leadOwner", header: "Lead Owner", width: 20 },
+    
+    // Enquiry Details
+    enquiryType: { key: "enquiryType", header: "Type", width: 15 },
+    status: { key: "status", header: "Status", width: 15 },
+    level: { key: "level", header: "Priority", width: 15 },
+    hotelPref: { key: "hotelPref", header: "Preferences", width: 30 },
+    
+    // Dates
+    checkIn: { key: "checkIn", header: "Check-In", width: 15 },
+    checkOut: { key: "checkOut", header: "Check-Out", width: 15 },
+    createdAt: { key: "createdAt", header: "Created", width: 15 },
+    
+    // Hotel Details
+    city: { key: "city", header: "City", width: 15 },
+    area: { key: "area", header: "Area", width: 15 },
+    rooms: { key: "rooms", header: "Total Rooms", width: 15 },
+    categories: { key: "categories", header: "Categories", width: 25 },
+    occupancy: { key: "occupancy", header: "Occupancy", width: 20 },
+    
+    // Banquet
+    banquetDates: { key: "banquetDates", header: "Banquet Dates", width: 30 },
+    banquetCount: { key: "banquetCount", header: "# Banquets", width: 15 },
+    
+    // Rooms
+    roomDetails: { key: "roomDetails", header: "Room Details", width: 40 },
+    
+    // Event
+    eventType: { key: "eventType", header: "Event Type", width: 20 },
+    eventDates: { key: "eventDates", header: "Event Dates", width: 30 },
+    
+    // Air Tickets
+    airTrip: { key: "airTrip", header: "Flight Type", width: 15 },
+    airPassengers: { key: "airPassengers", header: "Passengers", width: 15 },
+    airRoute: { key: "airRoute", header: "Route", width: 25 },
+    
+    // Cab
+    cabDetails: { key: "cabDetails", header: "Cab Details", width: 40 },
+    cabCount: { key: "cabCount", header: "# Cab Bookings", width: 15 },
+  };
+
+  return fields.length === 0
+    ? Object.values(fieldMapping)
+    : fields
+        .map((field) => fieldMapping[field as keyof typeof fieldMapping])
+        .filter(Boolean);
+};
+
+export const downloadEnquiryTemplate = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const workbook = new ExcelJs.Workbook();
+    const worksheet = workbook.addWorksheet("Enquiry Template", {
+      pageSetup: { paperSize: 9, orientation: "landscape" },
+    });
+
+    // Define columns
+    worksheet.columns = [
+      { header: "Enquiry Type*", key: "enquiryType", width: 20 },
+      { header: "First Name*", key: "firstName", width: 20 },
+      { header: "Last Name*", key: "lastName", width: 20 },
+      { header: "Company Name", key: "companyName", width: 25 },
+      { header: "Email*", key: "email", width: 30 },
+      { header: "Phone*", key: "phoneNumber", width: 20 },
+      { header: "City", key: "city", width: 15 },
+      { header: "Check-In Date", key: "checkIn", width: 15 },
+      { header: "Check-Out Date", key: "checkOut", width: 15 },
+      { header: "Status", key: "status", width: 15 },
+    ];
+
+    // Style header
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true };
+    headerRow.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFE0E0E0" },
+    };
+
+    // Add data validation
+    ['A2', 'J2'].forEach(cell => {
+      worksheet.getCell(cell).dataValidation = {
+        type: "list",
+        allowBlank: cell === 'J2',
+        formulae: [
+          cell === 'A2' 
+            ? '"Hotel,Event,Air Ticket,Cab,Banquet"'
+            : '"New,In Progress,Confirmed,Cancelled"'
+        ],
+      };
+    });
+
+    // Add sample data
+    const sampleDate = new Date();
+    worksheet.addRow({
+      enquiryType: "Hotel",
+      firstName: "John",
+      lastName: "Doe",
+      email: "john.doe@example.com",
+      phoneNumber: "9876543210",
+      city: "Mumbai",
+      checkIn: sampleDate.toISOString().split('T')[0],
+      checkOut: new Date(sampleDate.setDate(sampleDate.getDate() + 3)).toISOString().split('T')[0],
+      status: "New"
+    });
+
+    // Add instructions sheet
+    const instructionSheet = workbook.addWorksheet("Instructions");
+    instructionSheet.columns = [
+      { header: "Field", key: "field", width: 20 },
+      { header: "Description", key: "description", width: 50 },
+      { header: "Required", key: "required", width: 10 },
+    ];
+
+    instructionSheet.getRow(1).font = { bold: true };
+    instructionSheet.getRow(1).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFE0E0E0" },
+    };
+
+    const instructions = [
+      { field: "Enquiry Type", description: "Type of enquiry", required: "Yes" },
+      { field: "First Name", description: "Contact person's first name", required: "Yes" },
+      { field: "Last Name", description: "Contact person's last name", required: "Yes" },
+      { field: "Company Name", description: "Contact's company", required: "No" },
+      { field: "Email", description: "Contact's email", required: "Yes" },
+      { field: "Phone", description: "Contact's phone", required: "Yes" },
+      { field: "City", description: "Primary location", required: "No" },
+      { field: "Check-In Date", description: "Format: YYYY-MM-DD", required: "No" },
+      { field: "Check-Out Date", description: "Format: YYYY-MM-DD", required: "No" },
+      { field: "Status", description: "Current enquiry status", required: "No" },
+    ];
+
+    instructions.forEach(inst => instructionSheet.addRow(inst));
+
+    // Generate file
+    const filename = `enquiry_import_template_${Date.now()}.xlsx`;
+    const filePath = path.join("public", "uploads", filename);
+    
+    await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
+    await workbook.xlsx.writeFile(filePath);
+
+    res.json({
+      status: "success",
+      message: "Enquiry template downloaded",
+      filename,
+    });
+  } catch (error) {
+    console.error("Enquiry template generation failed:", error);
     next(error);
   }
 };

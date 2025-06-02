@@ -45,12 +45,119 @@ export const getAllQuotesToCustomer = async (req: any, res: any, next: any) => {
     try {
         let pipeline: PipelineStage[] = [];
         let matchObj: Record<string, any> = {};
-        if (req.query.query && req.query.query != "") {
-            matchObj.name = new RegExp(req.query.query, "i");
-        }
-        pipeline.push({
-            $match: matchObj,
+
+        const { query } = req.query;
+        // Handle basic search - search across multiple fields
+        if (
+          req.query.query &&
+          typeof req.query.query === "string" &&
+          req.query.query !== ""
+        ) {
+          matchObj.$or = [
+            {
+              displayName: {
+                $regex: new RegExp(
+                  `${typeof req?.query?.query === "string" ? req.query.query : ""}`,
+                  "i"
+                ),
+              },
+            },
+    
+       
+            {
+              customerName: new RegExp(
+                typeof req?.query?.query === "string" ? req.query.query : "",
+                "i"
+              ),
+            },
+            {
+              quotesId: new RegExp(
+                typeof req?.query?.query === "string" ? req.query.query : "",
+                "i"
+              ),
+            },
+            {
+              status: new RegExp(
+                typeof req?.query?.query === "string" ? req.query.query : "",
+                "i"
+              ),
+            },
+    
+            
+            //check for fullName
+          ];
+          
+           pipeline.push({
+          $addFields: {
+            fullName: { $concat: ["$firstName", " ", "$lastName"] },
+          },
         });
+        }
+    
+        // Handle advanced search (same as before)
+        if (req?.query?.advancedSearch && req.query.advancedSearch !== "") {
+          const searchParams =
+            typeof req.query.advancedSearch === "string"
+              ? req.query.advancedSearch.split(",")
+              : [];
+    
+          const advancedSearchConditions: any[] = [];
+    
+          searchParams.forEach((param: string) => {
+            const [field, condition, value] = param.split(":");
+    
+            if (field && condition && value) {
+              let fieldCondition: Record<string, any> = {};
+    
+              switch (condition) {
+                case "contains":
+                  fieldCondition[field] = { $regex: value, $options: "i" };
+                  break;
+                case "equals":
+                  fieldCondition[field] = value;
+                  break;
+                case "startsWith":
+                  fieldCondition[field] = { $regex: `^${value}`, $options: "i" };
+                  break;
+                case "endsWith":
+                  fieldCondition[field] = { $regex: `${value}$`, $options: "i" };
+                  break;
+                case "greaterThan":
+                  fieldCondition[field] = {
+                    $gt: isNaN(Number(value)) ? value : Number(value),
+                  };
+                  break;
+                case "lessThan":
+                  fieldCondition[field] = {
+                    $lt: isNaN(Number(value)) ? value : Number(value),
+                  };
+                  break;
+                default:
+                  fieldCondition[field] = { $regex: value, $options: "i" };
+              }
+    
+              advancedSearchConditions.push(fieldCondition);
+            }
+          });
+    
+          // If we have both basic and advanced search, we need to combine them
+          if (matchObj.$or) {
+            // If there are already $or conditions (from basic search)
+            // We need to use $and to combine with advanced search
+            matchObj = {
+              $and: [{ $or: matchObj.$or }, { $and: advancedSearchConditions }],
+            };
+          } else {
+            // If there's only advanced search, use $and directly
+            matchObj.$and = advancedSearchConditions;
+          }
+        }
+    
+        // Add the match stage to the pipeline
+        pipeline.push({
+          $match: matchObj,
+        });
+    
         let QuotesToCustomerArr = await paginateAggregate(QuotesToCustomer, pipeline, req.query);
 
         res.status(201).json({ message: "found all Device", data: QuotesToCustomerArr.data, total: QuotesToCustomerArr.total });

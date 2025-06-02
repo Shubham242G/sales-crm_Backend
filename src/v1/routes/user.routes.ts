@@ -12,6 +12,7 @@ import { webLogin,
     uploadDocuments,
     UpdatePasswordByAuthorizeId,
     getAllUserName,
+    downloadUserTemplate,
  } from '@controllersv1/user.controller';
 import { authorizeJwt } from '@middlewares/auth.middleware';
 import { upload } from '@middlewares/multer.middleware';
@@ -56,6 +57,8 @@ router.get("/getAllUserName", getAllUserName);
 router.patch("/updateById/:id", authorizeJwt, updateUserById);
 
 router.patch("/changePassword", authorizeJwt, UpdatePasswordByAuthorizeId);
+
+router.post('/getExcel',downloadUserTemplate);
 
 // Exporting the router instance to make it available for use in other modules
 export default router;
