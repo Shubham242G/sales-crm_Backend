@@ -52,134 +52,94 @@ export const addRfp = async (req: Request, res: Response, next: NextFunction) =>
     }
 };
 
+
+
 export const getAllRfp = async (req: any, res: any, next: any) => {
     try {
         let pipeline: PipelineStage[] = [];
         let matchObj: Record<string, any> = {};
 
-        const { query } = req.query;
-        // Handle basic search - search across multiple fields
-        if (
-          req.query.query &&
-          typeof req.query.query === "string" &&
-          req.query.query !== ""
-        ) {
-          matchObj.$or = [
-            {
-              status: {
-                $regex: new RegExp(
-                  `${typeof req?.query?.query === "string" ? req.query.query : ""}`,
-                  "i"
-                ),
-              },
-            },
-    
-       
-            {
-              displayName: new RegExp(
-                typeof req?.query?.query === "string" ? req.query.query : "",
-                "i"
-              ),
-            },
-            {
-              fullName: new RegExp(
-                typeof req?.query?.query === "string" ? req.query.query : "",
-                "i"
-              ),
-            },
-            {
-              deadlineOfProposal: new RegExp(
-                typeof req?.query?.query === "string" ? req.query.query : "",
-                "i"
-              ),
-            },
-           
-    
-            
-            //check for fullName
-          ];
-          
-          
+        // Basic search (keyword across fields)
+        if (req.query.query && typeof req.query.query === "string" && req.query.query !== "") {
+            matchObj.$or = [
+                { status: { $regex: req.query.query, $options: "i" } },
+                { displayName: { $regex: req.query.query, $options: "i" } },
+                { fullName: { $regex: req.query.query, $options: "i" } },
+                { deadlineOfProposal: { $regex: req.query.query, $options: "i" } },
+                { rfpId: { $regex: req.query.query, $options: "i" } }
+            ];
         }
-    
-        // Handle advanced search (same as before)
+
+        // Advanced search (field:condition:value)
         if (req?.query?.advancedSearch && req.query.advancedSearch !== "") {
-          const searchParams =
-            typeof req.query.advancedSearch === "string"
-              ? req.query.advancedSearch.split(",")
-              : [];
-    
-          const advancedSearchConditions: any[] = [];
-    
-          searchParams.forEach((param: string) => {
-            const [field, condition, value] = param.split(":");
-    
-            if (field && condition && value) {
-              let fieldCondition: Record<string, any> = {};
-    
-              switch (condition) {
-                case "contains":
-                  fieldCondition[field] = { $regex: value, $options: "i" };
-                  break;
-                case "equals":
-                  fieldCondition[field] = value;
-                  break;
-                case "startsWith":
-                  fieldCondition[field] = { $regex: `^${value}`, $options: "i" };
-                  break;
-                case "endsWith":
-                  fieldCondition[field] = { $regex: `${value}$`, $options: "i" };
-                  break;
-                case "greaterThan":
-                  fieldCondition[field] = {
-                    $gt: isNaN(Number(value)) ? value : Number(value),
-                  };
-                  break;
-                case "lessThan":
-                  fieldCondition[field] = {
-                    $lt: isNaN(Number(value)) ? value : Number(value),
-                  };
-                  break;
-                default:
-                  fieldCondition[field] = { $regex: value, $options: "i" };
-              }
-    
-              advancedSearchConditions.push(fieldCondition);
+            const searchParams = typeof req.query.advancedSearch === "string"
+                ? req.query.advancedSearch.split(",")
+                : [];
+
+            const advancedSearchConditions: Record<string, any>[] = [];
+
+            searchParams.forEach((param: string) => {
+                const [field, condition, value] = param.split(":");
+                if (!field || !condition || !value) return;
+
+                let parsedCondition: Record<string, any> = {};
+
+                switch (condition) {
+                    case "contains":
+                        parsedCondition[field] = { $regex: value, $options: "i" };
+                        break;
+                    case "equals":
+                        parsedCondition[field] = value;
+                        break;
+                    case "startsWith":
+                        parsedCondition[field] = { $regex: `^${value}`, $options: "i" };
+                        break;
+                    case "endsWith":
+                        parsedCondition[field] = { $regex: `${value}$`, $options: "i" };
+                        break;
+                    case "greaterThan":
+                        parsedCondition[field] = { $gt: isNaN(Number(value)) ? value : Number(value) };
+                        break;
+                    case "lessThan":
+                        parsedCondition[field] = { $lt: isNaN(Number(value)) ? value : Number(value) };
+                        break;
+                    default:
+                        parsedCondition[field] = { $regex: value, $options: "i" };
+                }
+
+                advancedSearchConditions.push(parsedCondition);
+            });
+
+            // Combine basic search and advanced search
+            if (matchObj.$or) {
+                matchObj = {
+                    $and: [
+                        { $or: matchObj.$or },
+                        ...advancedSearchConditions
+                    ]
+                };
+            } else if (advancedSearchConditions.length > 0) {
+                matchObj = { $and: advancedSearchConditions };
             }
-          });
-    
-          // If we have both basic and advanced search, we need to combine them
-          if (matchObj.$or) {
-            // If there are already $or conditions (from basic search)
-            // We need to use $and to combine with advanced search
-            matchObj = {
-              $and: [{ $or: matchObj.$or }, { $and: advancedSearchConditions }],
-            };
-          } else {
-            // If there's only advanced search, use $and directly
-            matchObj.$and = advancedSearchConditions;
-          }
         }
-    
-        // Add the match stage to the pipeline
-        pipeline.push({
-          $match: matchObj,
+
+        if (Object.keys(matchObj).length > 0) {
+            pipeline.push({ $match: matchObj });
+        }
+
+        const RfpArr = await paginateAggregate(Rfp, pipeline, req.query);
+
+        res.status(201).json({
+            message: "Found all RFPs",
+            data: RfpArr.data,
+            total: RfpArr.total
         });
-        let RfpArr = await paginateAggregate(Rfp, pipeline, req.query);
 
-        if (req.query.query) {
-
-            const $or: Array<Record<string, any>> = [];
-            $or.push({ rfpId: new RegExp(req.query.query, "i") });
-            matchObj.$or = $or;
-        }
-
-        res.status(201).json({ message: "found all Device", data: RfpArr.data, total: RfpArr.total });
-        console.log("RfpArr", RfpArr)
     } catch (error) {
         next(error);
     }
 };
+
 
 export const getRfpById = async (req: Request, res: Response, next: NextFunction) => {
     try {

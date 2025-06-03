@@ -55,120 +55,177 @@ export const getAllQuotesFromVendors = async (req: any, res: any, next: any) => 
         let pipeline: PipelineStage[] = [];
         let matchObj: Record<string, any> = {};
 
-    const { query } = req.query;
-    // Handle basic search - search across multiple fields
-    if (
-      req.query.query &&
-      typeof req.query.query === "string" &&
-      req.query.query !== ""
-    ) {
-      matchObj.$or = [
-        {
-          rfpId: {
-            $regex: new RegExp(
-              `${typeof req?.query?.query === "string" ? req.query.query : ""}`,
-              "i"
-            ),
-          },
-        },
-
-   
-        {
-          receivedDate: new RegExp(
-            typeof req?.query?.query === "string" ? req.query.query : "",
-            "i"
-          ),
-        },
-        {
-          displayName: new RegExp(
-            typeof req?.query?.query === "string" ? req.query.query : "",
-            "i"
-          ),
-        },
-        {
-          label: new RegExp(
-            typeof req?.query?.query === "string" ? req.query.query : "",
-            "i"
-          ),
-        },
-
+        // Handle basic search - search across multiple fields
+        if (req.query?.query && typeof req.query.query === "string" && req.query.query.trim() !== "") {
+            const searchTerm = req.query.query.trim();
+            const searchRegex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), "i");
+            
+            matchObj.$or = [
+                { rfpId: searchRegex },
+                { quotesId: searchRegex },
+                { displayName: searchRegex },
+                { 'vendorList.label': searchRegex },
+                { 'markupDetails.label': searchRegex },
+                { status: searchRegex }
+            ];
         
-        //check for fullName
-      ];
-      
-       
-    }
-
-    // Handle advanced search (same as before)
-    if (req?.query?.advancedSearch && req.query.advancedSearch !== "") {
-      const searchParams =
-        typeof req.query.advancedSearch === "string"
-          ? req.query.advancedSearch.split(",")
-          : [];
-
-      const advancedSearchConditions: any[] = [];
-
-      searchParams.forEach((param: string) => {
-        const [field, condition, value] = param.split(":");
-
-        if (field && condition && value) {
-          let fieldCondition: Record<string, any> = {};
-
-          switch (condition) {
-            case "contains":
-              fieldCondition[field] = { $regex: value, $options: "i" };
-              break;
-            case "equals":
-              fieldCondition[field] = value;
-              break;
-            case "startsWith":
-              fieldCondition[field] = { $regex: `^${value}`, $options: "i" };
-              break;
-            case "endsWith":
-              fieldCondition[field] = { $regex: `${value}$`, $options: "i" };
-              break;
-            case "greaterThan":
-              fieldCondition[field] = {
-                $gt: isNaN(Number(value)) ? value : Number(value),
-              };
-              break;
-            case "lessThan":
-              fieldCondition[field] = {
-                $lt: isNaN(Number(value)) ? value : Number(value),
-              };
-              break;
-            default:
-              fieldCondition[field] = { $regex: value, $options: "i" };
-          }
-
-          advancedSearchConditions.push(fieldCondition);
+            if (isValidDate(searchTerm)) {
+                const date = new Date(searchTerm);
+                const startOfDay = new Date(date.setHours(0, 0, 0, 0));
+                const endOfDay = new Date(date.setHours(23, 59, 59, 999));
+                matchObj.$or.push({ 
+                    receivedDate: { 
+                        $gte: startOfDay, 
+                        $lte: endOfDay 
+                    } 
+                });
+                matchObj.$or.push({ 
+                    'eventDates.startDate': { 
+                        $gte: startOfDay, 
+                        $lte: endOfDay 
+                    } 
+                });
+            }
+        
+            // Numeric search for amount
+            if (!isNaN(Number(searchTerm))) {
+                matchObj.$or.push({ amount: searchTerm });
+            }
         }
-      });
-
-      // If we have both basic and advanced search, we need to combine them
-      if (matchObj.$or) {
-        // If there are already $or conditions (from basic search)
-        // We need to use $and to combine with advanced search
-        matchObj = {
-          $and: [{ $or: matchObj.$or }, { $and: advancedSearchConditions }],
-        };
-      } else {
-        // If there's only advanced search, use $and directly
-        matchObj.$and = advancedSearchConditions;
-      }
-    }
-
-    // Add the match stage to the pipeline
-    pipeline.push({
-      $match: matchObj,
-    });
+        
+        // Handle advanced search
+        if (req.query?.advancedSearch && typeof req.query.advancedSearch === "string" && req.query.advancedSearch.trim() !== "") {
+            const searchParams = req.query.advancedSearch.split(",");
+            const advancedSearchConditions: any[] = [];
+        
+            for (const param of searchParams) {
+                const trimmedParam = param.trim();
+                if (!trimmedParam) continue;
+                
+                const [field, condition, value] = trimmedParam.split(":").map((p: any) => p.trim());
+                if (!field || !condition || !value) continue;
+        
+                let fieldCondition: Record<string, any> = {};
+                const lowerCondition = condition.toLowerCase();
+        
+                // Handle nested fields
+                if (field.startsWith('vendorList.')) {
+                    const nestedField = field.replace('vendorList.', '');
+                    fieldCondition[`vendorList.${nestedField}`] = buildFieldCondition(nestedField, lowerCondition, value);
+                } 
+                else if (field.startsWith('markupDetails.')) {
+                    const nestedField = field.replace('markupDetails.', '');
+                    fieldCondition[`markupDetails.${nestedField}`] = buildFieldCondition(nestedField, lowerCondition, value);
+                }
+                else if (field.startsWith('eventDates.')) {
+                    const nestedField = field.replace('eventDates.', '');
+                    fieldCondition[`eventDates.${nestedField}`] = buildFieldCondition(nestedField, lowerCondition, value);
+                }
+                else {
+                    fieldCondition[field] = buildFieldCondition(field, lowerCondition, value);
+                }
+        
+                if (Object.keys(fieldCondition).length > 0) {
+                    advancedSearchConditions.push(fieldCondition);
+                }
+            }
+        
+            // Combine conditions
+            if (advancedSearchConditions.length > 0) {
+                if (matchObj.$or) {
+                    matchObj = {
+                        $and: [
+                            { $or: matchObj.$or },
+                            ...advancedSearchConditions
+                        ]
+                    };
+                } else {
+                    matchObj = advancedSearchConditions.length === 1 
+                        ? advancedSearchConditions[0] 
+                        : { $and: advancedSearchConditions };
+                }
+            }
+        }
+        
+        // Helper function to build field conditions
+        function buildFieldCondition(field: string, condition: string, value: string): any {
+            // Handle date fields
+            const dateFields = ['receivedDate', 'eventDates.startDate'];
+            if (dateFields.includes(field)) {
+                const dateValue = new Date(value);
+                if (isNaN(dateValue.getTime())) return null;
+        
+                switch (condition) {
+                    case 'equals':
+                        const start = new Date(dateValue.setHours(0, 0, 0, 0));
+                        const end = new Date(dateValue.setHours(23, 59, 59, 999));
+                        return { $gte: start, $lte: end };
+                    case 'greaterthan':
+                        return { $gt: dateValue };
+                    case 'lessthan':
+                        return { $lt: dateValue };
+                    default:
+                        return null;
+                }
+            }
+        
+            // Handle numeric fields
+            const numericFields = ['amount'];
+            if (numericFields.includes(field) && !isNaN(Number(value))) {
+                const numValue = Number(value);
+                switch (condition) {
+                    case 'equals':
+                        return numValue;
+                    case 'greaterthan':
+                        return { $gt: numValue };
+                    case 'lessthan':
+                        return { $lt: numValue };
+                    default:
+                        return { $regex: value, $options: 'i' };
+                }
+            }
+        
+            // Handle text fields
+            switch (condition) {
+                case 'contains':
+                    return { $regex: value, $options: 'i' };
+                case 'equals':
+                    return value;
+                case 'startswith':
+                    return { $regex: `^${value}`, $options: 'i' };
+                case 'endswith':
+                    return { $regex: `${value}$`, $options: 'i' };
+                case 'in':
+                    return { $in: value.split('|').map(v => v.trim()) };
+                case 'notin':
+                    return { $nin: value.split('|').map(v => v.trim()) };
+                default:
+                    return { $regex: value, $options: 'i' };
+            }
+        }
+        
+        // Add the match stage to the pipeline
+        if (Object.keys(matchObj).length > 0) {
+            pipeline.push({ $match: matchObj });
+        }
+        
         let QuotesFromVendorsArr = await paginateAggregate(QuotesFromVendors, pipeline, req.query);
 
-        res.status(201).json({ message: "found all Device", data: QuotesFromVendorsArr.data, total: QuotesFromVendorsArr.total });
+        res.status(200).json({ 
+            message: "Found all quotes from vendors", 
+            data: QuotesFromVendorsArr.data, 
+            total: QuotesFromVendorsArr.total 
+        });
     } catch (error) {
         next(error);
     }
 };
+
+// Helper function to check if a string is a valid date
+function isValidDate(dateString: string): boolean {
+    const date = new Date(dateString);
+    return !isNaN(date.getTime());
+}
 
 export const getQuotesFromVendorsById = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -451,10 +508,11 @@ export const convertQuotesFromVendorToQuotesToCustomer = async (
         }
 
         // Check if a quote already exists for this RFP
-        const existingQuote = await QuotesToCustomer.findOne({ enquiryId: vendorQuote.enquiryId }).lean().exec();
+        const existingQuote = await QuotesToCustomer.findOne({ leadId: vendorQuote.leadId }).lean().exec();
+        
         if (existingQuote) {
-            throw new Error("Quote from Vendors for this RFP already exists.");
-        }
+        throw new Error("A customer quote already exists for this lead.");
+}
 
         const updatedMarkupDetails = vendorQuote.markupDetails?.map((item: any) => {
             const baseAmount = Number(vendorQuote.amount || 0);
@@ -532,7 +590,8 @@ export const convertQuotesFromVendorToQuotesToCustomer = async (
         if (vendorQuote?.enquiryId) {
             var newQuotesToCustomer = await new ConfirmedQuotesFromVendor(quotesFromVendorData).save();
 
-
+            console.log(newQuotesToCustomer, "<<--newQuotesToCustomer");
+            
             const result = await Enquiry.findByIdAndUpdate(vendorQuote.enquiryId, { status: "Quote sent to customer" }).exec();
 
 

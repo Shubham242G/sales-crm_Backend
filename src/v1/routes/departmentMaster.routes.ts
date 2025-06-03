@@ -9,6 +9,7 @@ router.get('/getById/:id', getDepartmentMasterById);
 router.get('/getAllDepartmentMaster', getAllDepartmentMaster);
 router.patch('/updateById/:id', updateDepartmentMasterById);
 router.delete('/deleteById/:id', deleteDepartmentMasterById);
+router.post('/getExcel', )
 
 
 export default router;

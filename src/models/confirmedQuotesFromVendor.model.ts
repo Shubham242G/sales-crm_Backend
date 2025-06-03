@@ -5,7 +5,6 @@ interface IConfirmedQuotesFromVendor {
     eventCoordinatorName: string;
     eventDate: Date;
     hotelName: string;
-
     eventCoordinatorReportingTime: string;
     clientsCompanyName: string;
     onsiteClientName: string;
@@ -77,7 +76,6 @@ const confirmedQuotesFromVendorSchema = new Schema<IConfirmedQuotesFromVendor>(
         eventCoordinatorName: String,
         eventDate: Date,
         hotelName: String,
-      
         eventCoordinatorReportingTime: String,
         clientsCompanyName: String,
         onsiteClientName: String,

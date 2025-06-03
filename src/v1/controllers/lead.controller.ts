@@ -56,62 +56,51 @@ export const getAllLead = async (
     let matchObj: Record<string, any> = {};
 
     const { query } = req.query;
+    
+    // Add fullName field creation FIRST, before any matching
+    pipeline.push({
+      $addFields: {
+        fullName: { $concat: ["$firstName", " ", "$lastName"] },
+      },
+    });
+
     // Handle basic search - search across multiple fields
     if (
       req.query.query &&
       typeof req.query.query === "string" &&
       req.query.query !== ""
     ) {
+      const searchQuery = req.query.query;
       matchObj.$or = [
         {
           fullName: {
-            $regex: new RegExp(
-              `${typeof req?.query?.query === "string" ? req.query.query : ""}`,
-              "i"
-            ),
+            $regex: new RegExp(searchQuery, "i"),
           },
         },
-
-   
         {
-          email: new RegExp(
-            typeof req?.query?.query === "string" ? req.query.query : "",
-            "i"
-          ),
+          email: {
+            $regex: new RegExp(searchQuery, "i"),
+          },
         },
         {
-          company: new RegExp(
-            typeof req?.query?.query === "string" ? req.query.query : "",
-            "i"
-          ),
+          company: {
+            $regex: new RegExp(searchQuery, "i"),
+          },
         },
         {
-          phone: new RegExp(
-            typeof req?.query?.query === "string" ? req.query.query : "",
-            "i"
-          ),
+          phone: {
+            $regex: new RegExp(searchQuery, "i"),
+          },
         },
         {
-          ownerName: new RegExp(
-            typeof req?.query?.query === "string" ? req.query.query : "",
-            "i"
-          ),
+          ownerName: {
+            $regex: new RegExp(searchQuery, "i"),
+          },
         },
-
-
-        console.log("check i t is wokring insklf ashifas ufio ashf in lead ---------------------------->")
-        
-        //check for fullName
       ];
-      
-       pipeline.push({
-      $addFields: {
-        fullName: { $concat: ["$firstName", " ", "$lastName"] },
-      },
-    });
     }
 
-    // Handle advanced search (same as before)
+    // Handle advanced search
     if (req?.query?.advancedSearch && req.query.advancedSearch !== "") {
       const searchParams =
         typeof req.query.advancedSearch === "string"
@@ -149,7 +138,21 @@ export const getAllLead = async (
                 $lt: isNaN(Number(value)) ? value : Number(value),
               };
               break;
+            case "greaterThanOrEqual":
+              fieldCondition[field] = {
+                $gte: isNaN(Number(value)) ? value : Number(value),
+              };
+              break;
+            case "lessThanOrEqual":
+              fieldCondition[field] = {
+                $lte: isNaN(Number(value)) ? value : Number(value),
+              };
+              break;
+            case "notEquals":
+              fieldCondition[field] = { $ne: value };
+              break;
             default:
+              // Default to contains for unknown conditions
               fieldCondition[field] = { $regex: value, $options: "i" };
           }
 
@@ -157,23 +160,30 @@ export const getAllLead = async (
         }
       });
 
-      // If we have both basic and advanced search, we need to combine them
-      if (matchObj.$or) {
-        // If there are already $or conditions (from basic search)
-        // We need to use $and to combine with advanced search
-        matchObj = {
-          $and: [{ $or: matchObj.$or }, { $and: advancedSearchConditions }],
-        };
-      } else {
-        // If there's only advanced search, use $and directly
-        matchObj.$and = advancedSearchConditions;
+      // Combine basic and advanced search properly
+      if (advancedSearchConditions.length > 0) {
+        if (matchObj.$or) {
+          // If we have both basic search ($or) and advanced search conditions
+          // Combine them with $and - basic search OR advanced search conditions
+          matchObj = {
+            $and: [
+              { $or: matchObj.$or }, // Basic search conditions
+              ...advancedSearchConditions // Advanced search conditions (all must match)
+            ],
+          };
+        } else {
+          // If there's only advanced search, all conditions must match
+          matchObj.$and = advancedSearchConditions;
+        }
       }
     }
 
-    // Add the match stage to the pipeline
-    pipeline.push({
-      $match: matchObj,
-    });
+    // Add the match stage to the pipeline (only if we have conditions)
+    if (Object.keys(matchObj).length > 0) {
+      pipeline.push({
+        $match: matchObj,
+      });
+    }
 
     // Handle request for select input options
     if (req?.query?.isForSelectInput) {
@@ -197,7 +207,6 @@ export const getAllLead = async (
     next(error);
   }
 };
-
 export const getLeadById = async (
   req: Request,
   res: Response,

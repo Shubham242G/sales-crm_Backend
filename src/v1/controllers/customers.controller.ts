@@ -160,134 +160,137 @@ export const deleteCustomerById = async (req: Request, res: Response, next: Next
 
 
 export const getAllCustomers = async (req: any, res: any, next: any) => {
-
     try {
         let pipeline: PipelineStage[] = [];
         let matchObj: Record<string, any> = {};
 
-        const { query } = req.query;
-        // Handle basic search - search across multiple fields
-        if (
-          req.query.query &&
-          typeof req.query.query === "string" &&
-          req.query.query !== ""
-        ) {
-          matchObj.$or = [
-            {
-              firstName: new RegExp(
-                typeof req?.query?.query === "string" ? req.query.query : "",
-                "i"
-              ),
+        // Add fullName field for better searching
+        pipeline.push({
+            $addFields: {
+                fullName: { $concat: ["$firstName", " ", "$lastName"] },
+                fullAddress: { $concat: ["$addressStreet1", " ", "$addressStreet2", " ", "$city", " ", "$state"] }
             },
-            {
-              lastName: new RegExp(
-                typeof req?.query?.query === "string" ? req.query.query : "",
-                "i"
-              ),
-            },
-            {
-              email: new RegExp(
-                typeof req?.query?.query === "string" ? req.query.query : "",
-                "i"
-              ),
-            },
-            {
-              company: new RegExp(
-                typeof req?.query?.query === "string" ? req.query.query : "",
-                "i"
-              ),
-            },
-            {
-              phone: new RegExp(
-                typeof req?.query?.query === "string" ? req.query.query : "",
-                "i"
-              ),
-            },
-            {
-              ownerName: new RegExp(
-                typeof req?.query?.query === "string" ? req.query.query : "",
-                "i"
-              ),
-            },
-            // Add any other fields you want to search by
-          ];
+        });
+
+        // Handle basic search - optimized version
+        if (req.query?.query && typeof req.query.query === "string" && req.query.query.trim() !== "") {
+            const searchTerm = req.query.query.trim();
+            const searchRegex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), "i");
+            
+            matchObj.$or = [
+                { firstName: searchRegex },
+                { lastName: searchRegex },
+                { fullName: searchRegex },
+                { email: searchRegex },
+                { companyName: searchRegex },
+                { displayName: searchRegex },
+                { phone: searchRegex },
+                { workPhone: searchRegex },
+                { addressStreet1: searchRegex },
+                { addressStreet2: searchRegex },
+                { city: searchRegex },
+                { state: searchRegex },
+                { fullAddress: searchRegex },
+                { pinCode: searchRegex },
+                // Add numeric search if query is numeric
+                ...(!isNaN(Number(searchTerm)) ? [
+                    { openingBalance: Number(searchTerm) },
+                    { creditLimit: Number(searchTerm) }
+                ] : [])
+            ];
         }
-    
-        // Handle advanced search (same as before)
+
+        // Handle advanced search - fixed version
         if (req?.query?.advancedSearch && req.query.advancedSearch !== "") {
-          const searchParams =
-            typeof req.query.advancedSearch === "string"
-              ? req.query.advancedSearch.split(",")
-              : [];
-    
-          const advancedSearchConditions: any[] = [];
-    
-          searchParams.forEach((param: string) => {
-            const [field, condition, value] = param.split(":");
-    
-            if (field && condition && value) {
-              let fieldCondition: Record<string, any> = {};
-    
-              switch (condition) {
-                case "contains":
-                  fieldCondition[field] = { $regex: value, $options: "i" };
-                  break;
-                case "equals":
-                  fieldCondition[field] = value;
-                  break;
-                case "startsWith":
-                  fieldCondition[field] = { $regex: `^${value}`, $options: "i" };
-                  break;
-                case "endsWith":
-                  fieldCondition[field] = { $regex: `${value}$`, $options: "i" };
-                  break;
-                case "greaterThan":
-                  fieldCondition[field] = {
-                    $gt: isNaN(Number(value)) ? value : Number(value),
-                  };
-                  break;
-                case "lessThan":
-                  fieldCondition[field] = {
-                    $lt: isNaN(Number(value)) ? value : Number(value),
-                  };
-                  break;
-                default:
-                  fieldCondition[field] = { $regex: value, $options: "i" };
-              }
-    
-              advancedSearchConditions.push(fieldCondition);
+            const searchParams = typeof req.query.advancedSearch === "string"
+                ? req.query.advancedSearch.split(",")
+                : [];
+
+            const advancedSearchConditions: any[] = [];
+
+            for (const param of searchParams) {
+                const trimmedParam = param.trim();
+                if (!trimmedParam) continue;
+                
+                const [field, condition, value] = trimmedParam.split(":").map((p:any) => p.trim());
+                if (!field || !condition || !value) continue;
+
+                let fieldCondition: Record<string, any> = {};
+
+                switch (condition.toLowerCase()) {
+                    case "contains":
+                        fieldCondition[field] = { $regex: value, $options: "i" };
+                        break;
+                    case "equals":
+                        if (value.toLowerCase() === 'true') fieldCondition[field] = true;
+                        else if (value.toLowerCase() === 'false') fieldCondition[field] = false;
+                        else if (!isNaN(Number(value))) fieldCondition[field] = Number(value);
+                        else fieldCondition[field] = value;
+                        break;
+                    case "startswith":
+                        fieldCondition[field] = { $regex: `^${value}`, $options: "i" };
+                        break;
+                    case "endswith":
+                        fieldCondition[field] = { $regex: `${value}$`, $options: "i" };
+                        break;
+                    case "greaterthan":
+                        fieldCondition[field] = {
+                            $gt: isNaN(Number(value)) ? value : Number(value),
+                        };
+                        break;
+                    case "lessthan":
+                        fieldCondition[field] = {
+                            $lt: isNaN(Number(value)) ? value : Number(value),
+                        };
+                        break;
+                    default:
+                        fieldCondition[field] = { $regex: value, $options: "i" };
+                }
+
+                advancedSearchConditions.push(fieldCondition);
             }
-          });
-    
-          // If we have both basic and advanced search, we need to combine them
-          if (matchObj.$or) {
-            // If there are already $or conditions (from basic search)
-            // We need to use $and to combine with advanced search
-            matchObj = {
-              $and: [{ $or: matchObj.$or }, { $and: advancedSearchConditions }],
-            };
-          } else {
-            // If there's only advanced search, use $and directly
-            matchObj.$and = advancedSearchConditions;
-          }
+
+            // Combine with basic search if it exists
+            if (advancedSearchConditions.length > 0) {
+                if (matchObj.$or) {
+                    matchObj = {
+                        $and: [
+                            { $or: matchObj.$or },
+                            ...advancedSearchConditions
+                        ]
+                    };
+                } else {
+                    matchObj = advancedSearchConditions.length === 1 
+                        ? advancedSearchConditions[0] 
+                        : { $and: advancedSearchConditions };
+                }
+            }
         }
-    
+
+        // Handle select input request
         if (req?.query?.isForSelectInput) {
             pipeline.push({
-              $project: {
-                label: { $concat: ["$firstName", " ", "$lastName"] },
-                value: "$_id",
-              },
+                $project: {
+                    label: { $concat: ["$firstName", " ", "$lastName"] },
+                    value: "$_id",
+                },
             });
-          }
-        // Add the match stage to the pipeline
-        pipeline.push({
-          $match: matchObj,
-        });
-        let CustomerArr = await paginateAggregate(Contact, pipeline, req.query);
+        }
 
-        res.status(201).json({ message: "found all Device", data: CustomerArr.data, total: CustomerArr.total });
+        // Add match stage if we have conditions
+        if (Object.keys(matchObj).length > 0) {
+            pipeline.push({ $match: matchObj });
+        }
+
+        const customerArr = await paginateAggregate(Contact, pipeline, req.query);
+
+        res.status(200).json({ 
+            message: "Found all customers successfully", 
+            data: customerArr.data, 
+            total: customerArr.total 
+        });
     } catch (error) {
+        console.error('Error in getAllCustomers:', error);
         next(error);
     }
 };

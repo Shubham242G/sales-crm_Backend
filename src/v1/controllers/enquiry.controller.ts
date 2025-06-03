@@ -57,126 +57,333 @@ export const getAllEnquiry = async (req: any, res: any, next: any) => {
   try {
     let pipeline: PipelineStage[] = [];
     let matchObj: Record<string, any> = {};
-    const { query } = req.query;
 
+    // Add helper fields for searching
+    pipeline.push({
+      $addFields: {
+        fullName: { $concat: ["$firstName", " ", "$lastName"] },
+        checkInDateString: { $dateToString: { format: "%Y-%m-%d", date: "$checkIn" } },
+        checkOutDateString: { $dateToString: { format: "%Y-%m-%d", date: "$checkOut" } },
+        "banquet.dateString": {
+          $map: {
+            input: "$banquet",
+            as: "banq",
+            in: { $dateToString: { format: "%Y-%m-%d", date: "$$banq.date" } }
+          }
+        },
+        "airTickets.departureDateString": {
+          $dateToString: { format: "%Y-%m-%d", date: "$airTickets.departureDate" }
+        },
+        "cab.dateString": {
+          $map: {
+            input: "$cab",
+            as: "cabItem",
+            in: { $dateToString: { format: "%Y-%m-%d", date: "$$cabItem.date" } }
+          }
+        }
+      }
+    });
 
-
-    // Handle basic search - search across multiple fields
-    if (req.query.query && typeof req.query.query === 'string' && req.query.query !== "") {
-      const queryStr = req.query.query;
+    // Handle basic search
+    if (req.query.query && typeof req.query.query === 'string' && req.query.query.trim() !== "") {
+      const searchTerm = req.query.query.trim();
+      const searchRegex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), "i");
+      
       matchObj.$or = [
-
-        { firstName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-        { lastName: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-        { enquiryType: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-        { noOfRooms: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-        { city: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-        { levelOfEnquiry: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-        { status: new RegExp(typeof req?.query?.query === "string" ? req.query.query : "", "i") },
-        { checkIn: { $eq: new Date(queryStr) } },
-        { checkOut: { $eq: new Date(queryStr) } }
-
-        // Add any other fields you want to search by
+        { firstName: searchRegex },
+        { lastName: searchRegex },
+        { fullName: searchRegex },
+        { enquiryType: searchRegex },
+        { noOfRooms: searchRegex },
+        { city: searchRegex },
+        { levelOfEnquiry: searchRegex },
+        { status: searchRegex },
+        { email: searchRegex },
+        { phoneNumber: searchRegex },
+        { companyName: searchRegex },
+        { assignedTo: searchRegex },
+        { numberOfRooms: searchRegex },
+        { "banquet.dateString": searchTerm },
+        { checkInDateString: searchTerm },
+        { checkOutDateString: searchTerm }
       ];
     }
 
-    // Handle advanced search (same as before)
+    // Handle advanced search
+    if (req?.query?.advancedSearch) {
+      const searchParams = Array.isArray(req.query.advancedSearch)
+        ? req.query.advancedSearch
+        : typeof req.query.advancedSearch === 'string'
+        ? [req.query.advancedSearch]
+        : [];
 
+      const advancedConditions = [];
 
-    console.log("req?.query?.advancedSearch", req?.query?.advancedSearch)
-    if (req?.query?.advancedSearch && req.query.advancedSearch !== "") {
-      const searchParams = typeof req.query.advancedSearch === 'string' ? req.query.advancedSearch.split(',') : [];
+      for (const param of searchParams) {
+        if (typeof param !== 'string') continue;
+        
+        const [field, operator, ...valueParts] = param.split(':');
+        const value = valueParts.join(':').trim();
+        
+        if (!field || !operator || !value) continue;
 
-      const advancedSearchConditions: any[] = [];
-
-      searchParams.forEach((param: string) => {
-        const [field, condition, value] = param.split(':');
-
-        if (field && condition && value) {
-          let fieldCondition: Record<string, any> = {};
-
-          console.log(fieldCondition, "fieldCondition")
-          console.log("condition", condition)
-
-          switch (condition) {
-            case 'contains':
-              fieldCondition[field] = { $regex: value, $options: 'i' };
-              break;
-            case 'equals':
-              if (value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)) {
-                fieldCondition[field] = new Date(value);
-              } else if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                fieldCondition[field] = new Date(`${value}T00:00:00.000Z`);
-              } else {
-                fieldCondition[field] = value;
-              }
-              break;
-            case 'startsWith':
-              fieldCondition[field] = { $regex: `^${value}`, $options: 'i' };
-              break;
-            case 'endsWith':
-              fieldCondition[field] = { $regex: `${value}$`, $options: 'i' };
-              break;
-            case 'greaterThan':
-              fieldCondition[field] = { $gt: isNaN(Number(value)) ? value : Number(value) };
-              break;
-            case 'lessThan':
-              fieldCondition[field] = { $lt: isNaN(Number(value)) ? value : Number(value) };
-              break;
-            case 'dateEquals':
-              fieldCondition[field] = { $eq: new Date(value).toISOString() };
-              break;
-            default:
-              fieldCondition[field] = { $regex: value, $options: 'i' };
-          }
-
-          advancedSearchConditions.push(fieldCondition);
+        const condition = buildAdvancedCondition(field, operator.toLowerCase(), value);
+        if (condition) {
+          advancedConditions.push(condition);
         }
-      });
+      }
 
-      // If we have both basic and advanced search, we need to combine them
-      if (matchObj.$or) {
-        // If there are already $or conditions (from basic search)
-        // We need to use $and to combine with advanced search
-        matchObj = {
-
-          $and: [
-            { $or: matchObj.$or },
-            { $and: advancedSearchConditions }
-          ]
-        };
-      } else {
-        // If there's only advanced search, use $and directly
-        matchObj.$and = advancedSearchConditions;
+      if (advancedConditions.length > 0) {
+        if (matchObj.$or) {
+          matchObj = {
+            $and: [
+              { $or: matchObj.$or },
+              ...advancedConditions
+            ]
+          };
+        } else {
+          matchObj = advancedConditions.length === 1 
+            ? advancedConditions[0] 
+            : { $and: advancedConditions };
+        }
       }
     }
 
     // Add the match stage to the pipeline
-    pipeline.push({
-      $match: matchObj
-    });
+    if (Object.keys(matchObj).length > 0) {
+      pipeline.push({ $match: matchObj });
+    }
 
-    // Handle request for select input options
+    // Handle select input request
     if (req?.query?.isForSelectInput) {
       pipeline.push({
         $project: {
           label: { $concat: ["$firstName", " ", "$lastName"] },
           value: "$_id"
-        },
-
+        }
       });
     }
-    let EnquiryArr = await paginateAggregate(Enquiry, pipeline, req.query);
 
-    res.status(201).json({
-      message: "found all Device",
+    const EnquiryArr = await paginateAggregate(Enquiry, pipeline, req.query);
+
+    res.status(200).json({
+      message: "Found all enquiries successfully",
       data: EnquiryArr.data,
       total: EnquiryArr.total,
     });
   } catch (error) {
+    console.error('Error in getAllEnquiry:', error);
     next(error);
   }
 };
+
+// Helper function to build advanced search conditions
+function buildAdvancedCondition(field: string, operator: string, value: string): Record<string, any> | null {
+  const fieldPath = getFieldPath(field);
+  const isArrayField = ['banquet', 'room', 'cab'].some(prefix => field.startsWith(`${prefix}.`));
+
+  switch (operator) {
+    case 'equals':
+      if (isDateField(field)) {
+        const date = new Date(value);
+        if (isNaN(date.getTime())) return null;
+        
+        const start = new Date(date.setHours(0, 0, 0, 0));
+        const end = new Date(date.setHours(23, 59, 59, 999));
+        
+        if (isArrayField) {
+          const [arrayField, nestedField] = field.split('.');
+          return { 
+            [arrayField]: { 
+              $elemMatch: { 
+                [nestedField]: { $gte: start, $lte: end } 
+              } 
+            } 
+          };
+        }
+        return { [fieldPath]: { $gte: start, $lte: end } };
+      }
+      
+      if (isArrayField) {
+        const [arrayField, nestedField] = field.split('.');
+        return { 
+          [arrayField]: { 
+            $elemMatch: { 
+              [nestedField]: value 
+            } 
+          } 
+        };
+      }
+      return { [fieldPath]: value };
+
+    case 'contains':
+      if (isArrayField) {
+        const [arrayField, nestedField] = field.split('.');
+        return { 
+          [arrayField]: { 
+            $elemMatch: { 
+              [nestedField]: { $regex: escapeRegex(value), $options: 'i' } 
+            } 
+          } 
+        };
+      }
+      return { [fieldPath]: { $regex: escapeRegex(value), $options: 'i' } };
+
+    case 'startswith':
+      if (isArrayField) {
+        const [arrayField, nestedField] = field.split('.');
+        return { 
+          [arrayField]: { 
+            $elemMatch: { 
+              [nestedField]: { $regex: `^${escapeRegex(value)}`, $options: 'i' } 
+            } 
+          } 
+        };
+      }
+      return { [fieldPath]: { $regex: `^${escapeRegex(value)}`, $options: 'i' } };
+
+    case 'endswith':
+      if (isArrayField) {
+        const [arrayField, nestedField] = field.split('.');
+        return { 
+          [arrayField]: { 
+            $elemMatch: { 
+              [nestedField]: { $regex: `${escapeRegex(value)}$`, $options: 'i' } 
+            } 
+          } 
+        };
+      }
+      return { [fieldPath]: { $regex: `${escapeRegex(value)}$`, $options: 'i' } };
+
+    case 'greaterthan':
+      if (isDateField(field)) {
+        const date = new Date(value);
+        if (isNaN(date.getTime())) return null;
+        
+        if (isArrayField) {
+          const [arrayField, nestedField] = field.split('.');
+          return { 
+            [arrayField]: { 
+              $elemMatch: { 
+                [nestedField]: { $gt: date } 
+              } 
+            } 
+          };
+        }
+        return { [fieldPath]: { $gt: date } };
+      }
+      
+      const numValue = Number(value);
+      if (isArrayField) {
+        const [arrayField, nestedField] = field.split('.');
+        return { 
+          [arrayField]: { 
+            $elemMatch: { 
+              [nestedField]: isNaN(numValue) ? { $gt: value } : { $gt: numValue } 
+            } 
+          } 
+        };
+      }
+      return { [fieldPath]: isNaN(numValue) ? { $gt: value } : { $gt: numValue } };
+
+    case 'lessthan':
+      if (isDateField(field)) {
+        const date = new Date(value);
+        if (isNaN(date.getTime())) return null;
+        
+        if (isArrayField) {
+          const [arrayField, nestedField] = field.split('.');
+          return { 
+            [arrayField]: { 
+              $elemMatch: { 
+                [nestedField]: { $lt: date } 
+              } 
+            } 
+          };
+        }
+        return { [fieldPath]: { $lt: date } };
+      }
+      
+      const numValueLt = Number(value);
+      if (isArrayField) {
+        const [arrayField, nestedField] = field.split('.');
+        return { 
+          [arrayField]: { 
+            $elemMatch: { 
+              [nestedField]: isNaN(numValueLt) ? { $lt: value } : { $lt: numValueLt } 
+            } 
+          } 
+        };
+      }
+      return { [fieldPath]: isNaN(numValueLt) ? { $lt: value } : { $lt: numValueLt } };
+
+    case 'in':
+      const inValues = value.split('|').map(v => v.trim()).filter(v => v);
+      if (inValues.length === 0) return null;
+      
+      if (isArrayField) {
+        const [arrayField, nestedField] = field.split('.');
+        return { 
+          [arrayField]: { 
+            $elemMatch: { 
+              [nestedField]: { $in: inValues } 
+            } 
+          } 
+        };
+      }
+      return { [fieldPath]: { $in: inValues } };
+
+    case 'notin':
+      const notInValues = value.split('|').map(v => v.trim()).filter(v => v);
+      if (notInValues.length === 0) return null;
+      
+      if (isArrayField) {
+        const [arrayField, nestedField] = field.split('.');
+        return { 
+          [arrayField]: { 
+            $elemMatch: { 
+              [nestedField]: { $nin: notInValues } 
+            } 
+          } 
+        };
+      }
+      return { [fieldPath]: { $nin: notInValues } };
+
+    default:
+      return null;
+  }
+}
+
+// Helper function to escape regex special characters
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Helper function to get correct field path
+function getFieldPath(field: string): string {
+  if (field.startsWith('eventSetup.')) {
+    return `eventSetup.${field.replace('eventSetup.', '')}`;
+  }
+  if (field.startsWith('airTickets.')) {
+    return `airTickets.${field.replace('airTickets.', '')}`;
+  }
+  return field;
+}
+
+// Helper function to check if field is a date field
+function isDateField(field: string): boolean {
+  const dateFields = [
+    'checkIn', 'checkOut',
+    'banquet.date', 'airTickets.departureDate', 'airTickets.returnDate',
+    'airTickets.multiDepartureDate', 'cab.date',
+    'eventSetup.eventDates.startDate', 'eventSetup.eventDates.endDate',
+    'eventSetup.eventStartDate', 'eventSetup.eventEndDate'
+  ];
+  return dateFields.some(df => field.includes(df));
+}
+
+
+
 
 export const getEnquiryById = async (
   req: Request,
@@ -681,6 +888,7 @@ export const convertRfp = async (
       fullName: `${enquiry.firstName} ${enquiry.lastName || ""}`.trim(),
       vendorList: [],
       displayName: enquiry.displayName,
+      markupPercentage:0,
       leadId: enquiry.leadId,
       // vendorList: [
       //   {
@@ -689,7 +897,7 @@ export const convertRfp = async (
       //   },
       // ],
       additionalInstructions: "",
-      status: "RFP raised to vendor"
+      status: "RFP raised to vendor",
     });
 
     const newRfp = await rfp.save();

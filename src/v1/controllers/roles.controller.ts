@@ -50,137 +50,208 @@ export const getAllroles = async (req: any, res: any, next: any) => {
     try {
         let pipeline: PipelineStage[] = [];
         let matchObj: Record<string, any> = {};
-        const { query } = req.query;
-    // Handle basic search - search across multiple fields
-    if (
-      req.query.query &&
-      typeof req.query.query === "string" &&
-      req.query.query !== ""
-    ) {
-      matchObj.$or = [
-        {
-            roleName: {
-            $regex: new RegExp(
-              `${typeof req?.query?.query === "string" ? req.query.query : ""}`,
-              "i"
-            ),
-          },
-        },
-
-   
-        {
-            description: new RegExp(
-            typeof req?.query?.query === "string" ? req.query.query : "",
-            "i"
-          ),
-        },
-        {
-          phoneNo: new RegExp(
-            typeof req?.query?.query === "string" ? req.query.query : "",
-            "i"
-          ),
-        },
-        {
-          name: new RegExp(
-            typeof req?.query?.query === "string" ? req.query.query : "",
-            "i"
-          ),
-        },
-        {
-          email: new RegExp(
-            typeof req?.query?.query === "string" ? req.query.query : "",
-            "i"
-          ),
-        },
-        {
-            designation: new RegExp(
-              typeof req?.query?.query === "string" ? req.query.query : "",
-              "i"
-            ),
-          },
-          {
-            department: new RegExp(
-              typeof req?.query?.query === "string" ? req.query.query : "",
-              "i"
-            ),
-          },
-
         
-        //check for fullName
-      ];
-      
-    }
-
-    // Handle advanced search (same as before)
-    if (req?.query?.advancedSearch && req.query.advancedSearch !== "") {
-      const searchParams =
-        typeof req.query.advancedSearch === "string"
-          ? req.query.advancedSearch.split(",")
-          : [];
-
-      const advancedSearchConditions: any[] = [];
-
-      searchParams.forEach((param: string) => {
-        const [field, condition, value] = param.split(":");
-
-        if (field && condition && value) {
-          let fieldCondition: Record<string, any> = {};
-
-          switch (condition) {
-            case "contains":
-              fieldCondition[field] = { $regex: value, $options: "i" };
-              break;
-            case "equals":
-              fieldCondition[field] = value;
-              break;
-            case "startsWith":
-              fieldCondition[field] = { $regex: `^${value}`, $options: "i" };
-              break;
-            case "endsWith":
-              fieldCondition[field] = { $regex: `${value}$`, $options: "i" };
-              break;
-            case "greaterThan":
-              fieldCondition[field] = {
-                $gt: isNaN(Number(value)) ? value : Number(value),
-              };
-              break;
-            case "lessThan":
-              fieldCondition[field] = {
-                $lt: isNaN(Number(value)) ? value : Number(value),
-              };
-              break;
-            default:
-              fieldCondition[field] = { $regex: value, $options: "i" };
-          }
-
-          advancedSearchConditions.push(fieldCondition);
-        }
-      });
-
-      // If we have both basic and advanced search, we need to combine them
-      if (matchObj.$or) {
-        // If there are already $or conditions (from basic search)
-        // We need to use $and to combine with advanced search
-        matchObj = {
-          $and: [{ $or: matchObj.$or }, { $and: advancedSearchConditions }],
+        // Field mapping based on your IRole interface
+        const fieldMapping: Record<string, string> = {
+            'role': 'roleName',
+            'rolename': 'roleName', 
+            'name': 'name',
+            'email': 'email',
+            'phone': 'phoneNo',
+            'phoneno': 'phoneNo',
+            'designation': 'designation',
+            'department': 'department',
+            'description': 'description',
+            'parentrole': 'parentRole',
+            'parent': 'parentRole'
         };
-      } else {
-        // If there's only advanced search, use $and directly
-        matchObj.$and = advancedSearchConditions;
-      }
-    }
+        
+        // Debug logging - remove in production
+        console.log('Query params:', req.query);
+        
+        // Handle basic search - search across all your actual fields
+        if (req.query.query && typeof req.query.query === "string" && req.query.query.trim() !== "") {
+            const searchQuery = req.query.query.trim();
+            console.log('Basic search query:', searchQuery);
+            
+            matchObj.$or = [
+                { roleName: { $regex: searchQuery, $options: "i" } },
+                { description: { $regex: searchQuery, $options: "i" } },
+                { name: { $regex: searchQuery, $options: "i" } },
+                { email: { $regex: searchQuery, $options: "i" } },
+                { phoneNo: { $regex: searchQuery, $options: "i" } },
+                { designation: { $regex: searchQuery, $options: "i" } },
+                { department: { $regex: searchQuery, $options: "i" } }
+            ];
+        }
 
-    // Add the match stage to the pipeline
-    pipeline.push({
-      $match: matchObj,
-    });
+        // Handle advanced search
+        if (req.query.advancedSearch && typeof req.query.advancedSearch === "string" && req.query.advancedSearch.trim() !== "") {
+            console.log('Advanced search string:', req.query.advancedSearch);
+            
+            const searchParams = req.query.advancedSearch.split(",");
+            const advancedSearchConditions: any[] = [];
 
+            searchParams.forEach((param: string) => {
+                const trimmedParam = param.trim();
+                if (!trimmedParam) return;
+                
+                const parts = trimmedParam.split(":");
+                console.log('Processing param parts:', parts);
+                
+                if (parts.length !== 3) {
+                    console.log('Invalid param format, skipping:', trimmedParam);
+                    return;
+                }
+                
+                let [field, condition, value] = parts.map(p => p.trim());
+                
+                if (!field || !condition || !value) {
+                    console.log('Empty field/condition/value, skipping:', { field, condition, value });
+                    return;
+                }
+                
+                // Map field name to actual database field name
+                const originalField = field;
+                field = fieldMapping[field.toLowerCase()] || field;
+                
+                console.log('Field mapping:', { original: originalField, mapped: field });
+                console.log('Creating condition for:', { field, condition, value });
+                
+                let fieldCondition: Record<string, any> = {};
 
+                switch (condition.toLowerCase()) {
+                    case "contains":
+                        fieldCondition[field] = { $regex: value, $options: "i" };
+                        break;
+                    case "equals":
+                        // Special handling for ObjectId fields like parentRole
+                        if (field === 'parentRole') {
+                            if (value.toLowerCase() === 'null' || value.toLowerCase() === 'none') {
+                                fieldCondition[field] = null;
+                            } else {
+                                // Assuming value is a valid ObjectId string
+                                fieldCondition[field] = value;
+                            }
+                        } else if (value.toLowerCase() === 'true') {
+                            fieldCondition[field] = true;
+                        } else if (value.toLowerCase() === 'false') {
+                            fieldCondition[field] = false;
+                        } else if (!isNaN(Number(value)) && value !== '') {
+                            fieldCondition[field] = Number(value);
+                        } else {
+                            fieldCondition[field] = value;
+                        }
+                        break;
+                    case "startswith":
+                        fieldCondition[field] = { $regex: `^${value}`, $options: "i" };
+                        break;
+                    case "endswith":
+                        fieldCondition[field] = { $regex: `${value}$`, $options: "i" };
+                        break;
+                    case "greaterthan":
+                        fieldCondition[field] = { $gt: isNaN(Number(value)) ? value : Number(value) };
+                        break;
+                    case "lessthan":
+                        fieldCondition[field] = { $lt: isNaN(Number(value)) ? value : Number(value) };
+                        break;
+                    case "greaterthanorequal":
+                        fieldCondition[field] = { $gte: isNaN(Number(value)) ? value : Number(value) };
+                        break;
+                    case "lessthanorequal":
+                        fieldCondition[field] = { $lte: isNaN(Number(value)) ? value : Number(value) };
+                        break;
+                    case "notequals":
+                        if (field === 'parentRole') {
+                            if (value.toLowerCase() === 'null' || value.toLowerCase() === 'none') {
+                                fieldCondition[field] = { $ne: null };
+                            } else {
+                                fieldCondition[field] = { $ne: value };
+                            }
+                        } else if (value.toLowerCase() === 'true') {
+                            fieldCondition[field] = { $ne: true };
+                        } else if (value.toLowerCase() === 'false') {
+                            fieldCondition[field] = { $ne: false };
+                        } else if (!isNaN(Number(value)) && value !== '') {
+                            fieldCondition[field] = { $ne: Number(value) };
+                        } else {
+                            fieldCondition[field] = { $ne: value };
+                        }
+                        break;
+                    case "exists":
+                        fieldCondition[field] = { $exists: value.toLowerCase() === 'true' };
+                        break;
+                    case "isnull":
+                        fieldCondition[field] = value.toLowerCase() === 'true' ? null : { $ne: null };
+                        break;
+                    case "in":
+                        // For array values like "value1|value2|value3"
+                        const arrayValues = value.split('|').map(v => v.trim());
+                        fieldCondition[field] = { $in: arrayValues };
+                        break;
+                    case "notin":
+                        const notInValues = value.split('|').map(v => v.trim());
+                        fieldCondition[field] = { $nin: notInValues };
+                        break;
+                    default:
+                        console.log('Unknown condition, defaulting to contains:', condition);
+                        fieldCondition[field] = { $regex: value, $options: "i" };
+                }
+
+                console.log('Created field condition:', fieldCondition);
+                advancedSearchConditions.push(fieldCondition);
+            });
+
+            console.log('All advanced search conditions:', advancedSearchConditions);
+
+            // Combine search conditions
+            if (advancedSearchConditions.length > 0) {
+                if (matchObj.$or && Object.keys(matchObj).length > 0) {
+                    // Both basic and advanced search
+                    console.log('Combining basic and advanced search');
+                    matchObj = {
+                        $and: [
+                            { $or: matchObj.$or },
+                            ...advancedSearchConditions
+                        ]
+                    };
+                } else {
+                    // Only advanced search
+                    console.log('Using only advanced search');
+                    if (advancedSearchConditions.length === 1) {
+                        matchObj = advancedSearchConditions[0];
+                    } else {
+                        matchObj = { $and: advancedSearchConditions };
+                    }
+                }
+            }
+        }
+
+        console.log('Final match object:', JSON.stringify(matchObj, null, 2));
+
+        // Add the match stage to the pipeline only if we have conditions
+        if (Object.keys(matchObj).length > 0) {
+            pipeline.push({ $match: matchObj });
+        }
+
+        console.log('Final pipeline:', JSON.stringify(pipeline, null, 2));
 
         let rolesArr = await paginateAggregate(Roles, pipeline, req.query);
 
-        res.status(201).json({ message: "found all Device", data: rolesArr.data, total: rolesArr.total });
+        res.status(200).json({ 
+            message: "found all roles", 
+            data: rolesArr.data, 
+            total: rolesArr.total,
+            // Add debug info - remove in production
+            debug: {
+                matchObj,
+                pipeline: pipeline.length,
+                queryParams: req.query,
+                availableFields: ['roleName', 'description', 'name', 'email', 'phoneNo', 'designation', 'department', 'parentRole']
+            }
+        });
     } catch (error) {
+        console.error('Error in getAllroles:', error);
         next(error);
     }
 };
