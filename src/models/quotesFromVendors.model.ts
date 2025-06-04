@@ -1,24 +1,16 @@
 import { model, Model, Schema, Types } from "mongoose";
 
-
-
-interface IMarkUpDetails {
-  label: string;
-  orignalAmount
-  : number;
-  markupAmount: number;
-}
 interface IQuotesFromVendors {
   quotesId: string;
   rfpId: string;
-  enquiryId?: Types.ObjectId;
+  enquiryId: Types.ObjectId;
   leadId: Types.ObjectId;
   vendorList: {
     label: string;
     value: string;
   };
   serviceType: [];
-  amount: Number;
+  amount: string;
   receivedDate: string;
   status: string;
   attachment: string[];
@@ -29,8 +21,11 @@ interface IQuotesFromVendors {
     }
   ];
 
-  markupDetails: IMarkUpDetails[];
-  totalMarkupAmount?: number;
+  markupDetails: {
+    label: string;
+    markupAmount: string;
+  }[];
+  totalMarkupAmount?: number
 }
 
 const QuotesFromVendorsSchema = new Schema(
@@ -38,31 +33,32 @@ const QuotesFromVendorsSchema = new Schema(
     quotesId: String,
     rfqId: String,
     enquiryId: Types.ObjectId,
-    leadId: Types.ObjectId,
     vendorList: {
       label: String,
       value: String,
     },
     serviceType: [],
     rfpId: String,
-    amount: Number,
+    amount: String,
     receivedDate: String,
+    leadId: Types.ObjectId,
     displayName: String,
     status: String,
     attachment: [String],
-    totalAmount: String,
     eventDates: [
       {
         startDate: Date,
       },
     ],
-    markupDetails: [{
-      label: String,
-      orignalAmount: Number,
-      markupAmount: Number,
-    }],
-    totalMarkupAmount: Number,
+    markupDetails: [
+        {
+          label: [String],
+          markupAmount: [String],
+        },
+      ],
+      totalMarkupAmount: Number,
   },
+  
   { timestamps: true }
 );
 

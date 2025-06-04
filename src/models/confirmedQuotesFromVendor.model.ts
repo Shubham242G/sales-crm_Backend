@@ -5,7 +5,6 @@ interface IConfirmedQuotesFromVendor {
     eventCoordinatorName: string;
     eventDate: Date;
     hotelName: string;
-
     eventCoordinatorReportingTime: string;
     clientsCompanyName: string;
     onsiteClientName: string;

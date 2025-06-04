@@ -349,155 +349,135 @@ const processAndSaveVendor = async (vendor: any[]) => {
 
 
 
-
 export const getAllVendor = async (req: any, res: any, next: any) => {
   try {
     let pipeline: PipelineStage[] = [];
-
     let matchObj: Record<string, any> = {};
 
-    const { query } = req.query;
-    // Handle basic search - search across multiple fields
-    if (
-      req.query.query &&
-      typeof req.query.query === "string" &&
-      req.query.query !== ""
-    ) {
+    // Add fullName field for better searching
+    pipeline.push({
+      $addFields: {
+        "vendor.fullName": { $concat: ["$vendor.firstName", " ", "$vendor.lastName"] },
+      },
+    });
+
+    // Handle basic search
+    if (req.query?.query && typeof req.query.query === "string" && req.query.query.trim() !== "") {
+      const searchTerm = req.query.query.trim();
+      const searchRegex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), "i");
+
       matchObj.$or = [
-        {
-          fullName: {
-            $regex: new RegExp(
-              `${typeof req?.query?.query === "string" ? req.query.query : ""}`,
-              "i"
-            ),
-          },
-        },
-
-
-        {
-          email: new RegExp(
-            typeof req?.query?.query === "string" ? req.query.query : "",
-            "i"
-          ),
-        },
-        {
-          company: new RegExp(
-            typeof req?.query?.query === "string" ? req.query.query : "",
-            "i"
-          ),
-        },
-        {
-          phone: new RegExp(
-            typeof req?.query?.query === "string" ? req.query.query : "",
-            "i"
-          ),
-        },
-        {
-          ownerName: new RegExp(
-            typeof req?.query?.query === "string" ? req.query.query : "",
-            "i"
-          ),
-        },
-
-
-        //check for fullName
+        { "vendor.firstName": searchRegex },
+        { "vendor.lastName": searchRegex },
+        { "vendor.fullName": searchRegex },
+        { "vendor.companyName": searchRegex },
+        { "location.state": searchRegex },
+        { "location.city": searchRegex },
+        { "location.address": searchRegex }
       ];
-
-      pipeline.push({
-        $addFields: {
-          fullName: { $concat: ["$firstName", " ", "$lastName"] },
-        },
-      });
     }
 
-
-    // Handle advanced search (same as before)
-    if (req?.query?.advancedSearch && req.query.advancedSearch !== "") {
-      const searchParams =
-        typeof req.query.advancedSearch === "string"
-          ? req.query.advancedSearch.split(",")
-          : [];
-
+    // Handle advanced search - FIXED VERSION
+    if (req.query?.advancedSearch && typeof req.query.advancedSearch === "string" && req.query.advancedSearch.trim() !== "") {
+      const searchParams = req.query.advancedSearch.split(",");
       const advancedSearchConditions: any[] = [];
 
-      searchParams.forEach((param: string) => {
-        const [field, condition, value] = param.split(":");
+      for (const param of searchParams) {
+        const trimmedParam = param.trim();
+        if (!trimmedParam) continue;
 
-        if (field && condition && value) {
-          let fieldCondition: Record<string, any> = {};
+        const [field, condition, value] = trimmedParam.split(":").map((p: any) => p.trim());
+        if (!field || !condition || !value) continue;
 
-          switch (condition) {
-            case "contains":
-              fieldCondition[field] = { $regex: value, $options: "i" };
-              break;
-            case "equals":
-              fieldCondition[field] = value;
-              break;
-            case "startsWith":
-              fieldCondition[field] = { $regex: `^${value}`, $options: "i" };
-              break;
-            case "endsWith":
-              fieldCondition[field] = { $regex: `${value}$`, $options: "i" };
-              break;
-            case "greaterThan":
-              fieldCondition[field] = {
-                $gt: isNaN(Number(value)) ? value : Number(value),
-              };
-              break;
-            case "lessThan":
-              fieldCondition[field] = {
-                $lt: isNaN(Number(value)) ? value : Number(value),
-              };
-              break;
-            default:
-              fieldCondition[field] = { $regex: value, $options: "i" };
-          }
-
-          advancedSearchConditions.push(fieldCondition);
+        // Determine the actual field path based on simple field names
+        let fieldPath: string;
+        switch (field.toLowerCase()) {
+          case 'name':
+          case 'vendorname':
+          case 'firstname':
+            fieldPath = 'vendor.firstName';
+            break;
+          case 'lastname':
+            fieldPath = 'vendor.lastName';
+            break;
+          case 'fullname':
+            fieldPath = 'vendor.fullName';
+            break;
+          case 'company':
+          case 'companyname':
+            fieldPath = 'vendor.companyName';
+            break;
+          case 'state':
+            fieldPath = 'location.state';
+            break;
+          case 'city':
+            fieldPath = 'location.city';
+            break;
+          case 'address':
+            fieldPath = 'location.address';
+            break;
+          default:
+            // Default to vendor field if no mapping found
+            fieldPath = `vendor.${field}`;
         }
-      });
 
-      // If we have both basic and advanced search, we need to combine them
-      if (matchObj.$or) {
-        // If there are already $or conditions (from basic search)
-        // We need to use $and to combine with advanced search
-        matchObj = {
-          $and: [{ $or: matchObj.$or }, { $and: advancedSearchConditions }],
-        };
-      } else {
-        // If there's only advanced search, use $and directly
-        matchObj.$and = advancedSearchConditions;
+        let fieldCondition: Record<string, any> = {};
+
+        switch (condition.toLowerCase()) {
+          case "contains":
+            fieldCondition[fieldPath] = { $regex: value, $options: "i" };
+            break;
+          case "equals":
+            fieldCondition[fieldPath] = value;
+            break;
+          case "startswith":
+            fieldCondition[fieldPath] = { $regex: `^${value}`, $options: "i" };
+            break;
+          case "endswith":
+            fieldCondition[fieldPath] = { $regex: `${value}$`, $options: "i" };
+            break;
+          default:
+            fieldCondition[fieldPath] = { $regex: value, $options: "i" };
+        }
+
+        advancedSearchConditions.push(fieldCondition);
+      }
+
+      // Combine with basic search if it exists
+      if (advancedSearchConditions.length > 0) {
+        if (matchObj.$or) {
+          matchObj = {
+            $and: [
+              { $or: matchObj.$or },
+              ...advancedSearchConditions
+            ]
+          };
+        } else {
+          matchObj = advancedSearchConditions.length === 1
+            ? advancedSearchConditions[0]
+            : { $and: advancedSearchConditions };
+        }
       }
     }
 
-    // Add the match stage to the pipeline
-    pipeline.push({
-      $match: matchObj,
-    });
-
-    // Handle request for select input options
-    if (req?.query?.isForSelectInput) {
-      pipeline.push({
-        $project: {
-          label: { $concat: ["$firstName", " ", "$lastName"] },
-          value: "$_id",
-        },
-      });
+    // Add the match stage if we have any conditions
+    if (Object.keys(matchObj).length > 0) {
+      pipeline.push({ $match: matchObj });
     }
 
+    // REST OF YOUR ORIGINAL CODE REMAINS THE SAME
     let vendorArr = await paginateAggregate(Vendor, pipeline, req.query);
 
-    res.status(201).json({
-      message: "found all Device",
+    res.status(200).json({
+      message: "Found all vendors",
       data: vendorArr.data,
       total: vendorArr.total,
     });
-  }
-  catch (error) {
+  } catch (error) {
+    console.error('Error in getAllVendor:', error);
     next(error);
   }
-}
-
+};
 
 export const getVendorById = async (
   req: Request,

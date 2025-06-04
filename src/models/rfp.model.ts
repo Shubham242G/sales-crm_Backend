@@ -25,7 +25,7 @@ interface IRfp {
     deadlineOfProposal: string;
     vendorList: IVendorList[];
     additionalInstructions: string;
-
+    markupPercentage: number
 
 
 }
@@ -50,7 +50,7 @@ const RfpSchema = new Schema({
     deadlineOfProposal: String,
     vendorList: [], 
     additionalInstructions: String,
-
+    markupPercentage: Number
 
 },
     { timestamps: true }

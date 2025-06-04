@@ -66,31 +66,100 @@ export const addLeadManagement = async (
 };
 
 export const getAllLeadManagement = async (req: any, res: any, next: any) => {
-  try {
-    let pipeline: PipelineStage[] = [];
-    let matchObj: Record<string, any> = {};
-    if (req.query.query && req.query.query != "") {
-      matchObj.name = new RegExp(req.query.query, "i");
+    try {
+      let pipeline: PipelineStage[] = [];
+      let matchObj: Record<string, any> = {};
+      const { query } = req.query;
+  
+      // Handle basic search - search across multiple fields
+      if (
+        req.query.query &&
+        typeof req.query.query === "string" &&
+        req.query.query !== ""
+      ) {
+        matchObj.$or = [
+          { name: { $regex: new RegExp(req.query.query, "i") } },
+          { email: { $regex: new RegExp(req.query.query, "i") } },
+          { phone: { $regex: new RegExp(req.query.query, "i") } },
+          // Add other fields you want to search here
+        ];
+      }
+  
+      // Handle advanced search
+      if (req?.query?.advancedSearch && req.query.advancedSearch !== "") {
+        const searchParams =
+          typeof req.query.advancedSearch === "string"
+            ? req.query.advancedSearch.split(",")
+            : [];
+  
+        const advancedSearchConditions: any[] = [];
+  
+        searchParams.forEach((param: string) => {
+          const [field, condition, value] = param.split(":");
+  
+          if (field && condition && value) {
+            let fieldCondition: Record<string, any> = {};
+  
+            switch (condition) {
+              case "contains":
+                fieldCondition[field] = { $regex: value, $options: "i" };
+                break;
+              case "equals":
+                fieldCondition[field] = value;
+                break;
+              case "startsWith":
+                fieldCondition[field] = { $regex: `^${value}`, $options: "i" };
+                break;
+              case "endsWith":
+                fieldCondition[field] = { $regex: `${value}$`, $options: "i" };
+                break;
+              case "greaterThan":
+                fieldCondition[field] = {
+                  $gt: isNaN(Number(value)) ? value : Number(value),
+                };
+                break;
+              case "lessThan":
+                fieldCondition[field] = {
+                  $lt: isNaN(Number(value)) ? value : Number(value),
+                };
+                break;
+              default:
+                fieldCondition[field] = { $regex: value, $options: "i" };
+            }
+  
+            advancedSearchConditions.push(fieldCondition);
+          }
+        });
+  
+        // Combine basic and advanced search if both exist
+        if (matchObj.$or) {
+          matchObj = {
+            $and: [{ $or: matchObj.$or }, { $and: advancedSearchConditions }],
+          };
+        } else {
+          matchObj.$and = advancedSearchConditions;
+        }
+      }
+  
+      pipeline.push({
+        $match: matchObj,
+      });
+  
+      let leadManagementArr = await paginateAggregate(
+        LeadManagement,
+        pipeline,
+        req.query
+      );
+  
+      res.status(201).json({
+        message: "found all Leads",
+        data: leadManagementArr.data,
+        total: leadManagementArr.total,
+      });
+    } catch (error) {
+      next(error);
     }
-    pipeline.push({
-      $match: matchObj,
-    });
-
-    let leadManagementArr = await paginateAggregate(
-      LeadManagement,
-      pipeline,
-      req.query
-    );
-
-    res.status(201).json({
-      message: "found all Device",
-      data: leadManagementArr.data,
-      total: leadManagementArr.total,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+  };
 
 export const getLeadManagementById = async (
   req: Request,
