@@ -324,14 +324,22 @@ export const convertConfirmedQuotesFromVendorToQuotesToCustomer = async (
         }
 
         // Check if a quote already exists for this RFP
-        const existingQuote = await QuotesToCustomer.findOne({ leadId: confirmedQuotesFromVendor.leadId }).lean().exec();
-        if (existingQuote) {
-            throw new Error("Quote from Vendors for this RFP already exists.");
-        }
+        // const existingQuote = await QuotesToCustomer.findOne({ leadId: confirmedQuotesFromVendor.leadId }).lean().exec();
+        // if (existingQuote) {
+        //     throw new Error("Quote from Vendors for this RFP already exists.");
+        // }
 
         const quotesToCustomerData = {
-            ...confirmedQuotesFromVendor,
-            status: "Quote sent to customer",
+            quotesId: confirmedQuotesFromVendor.banquetEventOrders.quotesId,
+            leadId: confirmedQuotesFromVendor.leadId,
+            customerName: confirmedQuotesFromVendor.banquetEventOrders.clientsCompanyName,
+            enquiryId: "",
+            serviceType: confirmedQuotesFromVendor.banquetEventOrders.serviceType,
+            amount: confirmedQuotesFromVendor.banquetEventOrders.amount,
+            status: confirmedQuotesFromVendor.banquetEventOrders.status,
+            displayName: confirmedQuotesFromVendor.banquetEventOrders.displayName,
+            markupDetails: confirmedQuotesFromVendor.banquetEventOrders.markupAmount,
+            totalMarkupAmount:  "",
         };
 
         const newQuotesToCustomer = await new QuotesToCustomer(quotesToCustomerData).save();

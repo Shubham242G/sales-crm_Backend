@@ -19,7 +19,8 @@ interface IConfirmedQuotesFromVendor {
         value: string
     }
     serviceType : [];
-    amount: string;
+    amount: number;
+    markupAmount: number;
     receivedDate: string;
     status: string;
     attachment: string[];
@@ -77,7 +78,7 @@ const confirmedQuotesFromVendorSchema = new Schema<IConfirmedQuotesFromVendor>(
         eventCoordinatorName: String,
         eventDate: Date,
         hotelName: String,
-      
+       
         eventCoordinatorReportingTime: String,
         clientsCompanyName: String,
         onsiteClientName: String,
@@ -90,7 +91,8 @@ const confirmedQuotesFromVendorSchema = new Schema<IConfirmedQuotesFromVendor>(
             label: String,
             value: String
         },
-        amount: String,
+         amount: Number,
+    markupAmount: Number,
         serviceType: [],
         receivedDate: String,
         status: String,

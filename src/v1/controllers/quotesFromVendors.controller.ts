@@ -486,10 +486,11 @@ export const convertQuotesFromVendorToQuotesToCustomer = async (
                 displayName: vendorQuote.displayName,
                 vendorList: vendorQuote.vendorList,
                 serviceType: vendorQuote.serviceType,
-                amount: vendorQuote.amount.toString(),
+                amount: vendorQuote.amount,
                 receivedDate: vendorQuote.receivedDate,
                 status: "Quote sent to customer",
-                attachment: vendorQuote.attachment
+                attachment: vendorQuote.attachment,
+                markupDetails: updatedMarkupDetails,
             },
             banquetEventOrdersSecond: {
                 eventStartTime: "",
